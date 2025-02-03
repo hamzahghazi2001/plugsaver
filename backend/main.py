@@ -1,5 +1,5 @@
 # main.py
-from app.auth import signup,login#, verify
+from app.auth import signup,login, verify
 
 def test_signup():
     email = "e@example.com"
