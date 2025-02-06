@@ -1,7 +1,8 @@
 # app/auth.py
 from supabase import create_client
 import bcrypt
-import config
+import app.config as config
+from app.email import verify
 
 # Supabase credentials
 supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)

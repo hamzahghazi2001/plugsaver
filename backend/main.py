@@ -1,5 +1,6 @@
 # main.py
-from app.auth import signup,login, verify
+from app.auth import signup,login
+from app.email import verify
 
 def test_signup():
     email = "e@example.com"
@@ -32,10 +33,10 @@ def test_login():
     else:
         print("Login failed.")
 
-def test():
+def test_email():
     verify("joseph.kariampally@gmail.com")
     print("TEST COMPLETE")
 
-#test()
+test_email()
 #test_signup()
-test_login()
+#test_login()
