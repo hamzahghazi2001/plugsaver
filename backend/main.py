@@ -34,7 +34,7 @@ def test_login():
 
 def test():
     verify("joseph.kariampally@gmail.com")
-    print("Done Done")
+    print("TEST COMPLETE")
 
 #test()
 #test_signup()
