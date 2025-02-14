@@ -1,0 +1,208 @@
+.device-flow-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #1a1a1a;
+  }
+  
+  .device-flow-card {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+  }
+  
+  .device-step {
+    padding: 24px;
+  }
+  
+  .device-step h1 {
+    margin: 0;
+    padding: 16px;
+    background: linear-gradient(to right, #7ee8fa, #80ff72);
+    color: white;
+    text-align: center;
+    margin: -24px -24px 24px;
+  }
+  
+  .device-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 16px;
+  }
+  
+  .category-label {
+    margin-bottom: 12px;
+    color: #666;
+  }
+  
+  .device-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .device-category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: none;
+    background: #f5f5f5;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .device-category.selected {
+    background: rgba(126, 232, 250, 0.1);
+    border: 2px solid #7ee8fa;
+  }
+  
+  .category-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  
+  .category-name {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .add-device-btn, .confirm-btn, .done-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 25px;
+    background: #ff4b8b;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .add-device-btn:hover, .confirm-btn:hover, .done-btn:hover {
+    background: #ff3377;
+  }
+  
+  .header-with-back {
+    display: flex;
+    align-items: center;
+    margin: -24px -24px 24px;
+    background: linear-gradient(to right, #7ee8fa, #80ff72);
+    padding: 16px;
+  }
+  
+  .back-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 16px;
+  }
+  
+  .device-info {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .info-row label {
+    color: #666;
+  }
+  
+  .schedule-section {
+    margin-bottom: 24px;
+  }
+  
+  .time-range {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .time-input {
+    flex: 1;
+  }
+  
+  .time-input label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+  }
+  
+  .time-input input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f5f5f5;
+  }
+  
+  .days-selector {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  
+  .day-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 12px;
+  }
+  
+  .day-button.active {
+    background: #7ee8fa;
+    color: white;
+  }
+  
+  .success {
+    text-align: center;
+  }
+  
+  .success-message {
+    font-size: 18px;
+    color: #333;
+    margin: 32px 0;
+  }
+  
+  .done-btn {
+    background: #80ff72;
+  }
+  
+  @media (max-width: 480px) {
+    .device-flow-card {
+      border-radius: 0;
+      min-height: 100vh;
+    }
+    
+    .device-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .time-range {
+      flex-direction: column;
+    }
+  }
