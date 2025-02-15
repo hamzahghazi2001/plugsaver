@@ -483,7 +483,8 @@ const MobileDeviceFlow = () => {
   const [newCategoryIcon, setNewCategoryIcon] = useState("")
   const [customCategories, setCustomCategories] = useState([])
 
-  const categories = [
+  // Default categories (non-removable)
+  const defaultCategories = [
     { id: "light", name: "Light", icon: "💡" },
     { id: "pc", name: "PC", icon: "💻" },
     { id: "tv", name: "TV", icon: "📺" },
@@ -491,14 +492,30 @@ const MobileDeviceFlow = () => {
     { id: "robot", name: "Robot", icon: "🤖" },
     { id: "door", name: "Door", icon: "🚪" },
   ]
+  const categories = [...defaultCategories, ...customCategories]
 
-  // Load data on mount
+  // ---------------------------------------------
+  // Load existing data from localStorage (fallback)
+  // and (optionally) from your backend if available
+  // ---------------------------------------------
   useEffect(() => {
+    // 1) Load from localStorage
     const appData = loadAppData()
     setRooms(appData.rooms || [])
     setCustomCategories(appData.customCategories || [])
+
+    // 2) Optionally fetch from server
+    // fetch("/api/devices")
+    //   .then((res) => res.json())
+    //   .then((data) => {
+    //     // Merge or override local data with server data
+    //     setRooms(data.rooms || [])
+    //     setCustomCategories(data.customCategories || [])
+    //   })
+    //   .catch((err) => console.error("Error loading from server:", err))
   }, [])
 
+  // The scanning logic for pairing
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
@@ -526,14 +543,16 @@ const MobileDeviceFlow = () => {
     }))
   }
 
-  // Remove a custom category by ID
+  // Remove a custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
-    // also remove from localStorage
     const appData = loadAppData()
     appData.customCategories = updated
     saveAppData(appData)
+
+    // Optionally also remove from backend:
+    // fetch(`/api/devices/categories/${id}`, { method: "DELETE" })
   }
 
   const addNewCategory = () => {
@@ -547,13 +566,21 @@ const MobileDeviceFlow = () => {
       setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
-      // update app data
+
       const appData = loadAppData()
       appData.customCategories = updated
       saveAppData(appData)
+
+      // Optionally send to backend:
+      // fetch("/api/devices/categories", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(newCategory),
+      // })
     }
   }
 
+  // Save final device info
   const saveDeviceInfo = () => {
     const deviceInfo = {
       name: deviceName,
@@ -561,15 +588,26 @@ const MobileDeviceFlow = () => {
       schedule,
       room: selectedRoom || newRoom,
     }
+
+    // Save to localStorage
     const appData = loadAppData()
     appData.devices = [...(appData.devices || []), deviceInfo]
     if (newRoom && !appData.rooms.includes(newRoom)) {
       appData.rooms.push(newRoom)
     }
     saveAppData(appData)
+
+    // Optionally send to backend:
+    // fetch("/api/devices", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(deviceInfo),
+    // })
+
     console.log("Device information saved successfully")
   }
 
+  // Render the steps
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -621,7 +659,7 @@ const MobileDeviceFlow = () => {
             <div className="category-section">
               <label className="category-label">Select Device Category</label>
               <div className="device-grid">
-                {[...categories, ...customCategories].map((category) => {
+                {[...categories].map((category) => {
                   const isCustom = customCategories.some(
                     (c) => c.id === category.id
                   )
@@ -724,10 +762,8 @@ const MobileDeviceFlow = () => {
               <div className="info-row">
                 <label>Device Category</label>
                 <div className="category-icon">
-                  {[
-                    ...categories,
-                    ...customCategories
-                  ].find((c) => c.id === selectedCategory)?.icon || ""}
+                  {categories.find((c) => c.id === selectedCategory)?.icon ||
+                    ""}
                 </div>
               </div>
             </div>
@@ -760,9 +796,9 @@ const MobileDeviceFlow = () => {
                   <button
                     key={dayObj.label}
                     className={`day-button ${dayObj.active ? "active" : ""}`}
-                    onClick={() => toggleDay(index)}
+                    onClick={() => toggleDay(dayObj.label)}
                   >
-                    {dayObj.label}
+                    {dayObj}
                   </button>
                 ))}
               </div>
@@ -842,7 +878,8 @@ const DesktopDeviceFlow = () => {
   const [consumptionLimit, setConsumptionLimit] = useState("")
   const [limitAction, setLimitAction] = useState("turnOff")
 
-  const categories = [
+  // Default categories
+  const defaultCategories = [
     { id: "light", name: "Light", icon: "💡" },
     { id: "pc", name: "PC", icon: "💻" },
     { id: "tv", name: "TV", icon: "📺" },
@@ -850,13 +887,26 @@ const DesktopDeviceFlow = () => {
     { id: "robot", name: "Robot", icon: "🤖" },
     { id: "door", name: "Door", icon: "🚪" },
   ]
-  const deviceCategories = [...categories, ...customCategories]
+  const deviceCategories = [...defaultCategories, ...customCategories]
 
-  // Load data on mount
+  // ---------------------------------------------
+  // Load existing data from localStorage (fallback)
+  // and optionally from your backend
+  // ---------------------------------------------
   useEffect(() => {
+    // localStorage fallback
     const appData = loadAppData()
     setRooms(appData.rooms || [])
     setCustomCategories(appData.customCategories || [])
+
+    // Optionally fetch from your backend
+    // fetch("/api/devices")
+    //   .then((res) => res.json())
+    //   .then((data) => {
+    //     setRooms(data.rooms || [])
+    //     setCustomCategories(data.customCategories || [])
+    //   })
+    //   .catch((err) => console.error("Error loading data:", err))
   }, [])
 
   useEffect(() => {
@@ -877,6 +927,7 @@ const DesktopDeviceFlow = () => {
   const handleBack = () => setStep((prev) => prev - 1)
   const handleNext = () => setStep((prev) => prev + 1)
 
+  // Toggle day in schedule
   const toggleDay = (index) => {
     setSchedule((prev) => {
       const newDays = prev.days.map((day, i) =>
@@ -886,13 +937,16 @@ const DesktopDeviceFlow = () => {
     })
   }
 
-  // Remove a custom category
+  // Remove custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
     const appData = loadAppData()
     appData.customCategories = updated
     saveAppData(appData)
+
+    // Optionally remove from backend
+    // fetch(`/api/devices/categories/${id}`, { method: "DELETE" })
   }
 
   const addNewCategory = () => {
@@ -906,13 +960,17 @@ const DesktopDeviceFlow = () => {
       setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
-      // update localStorage
+
       const appData = loadAppData()
       appData.customCategories = updated
       saveAppData(appData)
+
+      // Optionally send to backend
+      // fetch("/api/devices/categories", {...})
     }
   }
 
+  // Save final device info
   const saveDeviceInfo = () => {
     const deviceInfo = {
       name: deviceName,
@@ -923,12 +981,22 @@ const DesktopDeviceFlow = () => {
       consumptionLimit,
       limitAction,
     }
+
+    // localStorage fallback
     const appData = loadAppData()
     appData.devices = [...(appData.devices || []), deviceInfo]
     if (newRoom && !appData.rooms.includes(newRoom)) {
       appData.rooms.push(newRoom)
     }
     saveAppData(appData)
+
+    // Optionally send to backend
+    // fetch("/api/devices", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(deviceInfo),
+    // })
+
     console.log("Device information saved successfully")
   }
 
@@ -1000,9 +1068,14 @@ const DesktopDeviceFlow = () => {
                           }`}
                           onClick={() => setSelectedCategory(category.id)}
                         >
-                          <span className="category-icon">{category.icon}</span>
-                          <span className="category-name">{category.name}</span>
+                          <span className="category-icon">
+                            {category.icon}
+                          </span>
+                          <span className="category-name">
+                            {category.name}
+                          </span>
                         </button>
+                        {/* Remove if it's custom */}
                         {isCustom && (
                           <button
                             onClick={() => removeCategory(category.id)}
