@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react"
 import BottomNav from "../Components/BottomNav"
 
+// ========================================================
 // CSS styles as a template literal
+// ========================================================
 const styles = `
 .device-flow-container {
   background: #1a1a1a;
@@ -135,6 +137,14 @@ const styles = `
   margin-top: 10px;
 }
 
+/* Wrap each category + remove button in a small container */
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
 .device-category {
   display: flex;
   flex-direction: column;
@@ -160,6 +170,22 @@ const styles = `
   color: #333;
   text-align: center;
   word-break: break-word;
+}
+
+/* Remove button for custom categories */
+.remove-category-btn {
+  background: #ff6b6b;
+  border: none;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  margin-left: -35px; /* shift it slightly to overlap */
+  margin-top: -50px;
 }
 
 .schedule-section {
@@ -378,9 +404,52 @@ const styles = `
     padding-bottom: 80px;
   }
 }
+
+.location-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.location-option {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location-option:hover {
+  transform: scale(1.03);
+}
+
+.location-option.selected {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
+}
 `
 
+// ========================================================
+// Helper functions to load & save app data in localStorage
+// ========================================================
+const loadAppData = () => {
+  const data = localStorage.getItem("appData")
+  if (data) return JSON.parse(data)
+  return { devices: [], rooms: [], customCategories: [] }
+}
+
+const saveAppData = (data) => {
+  localStorage.setItem("appData", JSON.stringify(data))
+}
+
+// ========================================================
 // Hook to track window width
+// ========================================================
 const useViewport = () => {
   const [width, setWidth] = useState(window.innerWidth)
   useEffect(() => {
@@ -391,26 +460,9 @@ const useViewport = () => {
   return { width }
 }
 
-const DeviceFlow = () => {
-  const { width } = useViewport()
-  const breakpoint = 1024
-
-  useEffect(() => {
-    // Inject CSS into the document head
-    const styleSheet = document.createElement("style")
-    styleSheet.type = "text/css"
-    styleSheet.innerText = styles
-    document.head.appendChild(styleSheet)
-
-    // Cleanup on unmount
-    return () => {
-      document.head.removeChild(styleSheet)
-    }
-  }, [])
-
-  return width >= breakpoint ? <DesktopDeviceFlow /> : <MobileDeviceFlow />
-}
-
+// ========================================================
+// Mobile Device Flow Component
+// ========================================================
 const MobileDeviceFlow = () => {
   const [step, setStep] = useState(1)
   const [deviceName, setDeviceName] = useState("")
@@ -430,6 +482,7 @@ const MobileDeviceFlow = () => {
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryIcon, setNewCategoryIcon] = useState("")
   const [customCategories, setCustomCategories] = useState([])
+
   const categories = [
     { id: "light", name: "Light", icon: "💡" },
     { id: "pc", name: "PC", icon: "💻" },
@@ -439,18 +492,19 @@ const MobileDeviceFlow = () => {
     { id: "door", name: "Door", icon: "🚪" },
   ]
 
-  const days = ["M", "T", "W", "T", "F", "S", "S"]
-
+  // Load data on mount
   useEffect(() => {
-    loadRooms()
+    const appData = loadAppData()
+    setRooms(appData.rooms || [])
+    setCustomCategories(appData.customCategories || [])
   }, [])
 
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1)
-        setScanColor((prevColor) => (prevColor === "red" ? "green" : "red"))
+        setTimer((prev) => prev - 1)
+        setScanColor((prev) => (prev === "red" ? "green" : "red"))
       }, 1000)
     } else if (timer === 0) {
       setIsScanning(false)
@@ -460,24 +514,26 @@ const MobileDeviceFlow = () => {
     return () => clearInterval(interval)
   }, [isScanning, timer])
 
-  const loadRooms = () => {
-    const storedRooms = localStorage.getItem("rooms")
-    setRooms(storedRooms ? JSON.parse(storedRooms) : [])
-  }
-
-  const handleBack = () => {
-    setStep((prev) => prev - 1)
-  }
-
-  const handleNext = () => {
-    setStep((prev) => prev + 1)
-  }
+  const handleBack = () => setStep((prev) => prev - 1)
+  const handleNext = () => setStep((prev) => prev + 1)
 
   const toggleDay = (day) => {
     setSchedule((prev) => ({
       ...prev,
-      days: prev.days.includes(day) ? prev.days.filter((d) => d !== day) : [...prev.days, day],
+      days: prev.days.includes(day)
+        ? prev.days.filter((d) => d !== day)
+        : [...prev.days, day],
     }))
+  }
+
+  // Remove a custom category by ID
+  const removeCategory = (id) => {
+    const updated = customCategories.filter((cat) => cat.id !== id)
+    setCustomCategories(updated)
+    // also remove from localStorage
+    const appData = loadAppData()
+    appData.customCategories = updated
+    saveAppData(appData)
   }
 
   const addNewCategory = () => {
@@ -487,9 +543,14 @@ const MobileDeviceFlow = () => {
         name: newCategoryName,
         icon: newCategoryIcon,
       }
-      setCustomCategories([...customCategories, newCategory])
+      const updated = [...customCategories, newCategory]
+      setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
+      // update app data
+      const appData = loadAppData()
+      appData.customCategories = updated
+      saveAppData(appData)
     }
   }
 
@@ -500,20 +561,12 @@ const MobileDeviceFlow = () => {
       schedule,
       room: selectedRoom || newRoom,
     }
-
-    // Save device info
-    const storedDevices = localStorage.getItem("devices")
-    const devices = storedDevices ? JSON.parse(storedDevices) : []
-    devices.push(deviceInfo)
-    localStorage.setItem("devices", JSON.stringify(devices))
-
-    // Save new room if created
-    if (newRoom) {
-      const updatedRooms = [...rooms, newRoom]
-      setRooms(updatedRooms)
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms))
+    const appData = loadAppData()
+    appData.devices = [...(appData.devices || []), deviceInfo]
+    if (newRoom && !appData.rooms.includes(newRoom)) {
+      appData.rooms.push(newRoom)
     }
-
+    saveAppData(appData)
     console.log("Device information saved successfully")
   }
 
@@ -531,7 +584,9 @@ const MobileDeviceFlow = () => {
               </div>
               {deviceFound && (
                 <>
-                  <p className="device-found-message">Smart plug found! Ready to proceed.</p>
+                  <p className="device-found-message">
+                    Smart plug found! Ready to proceed.
+                  </p>
                   <div className="button-container">
                     <button className="add-device-btn" onClick={handleNext}>
                       Continue to Categorization
@@ -547,7 +602,6 @@ const MobileDeviceFlow = () => {
             </div>
           </div>
         )
-
       case 2:
         return (
           <div className="device-step">
@@ -567,16 +621,34 @@ const MobileDeviceFlow = () => {
             <div className="category-section">
               <label className="category-label">Select Device Category</label>
               <div className="device-grid">
-                {[...categories, ...customCategories].map((category) => (
-                  <button
-                    key={category.id}
-                    className={`device-category ${selectedCategory === category.id ? "selected" : ""}`}
-                    onClick={() => setSelectedCategory(category.id)}
-                  >
-                    <span className="category-icon">{category.icon}</span>
-                    <span className="category-name">{category.name}</span>
-                  </button>
-                ))}
+                {[...categories, ...customCategories].map((category) => {
+                  const isCustom = customCategories.some(
+                    (c) => c.id === category.id
+                  )
+                  return (
+                    <div key={category.id} className="category-item">
+                      <button
+                        className={`device-category ${
+                          selectedCategory === category.id ? "selected" : ""
+                        }`}
+                        onClick={() => setSelectedCategory(category.id)}
+                      >
+                        <span className="category-icon">{category.icon}</span>
+                        <span className="category-name">{category.name}</span>
+                      </button>
+                      {/* Show remove button only if it's a custom category */}
+                      {isCustom && (
+                        <button
+                          onClick={() => removeCategory(category.id)}
+                          className="remove-category-btn"
+                          title="Remove Category"
+                        >
+                          X
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
               <div className="add-category-section">
                 <input
@@ -600,14 +672,20 @@ const MobileDeviceFlow = () => {
             </div>
             <div className="room-section">
               <label className="room-label">Select Room</label>
-              <select value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} className="room-select">
-                <option value="">Select a room</option>
-                {rooms.map((room, index) => (
-                  <option key={index} value={room}>
-                    {room}
-                  </option>
-                ))}
-              </select>
+              {rooms.length > 0 && (
+                <select
+                  value={selectedRoom}
+                  onChange={(e) => setSelectedRoom(e.target.value)}
+                  className="room-select"
+                >
+                  <option value="">Select a room</option>
+                  {rooms.map((room, index) => (
+                    <option key={index} value={room}>
+                      {room}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="new-room">
                 <input
                   type="text"
@@ -621,32 +699,36 @@ const MobileDeviceFlow = () => {
             <button
               className="add-device-btn"
               onClick={handleNext}
-              disabled={!deviceName || !selectedCategory || (!selectedRoom && !newRoom)}
+              disabled={
+                !deviceName || !selectedCategory || (!selectedRoom && !newRoom)
+              }
             >
               Add Device
             </button>
           </div>
         )
-
       case 3:
         return (
           <div className="device-step">
             <div className="header-with-back">
               <button className="back-button" onClick={handleBack}>
-                &#8592;
+                ←
               </button>
               <h1>Configuration</h1>
             </div>
             <div className="device-info">
               <div className="info-row">
                 <label>Device Name</label>
-                <span className="info-value">{deviceName}</span>
+                <div className="info-value">{deviceName}</div>
               </div>
               <div className="info-row">
                 <label>Device Category</label>
-                <span className="info-value">
-                  {[...categories, ...customCategories].find((c) => c.id === selectedCategory)?.name}
-                </span>
+                <div className="category-icon">
+                  {[
+                    ...categories,
+                    ...customCategories
+                  ].find((c) => c.id === selectedCategory)?.icon || ""}
+                </div>
               </div>
             </div>
             <div className="schedule-section">
@@ -657,7 +739,9 @@ const MobileDeviceFlow = () => {
                   <input
                     type="time"
                     value={schedule.from}
-                    onChange={(e) => setSchedule((prev) => ({ ...prev, from: e.target.value }))}
+                    onChange={(e) =>
+                      setSchedule((prev) => ({ ...prev, from: e.target.value }))
+                    }
                   />
                 </div>
                 <div className="time-input">
@@ -665,18 +749,20 @@ const MobileDeviceFlow = () => {
                   <input
                     type="time"
                     value={schedule.to}
-                    onChange={(e) => setSchedule((prev) => ({ ...prev, to: e.target.value }))}
+                    onChange={(e) =>
+                      setSchedule((prev) => ({ ...prev, to: e.target.value }))
+                    }
                   />
                 </div>
               </div>
               <div className="days-selector">
-                {["M", "T", "W", "T", "F", "S", "S"].map((day) => (
+                {schedule.days.map((dayObj, index) => (
                   <button
-                    key={day}
-                    className={`day-button ${schedule.days.includes(day) ? "active" : ""}`}
-                    onClick={() => toggleDay(day)}
+                    key={dayObj.label}
+                    className={`day-button ${dayObj.active ? "active" : ""}`}
+                    onClick={() => toggleDay(index)}
                   >
-                    {day}
+                    {dayObj.label}
                   </button>
                 ))}
               </div>
@@ -686,13 +772,14 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
-
       case 4:
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
             <div className="success-icon">✅</div>
-            <p className="success-message">Device has been added successfully.</p>
+            <p className="success-message">
+              Device has been added successfully.
+            </p>
             <button
               className="done-btn"
               onClick={() => {
@@ -704,7 +791,6 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
-
       default:
         return null
     }
@@ -720,14 +806,25 @@ const MobileDeviceFlow = () => {
   )
 }
 
+// ========================================================
+// Desktop Device Flow Component
+// ========================================================
 const DesktopDeviceFlow = () => {
   const [step, setStep] = useState(1)
   const [deviceName, setDeviceName] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [schedule, setSchedule] = useState({
-    from: "8:00 AM",
-    to: "6:00 PM",
-    days: ["M", "T", "W", "T", "F"],
+    from: "08:00",
+    to: "18:00",
+    days: [
+      { label: "M", active: true },
+      { label: "T", active: true },
+      { label: "W", active: true },
+      { label: "T", active: true },
+      { label: "F", active: true },
+      { label: "S", active: false },
+      { label: "S", active: false },
+    ],
   })
   const [timer, setTimer] = useState(10)
   const [isScanning, setIsScanning] = useState(true)
@@ -739,6 +836,12 @@ const DesktopDeviceFlow = () => {
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryIcon, setNewCategoryIcon] = useState("")
   const [customCategories, setCustomCategories] = useState([])
+
+  // Extra device settings
+  const [deviceLocation, setDeviceLocation] = useState("")
+  const [consumptionLimit, setConsumptionLimit] = useState("")
+  const [limitAction, setLimitAction] = useState("turnOff")
+
   const categories = [
     { id: "light", name: "Light", icon: "💡" },
     { id: "pc", name: "PC", icon: "💻" },
@@ -747,19 +850,21 @@ const DesktopDeviceFlow = () => {
     { id: "robot", name: "Robot", icon: "🤖" },
     { id: "door", name: "Door", icon: "🚪" },
   ]
+  const deviceCategories = [...categories, ...customCategories]
 
-  const days = ["M", "T", "W", "T", "F", "S", "S"]
-
+  // Load data on mount
   useEffect(() => {
-    loadRooms()
+    const appData = loadAppData()
+    setRooms(appData.rooms || [])
+    setCustomCategories(appData.customCategories || [])
   }, [])
 
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1)
-        setScanColor((prevColor) => (prevColor === "red" ? "green" : "red"))
+        setTimer((prev) => prev - 1)
+        setScanColor((prev) => (prev === "red" ? "green" : "red"))
       }, 1000)
     } else if (timer === 0) {
       setIsScanning(false)
@@ -769,24 +874,25 @@ const DesktopDeviceFlow = () => {
     return () => clearInterval(interval)
   }, [isScanning, timer])
 
-  const loadRooms = () => {
-    const storedRooms = localStorage.getItem("rooms")
-    setRooms(storedRooms ? JSON.parse(storedRooms) : [])
+  const handleBack = () => setStep((prev) => prev - 1)
+  const handleNext = () => setStep((prev) => prev + 1)
+
+  const toggleDay = (index) => {
+    setSchedule((prev) => {
+      const newDays = prev.days.map((day, i) =>
+        i === index ? { ...day, active: !day.active } : day
+      )
+      return { ...prev, days: newDays }
+    })
   }
 
-  const handleBack = () => {
-    setStep((prev) => prev - 1)
-  }
-
-  const handleNext = () => {
-    setStep((prev) => prev + 1)
-  }
-
-  const toggleDay = (day) => {
-    setSchedule((prev) => ({
-      ...prev,
-      days: prev.days.includes(day) ? prev.days.filter((d) => d !== day) : [...prev.days, day],
-    }))
+  // Remove a custom category
+  const removeCategory = (id) => {
+    const updated = customCategories.filter((cat) => cat.id !== id)
+    setCustomCategories(updated)
+    const appData = loadAppData()
+    appData.customCategories = updated
+    saveAppData(appData)
   }
 
   const addNewCategory = () => {
@@ -796,9 +902,14 @@ const DesktopDeviceFlow = () => {
         name: newCategoryName,
         icon: newCategoryIcon,
       }
-      setCustomCategories([...customCategories, newCategory])
+      const updated = [...customCategories, newCategory]
+      setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
+      // update localStorage
+      const appData = loadAppData()
+      appData.customCategories = updated
+      saveAppData(appData)
     }
   }
 
@@ -808,21 +919,16 @@ const DesktopDeviceFlow = () => {
       category: selectedCategory,
       schedule,
       room: selectedRoom || newRoom,
+      deviceLocation,
+      consumptionLimit,
+      limitAction,
     }
-
-    // Save device info
-    const storedDevices = localStorage.getItem("devices")
-    const devices = storedDevices ? JSON.parse(storedDevices) : []
-    devices.push(deviceInfo)
-    localStorage.setItem("devices", JSON.stringify(devices))
-
-    // Save new room if created
-    if (newRoom) {
-      const updatedRooms = [...rooms, newRoom]
-      setRooms(updatedRooms)
-      localStorage.setItem("rooms", JSON.stringify(updatedRooms))
+    const appData = loadAppData()
+    appData.devices = [...(appData.devices || []), deviceInfo]
+    if (newRoom && !appData.rooms.includes(newRoom)) {
+      appData.rooms.push(newRoom)
     }
-
+    saveAppData(appData)
     console.log("Device information saved successfully")
   }
 
@@ -841,7 +947,9 @@ const DesktopDeviceFlow = () => {
                 </div>
                 {deviceFound && (
                   <>
-                    <p className="device-found-message">Smart plug found! Ready to proceed.</p>
+                    <p className="device-found-message">
+                      Smart plug found! Ready to proceed.
+                    </p>
                     <div className="button-container">
                       <button className="add-device-btn" onClick={handleNext}>
                         Continue to Categorization
@@ -860,7 +968,6 @@ const DesktopDeviceFlow = () => {
             </div>
           </div>
         )
-
       case 2:
         return (
           <div className="device-step">
@@ -881,16 +988,33 @@ const DesktopDeviceFlow = () => {
               <div className="category-section">
                 <label className="category-label">Select Device Category</label>
                 <div className="device-grid">
-                  {[...categories, ...customCategories].map((category) => (
-                    <button
-                      key={category.id}
-                      className={`device-category ${selectedCategory === category.id ? "selected" : ""}`}
-                      onClick={() => setSelectedCategory(category.id)}
-                    >
-                      <span className="category-icon">{category.icon}</span>
-                      <span className="category-name">{category.name}</span>
-                    </button>
-                  ))}
+                  {deviceCategories.map((category) => {
+                    const isCustom = customCategories.some(
+                      (c) => c.id === category.id
+                    )
+                    return (
+                      <div key={category.id} className="category-item">
+                        <button
+                          className={`device-category ${
+                            selectedCategory === category.id ? "selected" : ""
+                          }`}
+                          onClick={() => setSelectedCategory(category.id)}
+                        >
+                          <span className="category-icon">{category.icon}</span>
+                          <span className="category-name">{category.name}</span>
+                        </button>
+                        {isCustom && (
+                          <button
+                            onClick={() => removeCategory(category.id)}
+                            className="remove-category-btn"
+                            title="Remove Category"
+                          >
+                            X
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -916,14 +1040,20 @@ const DesktopDeviceFlow = () => {
               </div>
               <div className="room-section">
                 <label className="room-label">Select Room</label>
-                <select value={selectedRoom} onChange={(e) => setSelectedRoom(e.target.value)} className="room-select">
-                  <option value="">Select a room</option>
-                  {rooms.map((room, index) => (
-                    <option key={index} value={room}>
-                      {room}
-                    </option>
-                  ))}
-                </select>
+                {rooms.length > 0 && (
+                  <select
+                    value={selectedRoom}
+                    onChange={(e) => setSelectedRoom(e.target.value)}
+                    className="room-select"
+                  >
+                    <option value="">Select a room</option>
+                    {rooms.map((room, index) => (
+                      <option key={index} value={room}>
+                        {room}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <div className="new-room">
                   <input
                     type="text"
@@ -937,83 +1067,138 @@ const DesktopDeviceFlow = () => {
               <button
                 className="add-device-btn"
                 onClick={handleNext}
-                disabled={!deviceName || !selectedCategory || (!selectedRoom && !newRoom)}
+                disabled={
+                  !deviceName ||
+                  !selectedCategory ||
+                  (!selectedRoom && !newRoom)
+                }
               >
                 Add Device
               </button>
             </div>
           </div>
         )
-
       case 3:
         return (
           <div className="device-step">
             <div className="header-with-back">
               <button className="back-button" onClick={handleBack}>
-                &#8592;
+                ←
               </button>
               <h1>Configuration</h1>
             </div>
-            <div className="desktop-left">
-              <div className="device-info">
-                <div className="info-row">
-                  <label>Device Name</label>
-                  <span className="info-value">{deviceName}</span>
-                </div>
-                <div className="info-row">
-                  <label>Device Category</label>
-                  <span className="info-value">
-                    {[...categories, ...customCategories].find((c) => c.id === selectedCategory)?.name}
-                  </span>
+            <div className="device-info">
+              <div className="info-row">
+                <label>Device Name</label>
+                <div className="info-value">{deviceName}</div>
+              </div>
+              <div className="info-row">
+                <label>Device Category</label>
+                <div className="category-icon">
+                  {deviceCategories.find((c) => c.id === selectedCategory)?.icon}
                 </div>
               </div>
-              <div className="schedule-section">
-                <h3>Device Schedule</h3>
-                <div className="time-range">
-                  <div className="time-input">
-                    <label>From</label>
-                    <input
-                      type="time"
-                      value={schedule.from}
-                      onChange={(e) => setSchedule((prev) => ({ ...prev, from: e.target.value }))}
-                    />
-                  </div>
-                  <div className="time-input">
-                    <label>To</label>
-                    <input
-                      type="time"
-                      value={schedule.to}
-                      onChange={(e) => setSchedule((prev) => ({ ...prev, to: e.target.value }))}
-                    />
-                  </div>
+            </div>
+            <div className="schedule-section">
+              <h3>Device Schedule</h3>
+              <div className="time-range">
+                <div className="time-input">
+                  <label>From</label>
+                  <input
+                    type="time"
+                    value={schedule.from}
+                    onChange={(e) =>
+                      setSchedule((prev) => ({ ...prev, from: e.target.value }))
+                    }
+                  />
                 </div>
-                <div className="days-selector">
-                  {["M", "T", "W", "T", "F", "S", "S"].map((day) => (
+                <div className="time-input">
+                  <label>To</label>
+                  <input
+                    type="time"
+                    value={schedule.to}
+                    onChange={(e) =>
+                      setSchedule((prev) => ({ ...prev, to: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="days-selector">
+                {schedule.days.map((dayObj, index) => (
+                  <button
+                    key={dayObj.label}
+                    className={`day-button ${dayObj.active ? "active" : ""}`}
+                    onClick={() => toggleDay(index)}
+                  >
+                    {dayObj.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="device-location">
+              <h2>Device Location</h2>
+              <div className="location-options">
+                {rooms.length > 0 ? (
+                  rooms.map((loc) => (
                     <button
-                      key={day}
-                      className={`day-button ${schedule.days.includes(day) ? "active" : ""}`}
-                      onClick={() => toggleDay(day)}
+                      key={loc}
+                      className={`location-option ${
+                        deviceLocation === loc ? "selected" : ""
+                      }`}
+                      onClick={() => setDeviceLocation(loc)}
                     >
-                      {day}
+                      {loc}
                     </button>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <p>No rooms found.</p>
+                )}
               </div>
             </div>
-            <div className="desktop-right">
-              <button className="confirm-btn" onClick={handleNext}>
-                Confirm
-              </button>
+            <div className="consumption-limit">
+              <h2>Consumption Limit</h2>
+              <input
+                type="number"
+                placeholder="Enter limit (kWh)"
+                value={consumptionLimit}
+                onChange={(e) => setConsumptionLimit(e.target.value)}
+              />
+              <div className="limit-action">
+                <label>
+                  <input
+                    type="radio"
+                    name="limitAction"
+                    value="turnOff"
+                    checked={limitAction === "turnOff"}
+                    onChange={(e) => setLimitAction(e.target.value)}
+                  />
+                  Turn off device once limit is reached
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="limitAction"
+                    value="notify"
+                    checked={limitAction === "notify"}
+                    onChange={(e) => setLimitAction(e.target.value)}
+                  />
+                  Continue monitoring &amp; notify user
+                </label>
+              </div>
             </div>
+            <button className="confirm-btn" onClick={handleNext}>
+              Confirm
+            </button>
           </div>
         )
-
       case 4:
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
             <div className="success-icon">✅</div>
-            <p className="success-message">Device has been added successfully.</p>
+            <p className="success-message">
+              Device has been added successfully.
+            </p>
             <button
               className="done-btn"
               onClick={() => {
@@ -1025,7 +1210,6 @@ const DesktopDeviceFlow = () => {
             </button>
           </div>
         )
-
       default:
         return null
     }
@@ -1041,5 +1225,25 @@ const DesktopDeviceFlow = () => {
   )
 }
 
-export default DeviceFlow
+// ========================================================
+// Main DeviceFlow Component
+// ========================================================
+const DeviceFlow = () => {
+  const { width } = useViewport()
+  const breakpoint = 1024
 
+  useEffect(() => {
+    // Inject CSS into the document head
+    const styleSheet = document.createElement("style")
+    styleSheet.type = "text/css"
+    styleSheet.innerText = styles
+    document.head.appendChild(styleSheet)
+    return () => {
+      document.head.removeChild(styleSheet)
+    }
+  }, [])
+
+  return width >= breakpoint ? <DesktopDeviceFlow /> : <MobileDeviceFlow />
+}
+
+export default DeviceFlow

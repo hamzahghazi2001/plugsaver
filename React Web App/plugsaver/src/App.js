@@ -11,7 +11,9 @@ import HouseholdMember from "./Pages/HouseholdMember";
 import RewardsPage from "./Pages/RewardsPage";
 import DeviceFlow from "./Pages/DeviceFlow";
 
+
 import "./App.css";
+import SupportPages from "./Pages/SupportPage";
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
         <Route path="/rewards" element={<RewardsPage />} />
         <Route path="/RewardsPage" element={<RewardsPage />} />
         <Route path="/deviceflow" element={<DeviceFlow />} />
+        <Route path="/supportpage" element={<SupportPages />} />
       </Routes>
     </BrowserRouter>
   );
