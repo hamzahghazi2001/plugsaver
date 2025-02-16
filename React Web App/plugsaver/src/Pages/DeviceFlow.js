@@ -8,25 +8,17 @@ import BottomNav from "../Components/BottomNav"
 // ========================================================
 const styles = `
 .device-flow-container {
-  /* Mobile defaults */
   background: #1a1a1a;
   min-height: 100vh;
   padding: 20px;
-  overflow-y: auto; /* allow scrolling if content is tall */
+  overflow-y: auto;
 }
-
-/* 
-  Remove or comment these if you don't want everything centered on mobile:
-  display: flex;
-  justify-content: center;
-  align-items: center;
-*/
 
 .device-flow-card {
   background: #fff;
   border-radius: 20px;
   width: 100%;
-  max-width: 480px; /* Applies to mobile by default */
+  max-width: 480px;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
@@ -36,7 +28,7 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto; /* allow scrolling in mobile if needed */
+  overflow-y: auto;
 }
 
 .device-step h1 {
@@ -128,7 +120,7 @@ const styles = `
   background: #4facfe;
 }
 
-/* Updated device-input styles */
+/* device-input styles */
 .device-input {
   width: 100%;
   padding: 12px;
@@ -148,15 +140,13 @@ const styles = `
   margin-top: 10px;
 }
 
-/* A container for category items */
+/* Category items (unchanged) */
 .category-item {
   display: flex;
   align-items: center;
   gap: 8px;
   position: relative;
 }
-
-/* Category pills */
 .device-category {
   display: flex;
   flex-direction: column;
@@ -171,12 +161,10 @@ const styles = `
   width: 100%;
   height: 100%;
 }
-
 .device-category .category-icon {
   font-size: 32px;
   margin-bottom: 8px;
 }
-
 .device-category .category-name {
   font-size: 14px;
   color: #333;
@@ -197,71 +185,39 @@ const styles = `
   height: 24px;
   line-height: 24px;
   text-align: center;
-  margin-left: -35px;
-  margin-top: -50px;
 }
 
-/* For the "pills" representing rooms */
-.room-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.room-item {
-  position: relative;
-}
-
-.room-pill {
-  display: inline-block;
-  padding: 12px 20px;
-  background: #f5f5f5;
-  color: #333;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  border: 2px solid transparent;
-}
-
-.room-pill.selected {
-  border: 2px solid #4facfe;
-}
-
+/* Schedules, etc. */
 .schedule-section {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 12px;
 }
-
 .time-range {
   display: flex;
   gap: 20px;
   margin: 15px 0;
 }
-
 .time-input {
   flex: 1;
 }
-
 .time-input label {
   display: block;
   margin-bottom: 5px;
   color: #666;
 }
-
 .time-input input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
 }
-
 .days-selector {
   display: flex;
   gap: 10px;
   justify-content: space-between;
   margin-top: 15px;
 }
-
 .day-button {
   width: 40px;
   height: 40px;
@@ -276,12 +232,12 @@ const styles = `
   justify-content: center;
   transition: all 0.3s ease;
 }
-
 .day-button.active {
   background: #4facfe;
   color: white;
 }
 
+/* Buttons */
 .add-device-btn,
 .confirm-btn,
 .done-btn {
@@ -295,7 +251,6 @@ const styles = `
   margin-top: auto;
   transition: opacity 0.3s ease;
 }
-
 .add-device-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -304,12 +259,10 @@ const styles = `
 .success {
   text-align: center;
 }
-
 .success-icon {
   font-size: 64px;
   margin: 40px 0;
 }
-
 .success-message {
   color: #555;
   font-size: 18px;
@@ -319,21 +272,17 @@ const styles = `
 .room-section {
   margin-top: 20px;
 }
-
 .room-label {
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
 }
-
-/* For the "new-room" text box and spacing */
 .new-room {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
 .new-room-input {
   width: 100%;
   padding: 12px;
@@ -346,12 +295,12 @@ const styles = `
   border: 2px solid #4facfe;
 }
 
+/* Category creation */
 .add-category-section {
   margin-top: 20px;
   display: flex;
   gap: 10px;
 }
-
 .new-category-input {
   flex: 1;
   padding: 10px;
@@ -362,7 +311,6 @@ const styles = `
 .new-category-input:focus {
   border: 2px solid #4facfe;
 }
-
 .add-category-btn {
   padding: 10px;
   background: #4facfe;
@@ -388,54 +336,79 @@ const styles = `
 .scanning-circle.red {
   background-color: #ffcccb;
 }
-
 .scanning-circle.green {
   background-color: #90ee90;
 }
-
 .timer.red {
   color: #ff6b6b;
 }
-
 .timer.green {
   color: #32cd32;
+}
+
+/* ---- New tile-based room styling ---- */
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 10px;
+}
+.room-tile {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.room-tile.selected {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
+}
+.remove-room-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff6b6b;
+  border: none;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
 }
 
 /* Desktop styles */
 @media (min-width: 1024px) {
   .device-flow-container {
-    /* Light background for desktop */
     background: #f8f9fa;
-    /* Reduce or remove large padding */
     padding: 20px;
-    /* No more flex centering, so content can expand */
     display: block;
     min-height: 100vh;
   }
-
   .device-flow-card {
-    /* Let the card stretch out more on desktop */
     max-width: 1200px;
-    margin: 0 auto; /* center horizontally if desired */
+    margin: 0 auto;
     border-radius: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 40px;
   }
-
   .device-step {
     grid-column: 1 / -1;
     overflow-y: auto;
   }
-
   .desktop-left {
     grid-column: 1 / 2;
   }
-
   .desktop-right {
     grid-column: 2 / 3;
   }
-
   .desktop-nav {
     grid-column: 1 / -1;
     margin-top: auto;
@@ -456,7 +429,6 @@ const styles = `
     background: white;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   }
-
   .device-flow-container {
     padding-bottom: 80px;
   }
@@ -480,11 +452,9 @@ const styles = `
   font-size: 16px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .location-option:hover {
   transform: scale(1.03);
 }
-
 .location-option.selected {
   transform: scale(1.05);
   box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
@@ -501,9 +471,8 @@ const styles = `
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999; /* above everything */
+  z-index: 999;
 }
-
 .modal-content {
   background: #fff;
   border-radius: 10px;
@@ -512,21 +481,17 @@ const styles = `
   width: 80%;
   text-align: center;
 }
-
 .modal-content h3 {
   margin-bottom: 10px;
 }
-
 .modal-content p {
   margin-bottom: 20px;
 }
-
 .modal-buttons {
   display: flex;
   gap: 10px;
   justify-content: center;
 }
-
 .modal-buttons button {
   background: #4facfe;
   color: #fff;
@@ -537,51 +502,8 @@ const styles = `
   font-size: 14px;
   transition: background 0.2s;
 }
-
 .modal-buttons button:hover {
   background: #3ba7e0;
-}
-  .room-grid {
-  display: grid;
-  /* Adjust columns as you wish; here we do 2 columns on larger screens */
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  margin-top: 10px;
-}
-
-/* Each room as a tile/card */
-.room-tile {
-  background: linear-gradient(to right, #4facfe, #00f2fe);
-  color: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  position: relative; /* for the remove button */
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Highlight when selected */
-.room-tile.selected {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
-}
-
-/* Keep or update the remove-room-btn style as you prefer */
-.remove-room-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #ff6b6b;
-  border: none;
-  color: white;
-  border-radius: 50%;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  font-size: 14px;
-  line-height: 24px;
-  text-align: center;
 }
 `
 
@@ -692,7 +614,7 @@ const MobileDeviceFlow = () => {
   const handleBack = () => setStep((prev) => prev - 1)
   const handleNext = () => setStep((prev) => prev + 1)
 
-  // Updated toggleDay function for mobile view:
+  // Updated toggleDay for mobile
   const toggleDay = (index) => {
     setSchedule((prev) => {
       const newDays = prev.days.map((day, i) =>
@@ -706,7 +628,6 @@ const MobileDeviceFlow = () => {
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
-
     const appData = loadAppData()
     appData.customCategories = updated
     saveAppData(appData)
@@ -785,7 +706,7 @@ const MobileDeviceFlow = () => {
     console.log("Device information saved successfully")
   }
 
-  // Renders the main steps
+  // Render main steps
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -820,7 +741,6 @@ const MobileDeviceFlow = () => {
         )
 
       case 2:
-        // Configuration step: device name, category, rooms
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -857,7 +777,7 @@ const MobileDeviceFlow = () => {
                         <span className="category-icon">{category.icon}</span>
                         <span className="category-name">{category.name}</span>
                       </button>
-                      {/* Show remove button only if it's a custom category */}
+                      {/* Remove custom category */}
                       {isCustom && (
                         <button
                           onClick={() => removeCategory(category.id)}
@@ -892,45 +812,42 @@ const MobileDeviceFlow = () => {
               </div>
             </div>
 
-            {/* Rooms */}
+            {/* Rooms (tile-based) */}
             <div className="room-section">
-  <label className="room-label">Select or Remove Rooms</label>
-
-  {/* New .room-grid layout */}
-  <div className="room-grid">
-    {rooms.map((room) => (
-      <div
-        key={room}
-        className={`room-tile ${selectedRoom === room ? "selected" : ""}`}
-        onClick={() => setSelectedRoom(room)}
-      >
-        {room}
-        <button
-          className="remove-room-btn"
-          title="Remove Room"
-          onClick={(e) => {
-            e.stopPropagation(); // prevent clicking X from also selecting the room
-            handleRemoveRoomClick(room);
-          }}
-        >
-          X
-        </button>
-      </div>
-    ))}
-  </div>
-
-  {/* Input for creating a new room */}
-  <div className="new-room">
-    <input
-      type="text"
-      placeholder="Or create a new room"
-      value={newRoom}
-      onChange={(e) => setNewRoom(e.target.value)}
-      className="new-room-input"
-    />
-  </div>
-</div>
-
+              <label className="room-label">Select or Remove Rooms</label>
+              <div className="room-grid">
+                {rooms.map((room) => (
+                  <div
+                    key={room}
+                    className={`room-tile ${
+                      selectedRoom === room ? "selected" : ""
+                    }`}
+                    onClick={() => setSelectedRoom(room)}
+                  >
+                    {room}
+                    <button
+                      className="remove-room-btn"
+                      title="Remove Room"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveRoomClick(room)
+                      }}
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="new-room">
+                <input
+                  type="text"
+                  placeholder="Or create a new room"
+                  value={newRoom}
+                  onChange={(e) => setNewRoom(e.target.value)}
+                  className="new-room-input"
+                />
+              </div>
+            </div>
 
             <button
               className="add-device-btn"
@@ -945,7 +862,6 @@ const MobileDeviceFlow = () => {
         )
 
       case 3:
-        // Step 3: schedule, device location, consumption limit
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -963,7 +879,7 @@ const MobileDeviceFlow = () => {
               <div className="info-row">
                 <label>Device Category</label>
                 <div className="category-icon">
-                  {categories.find((c) => c.id === selectedCategory)?.icon || ""}
+                  {categories.find((c) => c.id === selectedCategory)?.icon}
                 </div>
               </div>
             </div>
@@ -1010,21 +926,17 @@ const MobileDeviceFlow = () => {
             <div className="device-location">
               <h2>Device Location</h2>
               <div className="location-options">
-                {rooms.length > 0 ? (
-                  rooms.map((loc) => (
-                    <button
-                      key={loc}
-                      className={`location-option ${
-                        deviceLocation === loc ? "selected" : ""
-                      }`}
-                      onClick={() => setDeviceLocation(loc)}
-                    >
-                      {loc}
-                    </button>
-                  ))
-                ) : (
-                  <p>No rooms found.</p>
-                )}
+                {rooms.map((loc) => (
+                  <button
+                    key={loc}
+                    className={`location-option ${
+                      deviceLocation === loc ? "selected" : ""
+                    }`}
+                    onClick={() => setDeviceLocation(loc)}
+                  >
+                    {loc}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1068,7 +980,6 @@ const MobileDeviceFlow = () => {
         )
 
       case 4:
-        // Final success
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
@@ -1093,7 +1004,6 @@ const MobileDeviceFlow = () => {
     }
   }
 
-  // Renders the custom modal if showRemoveModal is true
   const renderRemoveModal = () => {
     if (!showRemoveModal) return null
     return (
@@ -1179,14 +1089,12 @@ const DesktopDeviceFlow = () => {
   ]
   const deviceCategories = [...defaultCategories, ...customCategories]
 
-  // Load data on mount
   useEffect(() => {
     const appData = loadAppData()
     setRooms(appData.rooms || [])
     setCustomCategories(appData.customCategories || [])
   }, [])
 
-  // Pairing scanning logic
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
@@ -1214,7 +1122,6 @@ const DesktopDeviceFlow = () => {
     })
   }
 
-  // Remove a custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
@@ -1223,7 +1130,6 @@ const DesktopDeviceFlow = () => {
     saveAppData(appData)
   }
 
-  // Add a new custom category
   const addNewCategory = () => {
     if (newCategoryName && newCategoryIcon) {
       const newCategory = {
@@ -1241,13 +1147,11 @@ const DesktopDeviceFlow = () => {
     }
   }
 
-  // Show custom popup for removing a room
   const handleRemoveRoomClick = (room) => {
     setPendingRemoveRoom(room)
     setShowRemoveModal(true)
   }
 
-  // Confirm removing the room
   const handleConfirmRemoveRoom = () => {
     if (!pendingRemoveRoom) return
     const updated = rooms.filter((r) => r !== pendingRemoveRoom)
@@ -1267,7 +1171,6 @@ const DesktopDeviceFlow = () => {
     setShowRemoveModal(false)
   }
 
-  // Cancel removing the room
   const handleCancelRemoveRoom = () => {
     setPendingRemoveRoom(null)
     setShowRemoveModal(false)
@@ -1293,11 +1196,9 @@ const DesktopDeviceFlow = () => {
     console.log("Device information saved successfully")
   }
 
-  // Renders the main steps
   const renderStep = () => {
     switch (step) {
       case 1:
-        // Pairing step
         return (
           <div className="device-step">
             <h1>Add Device</h1>
@@ -1333,7 +1234,6 @@ const DesktopDeviceFlow = () => {
         )
 
       case 2:
-        // Configuration step
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -1365,7 +1265,9 @@ const DesktopDeviceFlow = () => {
                           }`}
                           onClick={() => setSelectedCategory(category.id)}
                         >
-                          <span className="category-icon">{category.icon}</span>
+                          <span className="category-icon">
+                            {category.icon}
+                          </span>
                           <span className="category-name">
                             {category.name}
                           </span>
@@ -1405,24 +1307,27 @@ const DesktopDeviceFlow = () => {
                   Add Category
                 </button>
               </div>
+
+              {/* Rooms (tile-based) */}
               <div className="room-section">
                 <label className="room-label">Select or Remove Rooms</label>
-                <div className="room-list">
+                <div className="room-grid">
                   {rooms.map((room) => (
-                    <div key={room} className="room-item">
-                      <button
-                        className={`room-pill ${
-                          selectedRoom === room ? "selected" : ""
-                        }`}
-                        onClick={() => setSelectedRoom(room)}
-                        style={{ color: "#333" }}
-                      >
-                        {room}
-                      </button>
+                    <div
+                      key={room}
+                      className={`room-tile ${
+                        selectedRoom === room ? "selected" : ""
+                      }`}
+                      onClick={() => setSelectedRoom(room)}
+                    >
+                      {room}
                       <button
                         className="remove-room-btn"
-                        onClick={() => handleRemoveRoomClick(room)}
                         title="Remove Room"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveRoomClick(room)
+                        }}
                       >
                         X
                       </button>
@@ -1439,11 +1344,14 @@ const DesktopDeviceFlow = () => {
                   />
                 </div>
               </div>
+
               <button
                 className="add-device-btn"
                 onClick={handleNext}
                 disabled={
-                  !deviceName || !selectedCategory || (!selectedRoom && !newRoom)
+                  !deviceName ||
+                  !selectedCategory ||
+                  (!selectedRoom && !newRoom)
                 }
               >
                 Add Device
@@ -1453,7 +1361,6 @@ const DesktopDeviceFlow = () => {
         )
 
       case 3:
-        // Step 3: schedule, device location, consumption limit
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -1514,29 +1421,23 @@ const DesktopDeviceFlow = () => {
               </div>
             </div>
 
-            {/* Device Location */}
             <div className="device-location">
               <h2>Device Location</h2>
               <div className="location-options">
-                {rooms.length > 0 ? (
-                  rooms.map((loc) => (
-                    <button
-                      key={loc}
-                      className={`location-option ${
-                        deviceLocation === loc ? "selected" : ""
-                      }`}
-                      onClick={() => setDeviceLocation(loc)}
-                    >
-                      {loc}
-                    </button>
-                  ))
-                ) : (
-                  <p>No rooms found.</p>
-                )}
+                {rooms.map((loc) => (
+                  <button
+                    key={loc}
+                    className={`location-option ${
+                      deviceLocation === loc ? "selected" : ""
+                    }`}
+                    onClick={() => setDeviceLocation(loc)}
+                  >
+                    {loc}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Consumption Limit */}
             <div className="consumption-limit">
               <h2>Consumption Limit</h2>
               <input
@@ -1576,7 +1477,6 @@ const DesktopDeviceFlow = () => {
         )
 
       case 4:
-        // Final success
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
@@ -1599,7 +1499,6 @@ const DesktopDeviceFlow = () => {
     }
   }
 
-  // Renders the custom modal if showRemoveModal is true
   const renderRemoveModal = () => {
     if (!showRemoveModal) return null
     return (
