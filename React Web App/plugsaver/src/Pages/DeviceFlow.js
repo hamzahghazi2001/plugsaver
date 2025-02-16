@@ -14,6 +14,7 @@ const styles = `
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow-y: auto; /* allow scrolling if content is tall */
 }
 
 .device-flow-card {
@@ -30,7 +31,7 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: 600px;
+  overflow-y: auto; /* allow scrolling in mobile if needed */
 }
 
 .device-step h1 {
@@ -122,12 +123,17 @@ const styles = `
   background: #4facfe;
 }
 
+/* Updated device-input styles */
 .device-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
+  outline: none;
+}
+.device-input:focus {
+  border: 2px solid #4facfe;
 }
 
 .device-grid {
@@ -137,7 +143,7 @@ const styles = `
   margin-top: 10px;
 }
 
-/* Wrap each category + remove button in a small container */
+/* A container for category items */
 .category-item {
   display: flex;
   align-items: center;
@@ -145,6 +151,7 @@ const styles = `
   position: relative;
 }
 
+/* Category pills */
 .device-category {
   display: flex;
   flex-direction: column;
@@ -172,8 +179,9 @@ const styles = `
   word-break: break-word;
 }
 
-/* Remove button for custom categories */
-.remove-category-btn {
+/* Remove button for categories or rooms */
+.remove-category-btn,
+.remove-room-btn {
   background: #ff6b6b;
   border: none;
   color: white;
@@ -184,8 +192,33 @@ const styles = `
   height: 24px;
   line-height: 24px;
   text-align: center;
-  margin-left: -35px; /* shift it slightly to overlap */
+  margin-left: -35px;
   margin-top: -50px;
+}
+
+/* For the "pills" representing rooms */
+.room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.room-item {
+  position: relative;
+}
+
+.room-pill {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #f5f5f5;
+  color: #333;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.room-pill.selected {
+  border: 2px solid #4facfe;
 }
 
 .schedule-section {
@@ -288,19 +321,24 @@ const styles = `
   font-weight: bold;
 }
 
-.room-select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-bottom: 10px;
+/* For the "new-room" text box and spacing */
+.new-room {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .new-room-input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
   border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+}
+.new-room-input:focus {
+  border: 2px solid #4facfe;
 }
 
 .add-category-section {
@@ -312,8 +350,12 @@ const styles = `
 .new-category-input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 2px solid #ddd;
   border-radius: 8px;
+  outline: none;
+}
+.new-category-input:focus {
+  border: 2px solid #4facfe;
 }
 
 .add-category-btn {
@@ -369,6 +411,7 @@ const styles = `
 
   .device-step {
     grid-column: 1 / -1;
+    overflow-y: auto;
   }
 
   .desktop-left {
@@ -432,6 +475,58 @@ const styles = `
   transform: scale(1.05);
   box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
 }
+
+/* Modal overlay for custom popup */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999; /* above everything */
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 400px;
+  width: 80%;
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-bottom: 10px;
+}
+
+.modal-content p {
+  margin-bottom: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-buttons button {
+  background: #4facfe;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.modal-buttons button:hover {
+  background: #3ba7e0;
+}
 `
 
 // ========================================================
@@ -468,22 +563,43 @@ const MobileDeviceFlow = () => {
   const [deviceName, setDeviceName] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [schedule, setSchedule] = useState({
-    from: "8:00 AM",
-    to: "6:00 PM",
-    days: ["M", "T", "W", "T", "F"],
+    from: "08:00",
+    to: "18:00",
+    days: [
+      { label: "M", active: true },
+      { label: "T", active: true },
+      { label: "W", active: true },
+      { label: "T", active: true },
+      { label: "F", active: true },
+      { label: "S", active: false },
+      { label: "S", active: false },
+    ],
   })
   const [timer, setTimer] = useState(10)
   const [isScanning, setIsScanning] = useState(true)
   const [scanColor, setScanColor] = useState("")
   const [deviceFound, setDeviceFound] = useState(false)
+
+  // Rooms
   const [rooms, setRooms] = useState([])
   const [selectedRoom, setSelectedRoom] = useState("")
   const [newRoom, setNewRoom] = useState("")
+
+  // Categories
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryIcon, setNewCategoryIcon] = useState("")
   const [customCategories, setCustomCategories] = useState([])
 
-  // Default categories (non-removable)
+  // Extra device settings
+  const [deviceLocation, setDeviceLocation] = useState("")
+  const [consumptionLimit, setConsumptionLimit] = useState("")
+  const [limitAction, setLimitAction] = useState("turnOff")
+
+  // For the custom popup
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [pendingRemoveRoom, setPendingRemoveRoom] = useState(null)
+
+  // Default categories
   const defaultCategories = [
     { id: "light", name: "Light", icon: "💡" },
     { id: "pc", name: "PC", icon: "💻" },
@@ -494,28 +610,14 @@ const MobileDeviceFlow = () => {
   ]
   const categories = [...defaultCategories, ...customCategories]
 
-  // ---------------------------------------------
-  // Load existing data from localStorage (fallback)
-  // and (optionally) from your backend if available
-  // ---------------------------------------------
+  // Load data on mount
   useEffect(() => {
-    // 1) Load from localStorage
     const appData = loadAppData()
     setRooms(appData.rooms || [])
     setCustomCategories(appData.customCategories || [])
-
-    // 2) Optionally fetch from server
-    // fetch("/api/devices")
-    //   .then((res) => res.json())
-    //   .then((data) => {
-    //     // Merge or override local data with server data
-    //     setRooms(data.rooms || [])
-    //     setCustomCategories(data.customCategories || [])
-    //   })
-    //   .catch((err) => console.error("Error loading from server:", err))
   }, [])
 
-  // The scanning logic for pairing
+  // Pairing scanning logic
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
@@ -534,27 +636,27 @@ const MobileDeviceFlow = () => {
   const handleBack = () => setStep((prev) => prev - 1)
   const handleNext = () => setStep((prev) => prev + 1)
 
-  const toggleDay = (day) => {
-    setSchedule((prev) => ({
-      ...prev,
-      days: prev.days.includes(day)
-        ? prev.days.filter((d) => d !== day)
-        : [...prev.days, day],
-    }))
+  // Updated toggleDay function for mobile view:
+  const toggleDay = (index) => {
+    setSchedule((prev) => {
+      const newDays = prev.days.map((day, i) =>
+        i === index ? { ...day, active: !day.active } : day
+      )
+      return { ...prev, days: newDays }
+    })
   }
 
   // Remove a custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
+
     const appData = loadAppData()
     appData.customCategories = updated
     saveAppData(appData)
-
-    // Optionally also remove from backend:
-    // fetch(`/api/devices/categories/${id}`, { method: "DELETE" })
   }
 
+  // Add a new custom category
   const addNewCategory = () => {
     if (newCategoryName && newCategoryIcon) {
       const newCategory = {
@@ -570,44 +672,64 @@ const MobileDeviceFlow = () => {
       const appData = loadAppData()
       appData.customCategories = updated
       saveAppData(appData)
-
-      // Optionally send to backend:
-      // fetch("/api/devices/categories", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(newCategory),
-      // })
     }
   }
 
-  // Save final device info
+  // Show custom popup for removing a room
+  const handleRemoveRoomClick = (room) => {
+    setPendingRemoveRoom(room)
+    setShowRemoveModal(true)
+  }
+
+  // Confirm removing the room
+  const handleConfirmRemoveRoom = () => {
+    if (!pendingRemoveRoom) return
+    const updated = rooms.filter((r) => r !== pendingRemoveRoom)
+    setRooms(updated)
+    const appData = loadAppData()
+    appData.rooms = updated
+    saveAppData(appData)
+
+    if (selectedRoom === pendingRemoveRoom) {
+      setSelectedRoom("")
+    }
+    if (deviceLocation === pendingRemoveRoom) {
+      setDeviceLocation("")
+    }
+
+    setPendingRemoveRoom(null)
+    setShowRemoveModal(false)
+  }
+
+  // Cancel removing the room
+  const handleCancelRemoveRoom = () => {
+    setPendingRemoveRoom(null)
+    setShowRemoveModal(false)
+  }
+
+  // Save device info
   const saveDeviceInfo = () => {
     const deviceInfo = {
       name: deviceName,
       category: selectedCategory,
       schedule,
       room: selectedRoom || newRoom,
+      deviceLocation,
+      consumptionLimit,
+      limitAction,
     }
-
-    // Save to localStorage
     const appData = loadAppData()
     appData.devices = [...(appData.devices || []), deviceInfo]
+
+    // Add new room if needed
     if (newRoom && !appData.rooms.includes(newRoom)) {
       appData.rooms.push(newRoom)
     }
     saveAppData(appData)
-
-    // Optionally send to backend:
-    // fetch("/api/devices", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(deviceInfo),
-    // })
-
     console.log("Device information saved successfully")
   }
 
-  // Render the steps
+  // Renders the main steps
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -640,7 +762,9 @@ const MobileDeviceFlow = () => {
             </div>
           </div>
         )
+
       case 2:
+        // Configuration step: device name, category, rooms
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -649,6 +773,7 @@ const MobileDeviceFlow = () => {
               </button>
               <h1>Configuration</h1>
             </div>
+            {/* Device Name */}
             <input
               type="text"
               className="device-input"
@@ -656,10 +781,12 @@ const MobileDeviceFlow = () => {
               value={deviceName}
               onChange={(e) => setDeviceName(e.target.value)}
             />
+
+            {/* Categories */}
             <div className="category-section">
               <label className="category-label">Select Device Category</label>
               <div className="device-grid">
-                {[...categories].map((category) => {
+                {categories.map((category) => {
                   const isCustom = customCategories.some(
                     (c) => c.id === category.id
                   )
@@ -708,22 +835,32 @@ const MobileDeviceFlow = () => {
                 </button>
               </div>
             </div>
+
+            {/* Rooms */}
             <div className="room-section">
-              <label className="room-label">Select Room</label>
-              {rooms.length > 0 && (
-                <select
-                  value={selectedRoom}
-                  onChange={(e) => setSelectedRoom(e.target.value)}
-                  className="room-select"
-                >
-                  <option value="">Select a room</option>
-                  {rooms.map((room, index) => (
-                    <option key={index} value={room}>
+              <label className="room-label">Select or Remove Rooms</label>
+              <div className="room-list">
+                {rooms.map((room) => (
+                  <div key={room} className="room-item">
+                    <button
+                      className={`room-pill ${
+                        selectedRoom === room ? "selected" : ""
+                      }`}
+                      onClick={() => setSelectedRoom(room)}
+                      style={{ color: "#333" }}
+                    >
                       {room}
-                    </option>
-                  ))}
-                </select>
-              )}
+                    </button>
+                    <button
+                      className="remove-room-btn"
+                      onClick={() => handleRemoveRoomClick(room)}
+                      title="Remove Room"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
               <div className="new-room">
                 <input
                   type="text"
@@ -734,6 +871,7 @@ const MobileDeviceFlow = () => {
                 />
               </div>
             </div>
+
             <button
               className="add-device-btn"
               onClick={handleNext}
@@ -745,7 +883,9 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
+
       case 3:
+        // Step 3: schedule, device location, consumption limit
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -754,6 +894,7 @@ const MobileDeviceFlow = () => {
               </button>
               <h1>Configuration</h1>
             </div>
+            {/* Device Summary */}
             <div className="device-info">
               <div className="info-row">
                 <label>Device Name</label>
@@ -762,11 +903,12 @@ const MobileDeviceFlow = () => {
               <div className="info-row">
                 <label>Device Category</label>
                 <div className="category-icon">
-                  {categories.find((c) => c.id === selectedCategory)?.icon ||
-                    ""}
+                  {categories.find((c) => c.id === selectedCategory)?.icon || ""}
                 </div>
               </div>
             </div>
+
+            {/* Schedule */}
             <div className="schedule-section">
               <h3>Device Schedule</h3>
               <div className="time-range">
@@ -796,19 +938,77 @@ const MobileDeviceFlow = () => {
                   <button
                     key={dayObj.label}
                     className={`day-button ${dayObj.active ? "active" : ""}`}
-                    onClick={() => toggleDay(dayObj.label)}
+                    onClick={() => toggleDay(index)}
                   >
-                    {dayObj}
+                    {dayObj.label}
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Device Location */}
+            <div className="device-location">
+              <h2>Device Location</h2>
+              <div className="location-options">
+                {rooms.length > 0 ? (
+                  rooms.map((loc) => (
+                    <button
+                      key={loc}
+                      className={`location-option ${
+                        deviceLocation === loc ? "selected" : ""
+                      }`}
+                      onClick={() => setDeviceLocation(loc)}
+                    >
+                      {loc}
+                    </button>
+                  ))
+                ) : (
+                  <p>No rooms found.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Consumption Limit */}
+            <div className="consumption-limit">
+              <h2>Consumption Limit</h2>
+              <input
+                type="number"
+                placeholder="Enter limit (kWh)"
+                value={consumptionLimit}
+                onChange={(e) => setConsumptionLimit(e.target.value)}
+              />
+              <div className="limit-action">
+                <label>
+                  <input
+                    type="radio"
+                    name="limitAction"
+                    value="turnOff"
+                    checked={limitAction === "turnOff"}
+                    onChange={(e) => setLimitAction(e.target.value)}
+                  />
+                  Turn off device once limit is reached
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="limitAction"
+                    value="notify"
+                    checked={limitAction === "notify"}
+                    onChange={(e) => setLimitAction(e.target.value)}
+                  />
+                  Continue monitoring &amp; notify user
+                </label>
+              </div>
+            </div>
+
             <button className="confirm-btn" onClick={handleNext}>
               Confirm
             </button>
           </div>
         )
+
       case 4:
+        // Final success
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
@@ -827,15 +1027,37 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
+
       default:
         return null
     }
+  }
+
+  // Renders the custom modal if showRemoveModal is true
+  const renderRemoveModal = () => {
+    if (!showRemoveModal) return null
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h3>Remove Room?</h3>
+          <p>
+            Any devices assigned to this room will need to be re-paired from the
+            dashboard.
+          </p>
+          <div className="modal-buttons">
+            <button onClick={handleConfirmRemoveRoom}>Yes, remove it</button>
+            <button onClick={handleCancelRemoveRoom}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="device-flow-container">
       <div className="device-flow-card">
         {renderStep()}
+        {renderRemoveModal()}
         <BottomNav isDesktop={false} />
       </div>
     </div>
@@ -866,9 +1088,13 @@ const DesktopDeviceFlow = () => {
   const [isScanning, setIsScanning] = useState(true)
   const [scanColor, setScanColor] = useState("")
   const [deviceFound, setDeviceFound] = useState(false)
+
+  // Rooms
   const [rooms, setRooms] = useState([])
   const [selectedRoom, setSelectedRoom] = useState("")
   const [newRoom, setNewRoom] = useState("")
+
+  // Categories
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryIcon, setNewCategoryIcon] = useState("")
   const [customCategories, setCustomCategories] = useState([])
@@ -877,6 +1103,10 @@ const DesktopDeviceFlow = () => {
   const [deviceLocation, setDeviceLocation] = useState("")
   const [consumptionLimit, setConsumptionLimit] = useState("")
   const [limitAction, setLimitAction] = useState("turnOff")
+
+  // For the custom popup
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [pendingRemoveRoom, setPendingRemoveRoom] = useState(null)
 
   // Default categories
   const defaultCategories = [
@@ -889,26 +1119,14 @@ const DesktopDeviceFlow = () => {
   ]
   const deviceCategories = [...defaultCategories, ...customCategories]
 
-  // ---------------------------------------------
-  // Load existing data from localStorage (fallback)
-  // and optionally from your backend
-  // ---------------------------------------------
+  // Load data on mount
   useEffect(() => {
-    // localStorage fallback
     const appData = loadAppData()
     setRooms(appData.rooms || [])
     setCustomCategories(appData.customCategories || [])
-
-    // Optionally fetch from your backend
-    // fetch("/api/devices")
-    //   .then((res) => res.json())
-    //   .then((data) => {
-    //     setRooms(data.rooms || [])
-    //     setCustomCategories(data.customCategories || [])
-    //   })
-    //   .catch((err) => console.error("Error loading data:", err))
   }, [])
 
+  // Pairing scanning logic
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
@@ -927,7 +1145,6 @@ const DesktopDeviceFlow = () => {
   const handleBack = () => setStep((prev) => prev - 1)
   const handleNext = () => setStep((prev) => prev + 1)
 
-  // Toggle day in schedule
   const toggleDay = (index) => {
     setSchedule((prev) => {
       const newDays = prev.days.map((day, i) =>
@@ -937,18 +1154,16 @@ const DesktopDeviceFlow = () => {
     })
   }
 
-  // Remove custom category
+  // Remove a custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
     const appData = loadAppData()
     appData.customCategories = updated
     saveAppData(appData)
-
-    // Optionally remove from backend
-    // fetch(`/api/devices/categories/${id}`, { method: "DELETE" })
   }
 
+  // Add a new custom category
   const addNewCategory = () => {
     if (newCategoryName && newCategoryIcon) {
       const newCategory = {
@@ -960,17 +1175,44 @@ const DesktopDeviceFlow = () => {
       setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
-
       const appData = loadAppData()
       appData.customCategories = updated
       saveAppData(appData)
-
-      // Optionally send to backend
-      // fetch("/api/devices/categories", {...})
     }
   }
 
-  // Save final device info
+  // Show custom popup for removing a room
+  const handleRemoveRoomClick = (room) => {
+    setPendingRemoveRoom(room)
+    setShowRemoveModal(true)
+  }
+
+  // Confirm removing the room
+  const handleConfirmRemoveRoom = () => {
+    if (!pendingRemoveRoom) return
+    const updated = rooms.filter((r) => r !== pendingRemoveRoom)
+    setRooms(updated)
+    const appData = loadAppData()
+    appData.rooms = updated
+    saveAppData(appData)
+
+    if (selectedRoom === pendingRemoveRoom) {
+      setSelectedRoom("")
+    }
+    if (deviceLocation === pendingRemoveRoom) {
+      setDeviceLocation("")
+    }
+
+    setPendingRemoveRoom(null)
+    setShowRemoveModal(false)
+  }
+
+  // Cancel removing the room
+  const handleCancelRemoveRoom = () => {
+    setPendingRemoveRoom(null)
+    setShowRemoveModal(false)
+  }
+
   const saveDeviceInfo = () => {
     const deviceInfo = {
       name: deviceName,
@@ -981,28 +1223,21 @@ const DesktopDeviceFlow = () => {
       consumptionLimit,
       limitAction,
     }
-
-    // localStorage fallback
     const appData = loadAppData()
     appData.devices = [...(appData.devices || []), deviceInfo]
+
     if (newRoom && !appData.rooms.includes(newRoom)) {
       appData.rooms.push(newRoom)
     }
     saveAppData(appData)
-
-    // Optionally send to backend
-    // fetch("/api/devices", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(deviceInfo),
-    // })
-
     console.log("Device information saved successfully")
   }
 
+  // Renders the main steps
   const renderStep = () => {
     switch (step) {
       case 1:
+        // Pairing step
         return (
           <div className="device-step">
             <h1>Add Device</h1>
@@ -1036,7 +1271,9 @@ const DesktopDeviceFlow = () => {
             </div>
           </div>
         )
+
       case 2:
+        // Configuration step
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -1068,14 +1305,11 @@ const DesktopDeviceFlow = () => {
                           }`}
                           onClick={() => setSelectedCategory(category.id)}
                         >
-                          <span className="category-icon">
-                            {category.icon}
-                          </span>
+                          <span className="category-icon">{category.icon}</span>
                           <span className="category-name">
                             {category.name}
                           </span>
                         </button>
-                        {/* Remove if it's custom */}
                         {isCustom && (
                           <button
                             onClick={() => removeCategory(category.id)}
@@ -1112,21 +1346,29 @@ const DesktopDeviceFlow = () => {
                 </button>
               </div>
               <div className="room-section">
-                <label className="room-label">Select Room</label>
-                {rooms.length > 0 && (
-                  <select
-                    value={selectedRoom}
-                    onChange={(e) => setSelectedRoom(e.target.value)}
-                    className="room-select"
-                  >
-                    <option value="">Select a room</option>
-                    {rooms.map((room, index) => (
-                      <option key={index} value={room}>
+                <label className="room-label">Select or Remove Rooms</label>
+                <div className="room-list">
+                  {rooms.map((room) => (
+                    <div key={room} className="room-item">
+                      <button
+                        className={`room-pill ${
+                          selectedRoom === room ? "selected" : ""
+                        }`}
+                        onClick={() => setSelectedRoom(room)}
+                        style={{ color: "#333" }}
+                      >
                         {room}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                      </button>
+                      <button
+                        className="remove-room-btn"
+                        onClick={() => handleRemoveRoomClick(room)}
+                        title="Remove Room"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                </div>
                 <div className="new-room">
                   <input
                     type="text"
@@ -1141,9 +1383,7 @@ const DesktopDeviceFlow = () => {
                 className="add-device-btn"
                 onClick={handleNext}
                 disabled={
-                  !deviceName ||
-                  !selectedCategory ||
-                  (!selectedRoom && !newRoom)
+                  !deviceName || !selectedCategory || (!selectedRoom && !newRoom)
                 }
               >
                 Add Device
@@ -1151,7 +1391,9 @@ const DesktopDeviceFlow = () => {
             </div>
           </div>
         )
+
       case 3:
+        // Step 3: schedule, device location, consumption limit
         return (
           <div className="device-step">
             <div className="header-with-back">
@@ -1168,7 +1410,10 @@ const DesktopDeviceFlow = () => {
               <div className="info-row">
                 <label>Device Category</label>
                 <div className="category-icon">
-                  {deviceCategories.find((c) => c.id === selectedCategory)?.icon}
+                  {
+                    deviceCategories.find((c) => c.id === selectedCategory)
+                      ?.icon
+                  }
                 </div>
               </div>
             </div>
@@ -1208,6 +1453,8 @@ const DesktopDeviceFlow = () => {
                 ))}
               </div>
             </div>
+
+            {/* Device Location */}
             <div className="device-location">
               <h2>Device Location</h2>
               <div className="location-options">
@@ -1228,6 +1475,8 @@ const DesktopDeviceFlow = () => {
                 )}
               </div>
             </div>
+
+            {/* Consumption Limit */}
             <div className="consumption-limit">
               <h2>Consumption Limit</h2>
               <input
@@ -1259,19 +1508,20 @@ const DesktopDeviceFlow = () => {
                 </label>
               </div>
             </div>
+
             <button className="confirm-btn" onClick={handleNext}>
               Confirm
             </button>
           </div>
         )
+
       case 4:
+        // Final success
         return (
           <div className="device-step success">
             <h1>Device Added</h1>
             <div className="success-icon">✅</div>
-            <p className="success-message">
-              Device has been added successfully.
-            </p>
+            <p className="success-message">Device has been added successfully.</p>
             <button
               className="done-btn"
               onClick={() => {
@@ -1283,15 +1533,37 @@ const DesktopDeviceFlow = () => {
             </button>
           </div>
         )
+
       default:
         return null
     }
+  }
+
+  // Renders the custom modal if showRemoveModal is true
+  const renderRemoveModal = () => {
+    if (!showRemoveModal) return null
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h3>Remove Room?</h3>
+          <p>
+            Any devices assigned to this room will need to be re-paired from the
+            dashboard.
+          </p>
+          <div className="modal-buttons">
+            <button onClick={handleConfirmRemoveRoom}>Yes, remove it</button>
+            <button onClick={handleCancelRemoveRoom}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="device-flow-container">
       <div className="device-flow-card">
         {renderStep()}
+        {renderRemoveModal()}
         <BottomNav isDesktop={true} />
       </div>
     </div>
