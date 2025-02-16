@@ -8,20 +8,25 @@ import BottomNav from "../Components/BottomNav"
 // ========================================================
 const styles = `
 .device-flow-container {
+  /* Mobile defaults */
   background: #1a1a1a;
   min-height: 100vh;
   padding: 20px;
+  overflow-y: auto; /* allow scrolling if content is tall */
+}
+
+/* 
+  Remove or comment these if you don't want everything centered on mobile:
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow-y: auto; /* allow scrolling if content is tall */
-}
+*/
 
 .device-flow-card {
   background: #fff;
   border-radius: 20px;
   width: 100%;
-  max-width: 480px;
+  max-width: 480px; /* Applies to mobile by default */
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
@@ -399,11 +404,20 @@ const styles = `
 /* Desktop styles */
 @media (min-width: 1024px) {
   .device-flow-container {
-    padding: 40px;
+    /* Light background for desktop */
+    background: #f8f9fa;
+    /* Reduce or remove large padding */
+    padding: 20px;
+    /* No more flex centering, so content can expand */
+    display: block;
+    min-height: 100vh;
   }
 
   .device-flow-card {
-    max-width: 960px;
+    /* Let the card stretch out more on desktop */
+    max-width: 1200px;
+    margin: 0 auto; /* center horizontally if desired */
+    border-radius: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 40px;
@@ -526,6 +540,48 @@ const styles = `
 
 .modal-buttons button:hover {
   background: #3ba7e0;
+}
+  .room-grid {
+  display: grid;
+  /* Adjust columns as you wish; here we do 2 columns on larger screens */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 10px;
+}
+
+/* Each room as a tile/card */
+.room-tile {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  position: relative; /* for the remove button */
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Highlight when selected */
+.room-tile.selected {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
+}
+
+/* Keep or update the remove-room-btn style as you prefer */
+.remove-room-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff6b6b;
+  border: none;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
 }
 `
 
@@ -838,39 +894,43 @@ const MobileDeviceFlow = () => {
 
             {/* Rooms */}
             <div className="room-section">
-              <label className="room-label">Select or Remove Rooms</label>
-              <div className="room-list">
-                {rooms.map((room) => (
-                  <div key={room} className="room-item">
-                    <button
-                      className={`room-pill ${
-                        selectedRoom === room ? "selected" : ""
-                      }`}
-                      onClick={() => setSelectedRoom(room)}
-                      style={{ color: "#333" }}
-                    >
-                      {room}
-                    </button>
-                    <button
-                      className="remove-room-btn"
-                      onClick={() => handleRemoveRoomClick(room)}
-                      title="Remove Room"
-                    >
-                      X
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="new-room">
-                <input
-                  type="text"
-                  placeholder="Or create a new room"
-                  value={newRoom}
-                  onChange={(e) => setNewRoom(e.target.value)}
-                  className="new-room-input"
-                />
-              </div>
-            </div>
+  <label className="room-label">Select or Remove Rooms</label>
+
+  {/* New .room-grid layout */}
+  <div className="room-grid">
+    {rooms.map((room) => (
+      <div
+        key={room}
+        className={`room-tile ${selectedRoom === room ? "selected" : ""}`}
+        onClick={() => setSelectedRoom(room)}
+      >
+        {room}
+        <button
+          className="remove-room-btn"
+          title="Remove Room"
+          onClick={(e) => {
+            e.stopPropagation(); // prevent clicking X from also selecting the room
+            handleRemoveRoomClick(room);
+          }}
+        >
+          X
+        </button>
+      </div>
+    ))}
+  </div>
+
+  {/* Input for creating a new room */}
+  <div className="new-room">
+    <input
+      type="text"
+      placeholder="Or create a new room"
+      value={newRoom}
+      onChange={(e) => setNewRoom(e.target.value)}
+      className="new-room-input"
+    />
+  </div>
+</div>
+
 
             <button
               className="add-device-btn"
