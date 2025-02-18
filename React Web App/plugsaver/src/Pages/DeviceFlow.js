@@ -3,65 +3,85 @@
 import { useState, useEffect } from "react"
 import BottomNav from "../Components/BottomNav"
 
-// ========================================================
-// CSS styles as a template literal
-// ========================================================
+// Updated CSS to mimic DeviceEdit's layout
 const styles = `
-.device-flow-container {
-  background: #1a1a1a;
+/* ---- Basic full-page layout, like DeviceEdit ---- */
+.device-flow-management {
   min-height: 100vh;
-  padding: 20px;
-  overflow-y: auto;
+  background-color: #f9fafb;
+  font-family: Arial, sans-serif; /* optional */
+  display: flex;
+  flex-direction: column;
 }
 
-.device-flow-card {
-  background: #fff;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 480px;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+/* Top gradient header with rounded corners */
+.flow-header {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  color: white;
+  padding: 24px;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  text-align: center;
+}
+.flow-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.flow-header p {
+  font-size: 14px;
+  opacity: 0.8;
 }
 
+/* White "card" content area, pulled up under the header */
+.flow-content {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin: -32px 16px 0;
+}
+
+/* Keep your existing step styles inside .flow-content */
 .device-step {
-  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
+  /* Remove or reduce default padding if desired */
 }
 
+/* Override old gradient backgrounds on .device-step h1 */
 .device-step h1 {
-  background: linear-gradient(to right, #4facfe, #00f2fe);
-  color: #fff;
+  background: none;
+  color: #111827;
+  margin: 0;
+  padding: 0;
   text-align: center;
-  margin: -20px -20px 20px -20px;
-  padding: 20px;
-  font-size: 24px;
+  font-size: 20px;
 }
 
+/* "header-with-back" can appear inside the white card now */
 .header-with-back {
-  background: linear-gradient(to right, #4facfe, #00f2fe);
   position: relative;
-  color: #fff;
+  background: none;
+  color: #111827;
   text-align: center;
-  margin: -20px -20px 20px -20px;
-  padding: 20px;
+  margin: 0;
+  padding: 16px 0;
 }
-
 .back-button {
   position: absolute;
-  left: 20px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #fff;
-  cursor: pointer;
-  padding: 8px;
+  color: #4facfe;
   font-size: 18px;
+  cursor: pointer;
 }
 
+/* Scanning circle, timer, etc. remain the same */
 .scanning-circle {
   width: 200px;
   height: 200px;
@@ -74,7 +94,6 @@ const styles = `
   position: relative;
   transition: background-color 0.5s ease;
 }
-
 .scanning-circle::after {
   content: '';
   position: absolute;
@@ -84,23 +103,19 @@ const styles = `
   border: 2px solid #4facfe;
   animation: pulse 2s infinite;
 }
-
 @keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
-
 .timer {
   font-size: 32px;
   color: #4facfe;
   transition: color 0.5s ease;
 }
+.scanning-circle.red { background-color: #ffcccb; }
+.scanning-circle.green { background-color: #90ee90; }
+.timer.red { color: #ff6b6b; }
+.timer.green { color: #32cd32; }
 
 .progress-dots {
   display: flex;
@@ -108,19 +123,17 @@ const styles = `
   justify-content: center;
   margin-top: auto;
 }
-
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #e0e0e0;
 }
-
 .dot.active {
   background: #4facfe;
 }
 
-/* device-input styles */
+/* Device input, category grid, etc. remain unchanged */
 .device-input {
   width: 100%;
   padding: 12px;
@@ -132,15 +145,12 @@ const styles = `
 .device-input:focus {
   border: 2px solid #4facfe;
 }
-
 .device-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   margin-top: 10px;
 }
-
-/* Category items (unchanged) */
 .category-item {
   display: flex;
   align-items: center;
@@ -171,8 +181,6 @@ const styles = `
   text-align: center;
   word-break: break-word;
 }
-
-/* Remove button for categories or rooms */
 .remove-category-btn,
 .remove-room-btn {
   background: #ff6b6b;
@@ -187,7 +195,7 @@ const styles = `
   text-align: center;
 }
 
-/* Schedules, etc. */
+/* Scheduling section, unchanged */
 .schedule-section {
   background: #f8f9fa;
   padding: 20px;
@@ -198,9 +206,7 @@ const styles = `
   gap: 20px;
   margin: 15px 0;
 }
-.time-input {
-  flex: 1;
-}
+.time-input { flex: 1; }
 .time-input label {
   display: block;
   margin-bottom: 5px;
@@ -237,7 +243,7 @@ const styles = `
   color: white;
 }
 
-/* Buttons */
+/* Buttons remain the same */
 .add-device-btn,
 .confirm-btn,
 .done-btn {
@@ -255,7 +261,6 @@ const styles = `
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .success {
   text-align: center;
 }
@@ -269,6 +274,7 @@ const styles = `
   margin-bottom: 40px;
 }
 
+/* Room section, unchanged except for layout */
 .room-section {
   margin-top: 20px;
 }
@@ -319,13 +325,11 @@ const styles = `
   border-radius: 8px;
   cursor: pointer;
 }
-
 .button-container {
   display: flex;
   justify-content: center;
   margin-top: 20px;
 }
-
 .device-found-message {
   text-align: center;
   color: #4facfe;
@@ -333,20 +337,7 @@ const styles = `
   margin-bottom: 15px;
 }
 
-.scanning-circle.red {
-  background-color: #ffcccb;
-}
-.scanning-circle.green {
-  background-color: #90ee90;
-}
-.timer.red {
-  color: #ff6b6b;
-}
-.timer.green {
-  color: #32cd32;
-}
-
-/* ---- New tile-based room styling ---- */
+/* Tile-based room styling remains the same */
 .room-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -367,100 +358,31 @@ const styles = `
   transform: scale(1.05);
   box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
 }
-.remove-room-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #ff6b6b;
-  border: none;
-  color: white;
-  border-radius: 50%;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  font-size: 14px;
-  line-height: 24px;
-  text-align: center;
-}
 
-/* Desktop styles */
-@media (min-width: 1024px) {
-  .device-flow-container {
-    background: #f8f9fa;
-    padding: 20px;
-    display: block;
-    min-height: 100vh;
-  }
-  .device-flow-card {
-    max-width: 1200px;
-    margin: 0 auto;
-    border-radius: 10px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 40px;
-  }
-  .device-step {
-    grid-column: 1 / -1;
-    overflow-y: auto;
-  }
-  .desktop-left {
-    grid-column: 1 / 2;
-  }
-  .desktop-right {
-    grid-column: 2 / 3;
-  }
-  .desktop-nav {
-    grid-column: 1 / -1;
-    margin-top: auto;
-  }
-}
-
-/* Mobile styles */
-@media (max-width: 1023px) {
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 10px;
-    border-radius: 15px 15px 0 0;
-    background: white;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  }
-  .device-flow-container {
-    padding-bottom: 80px;
-  }
-}
-
-.location-options {
+/* Bottom nav pinned at bottom, similar to DeviceEdit */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-top: 1px solid #e5e7eb;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 15px;
+  justify-content: space-around;
+  padding: 12px;
+}
+  .flow-content {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin: -32px 16px 0;
+  /* Add this so there's space above the bottom nav */
+  padding-bottom: 80px; 
 }
 
-.location-option {
-  background: linear-gradient(to right, #4facfe, #00f2fe);
-  color: #fff;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.location-option:hover {
-  transform: scale(1.03);
-}
-.location-option.selected {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
-}
 
-/* Modal overlay for custom popup */
+/* Modal overlay remains the same */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -505,6 +427,42 @@ const styles = `
 .modal-buttons button:hover {
   background: #3ba7e0;
 }
+  .device-location {
+  margin-top: 20px; /* optional spacing */
+}
+
+.device-location h2 {
+  margin-bottom: 10px; /* optional */
+}
+
+.location-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.location-option {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location-option:hover {
+  transform: scale(1.03);
+}
+
+.location-option.selected {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.6);
+}
+
 `
 
 // ========================================================
@@ -614,7 +572,6 @@ const MobileDeviceFlow = () => {
   const handleBack = () => setStep((prev) => prev - 1)
   const handleNext = () => setStep((prev) => prev + 1)
 
-  // Updated toggleDay for mobile
   const toggleDay = (index) => {
     setSchedule((prev) => {
       const newDays = prev.days.map((day, i) =>
@@ -624,7 +581,6 @@ const MobileDeviceFlow = () => {
     })
   }
 
-  // Remove a custom category
   const removeCategory = (id) => {
     const updated = customCategories.filter((cat) => cat.id !== id)
     setCustomCategories(updated)
@@ -633,7 +589,6 @@ const MobileDeviceFlow = () => {
     saveAppData(appData)
   }
 
-  // Add a new custom category
   const addNewCategory = () => {
     if (newCategoryName && newCategoryIcon) {
       const newCategory = {
@@ -645,20 +600,17 @@ const MobileDeviceFlow = () => {
       setCustomCategories(updated)
       setNewCategoryName("")
       setNewCategoryIcon("")
-
       const appData = loadAppData()
       appData.customCategories = updated
       saveAppData(appData)
     }
   }
 
-  // Show custom popup for removing a room
   const handleRemoveRoomClick = (room) => {
     setPendingRemoveRoom(room)
     setShowRemoveModal(true)
   }
 
-  // Confirm removing the room
   const handleConfirmRemoveRoom = () => {
     if (!pendingRemoveRoom) return
     const updated = rooms.filter((r) => r !== pendingRemoveRoom)
@@ -678,13 +630,11 @@ const MobileDeviceFlow = () => {
     setShowRemoveModal(false)
   }
 
-  // Cancel removing the room
   const handleCancelRemoveRoom = () => {
     setPendingRemoveRoom(null)
     setShowRemoveModal(false)
   }
 
-  // Save device info
   const saveDeviceInfo = () => {
     const deviceInfo = {
       name: deviceName,
@@ -698,7 +648,6 @@ const MobileDeviceFlow = () => {
     const appData = loadAppData()
     appData.devices = [...(appData.devices || []), deviceInfo]
 
-    // Add new room if needed
     if (newRoom && !appData.rooms.includes(newRoom)) {
       appData.rooms.push(newRoom)
     }
@@ -706,7 +655,6 @@ const MobileDeviceFlow = () => {
     console.log("Device information saved successfully")
   }
 
-  // Render main steps
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -739,7 +687,6 @@ const MobileDeviceFlow = () => {
             </div>
           </div>
         )
-
       case 2:
         return (
           <div className="device-step">
@@ -777,7 +724,6 @@ const MobileDeviceFlow = () => {
                         <span className="category-icon">{category.icon}</span>
                         <span className="category-name">{category.name}</span>
                       </button>
-                      {/* Remove custom category */}
                       {isCustom && (
                         <button
                           onClick={() => removeCategory(category.id)}
@@ -860,7 +806,6 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
-
       case 3:
         return (
           <div className="device-step">
@@ -978,7 +923,6 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
-
       case 4:
         return (
           <div className="device-step success">
@@ -998,7 +942,6 @@ const MobileDeviceFlow = () => {
             </button>
           </div>
         )
-
       default:
         return null
     }
@@ -1024,12 +967,20 @@ const MobileDeviceFlow = () => {
   }
 
   return (
-    <div className="device-flow-container">
-      <div className="device-flow-card">
+    <div className="device-flow-management">
+      {/* Gradient header, just like DeviceEdit */}
+      <div className="flow-header">
+        <h1>Device Flow</h1>
+        <p>Follow the steps to add or configure your device</p>
+      </div>
+
+      {/* White card content area */}
+      <div className="flow-content">
         {renderStep()}
         {renderRemoveModal()}
-        <BottomNav isDesktop={false} />
       </div>
+
+      <BottomNav isDesktop={false} />
     </div>
   )
 }
@@ -1095,6 +1046,7 @@ const DesktopDeviceFlow = () => {
     setCustomCategories(appData.customCategories || [])
   }, [])
 
+  // Pairing scanning logic
   useEffect(() => {
     let interval
     if (isScanning && timer > 0) {
@@ -1202,37 +1154,32 @@ const DesktopDeviceFlow = () => {
         return (
           <div className="device-step">
             <h1>Add Device</h1>
-            <div className="desktop-left">
-              <div className="pairing-section">
-                <h2>Pairing Plug...</h2>
-                <p>Ensure that the plug is connected and in pairing mode</p>
-                <div className={`scanning-circle ${scanColor}`}>
-                  <div className={`timer ${scanColor}`}>{timer}</div>
-                </div>
-                {deviceFound && (
-                  <>
-                    <p className="device-found-message">
-                      Smart plug found! Ready to proceed.
-                    </p>
-                    <div className="button-container">
-                      <button className="add-device-btn" onClick={handleNext}>
-                        Continue to Categorization
-                      </button>
-                    </div>
-                  </>
-                )}
+            <div className="pairing-section">
+              <h2>Pairing Plug...</h2>
+              <p>Ensure that the plug is connected and in pairing mode</p>
+              <div className={`scanning-circle ${scanColor}`}>
+                <div className={`timer ${scanColor}`}>{timer}</div>
               </div>
+              {deviceFound && (
+                <>
+                  <p className="device-found-message">
+                    Smart plug found! Ready to proceed.
+                  </p>
+                  <div className="button-container">
+                    <button className="add-device-btn" onClick={handleNext}>
+                      Continue to Categorization
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="desktop-right">
-              <div className="progress-dots">
-                <div className="dot active"></div>
-                <div className="dot"></div>
-                <div className="dot"></div>
-              </div>
+            <div className="progress-dots">
+              <div className="dot active"></div>
+              <div className="dot"></div>
+              <div className="dot"></div>
             </div>
           </div>
         )
-
       case 2:
         return (
           <div className="device-step">
@@ -1242,124 +1189,114 @@ const DesktopDeviceFlow = () => {
               </button>
               <h1>Configuration</h1>
             </div>
-            <div className="desktop-left">
+            <input
+              type="text"
+              className="device-input"
+              placeholder="Device Name"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+            />
+            <div className="category-section">
+              <label className="category-label">Select Device Category</label>
+              <div className="device-grid">
+                {deviceCategories.map((category) => {
+                  const isCustom = customCategories.some(
+                    (c) => c.id === category.id
+                  )
+                  return (
+                    <div key={category.id} className="category-item">
+                      <button
+                        className={`device-category ${
+                          selectedCategory === category.id ? "selected" : ""
+                        }`}
+                        onClick={() => setSelectedCategory(category.id)}
+                      >
+                        <span className="category-icon">{category.icon}</span>
+                        <span className="category-name">
+                          {category.name}
+                        </span>
+                      </button>
+                      {isCustom && (
+                        <button
+                          onClick={() => removeCategory(category.id)}
+                          className="remove-category-btn"
+                          title="Remove Category"
+                        >
+                          X
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="add-category-section">
               <input
                 type="text"
-                className="device-input"
-                placeholder="Device Name"
-                value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
+                placeholder="New Category Name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="new-category-input"
               />
-              <div className="category-section">
-                <label className="category-label">Select Device Category</label>
-                <div className="device-grid">
-                  {deviceCategories.map((category) => {
-                    const isCustom = customCategories.some(
-                      (c) => c.id === category.id
-                    )
-                    return (
-                      <div key={category.id} className="category-item">
-                        <button
-                          className={`device-category ${
-                            selectedCategory === category.id ? "selected" : ""
-                          }`}
-                          onClick={() => setSelectedCategory(category.id)}
-                        >
-                          <span className="category-icon">
-                            {category.icon}
-                          </span>
-                          <span className="category-name">
-                            {category.name}
-                          </span>
-                        </button>
-                        {isCustom && (
-                          <button
-                            onClick={() => removeCategory(category.id)}
-                            className="remove-category-btn"
-                            title="Remove Category"
-                          >
-                            X
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-            <div className="desktop-right">
-              <div className="add-category-section">
-                <input
-                  type="text"
-                  placeholder="New Category Name"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="new-category-input"
-                />
-                <input
-                  type="text"
-                  placeholder="Category Icon (Emoji)"
-                  value={newCategoryIcon}
-                  onChange={(e) => setNewCategoryIcon(e.target.value)}
-                  className="new-category-input"
-                />
-                <button onClick={addNewCategory} className="add-category-btn">
-                  Add Category
-                </button>
-              </div>
-
-              {/* Rooms (tile-based) */}
-              <div className="room-section">
-                <label className="room-label">Select or Remove Rooms</label>
-                <div className="room-grid">
-                  {rooms.map((room) => (
-                    <div
-                      key={room}
-                      className={`room-tile ${
-                        selectedRoom === room ? "selected" : ""
-                      }`}
-                      onClick={() => setSelectedRoom(room)}
-                    >
-                      {room}
-                      <button
-                        className="remove-room-btn"
-                        title="Remove Room"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRemoveRoomClick(room)
-                        }}
-                      >
-                        X
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="new-room">
-                  <input
-                    type="text"
-                    placeholder="Or create a new room"
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    className="new-room-input"
-                  />
-                </div>
-              </div>
-
-              <button
-                className="add-device-btn"
-                onClick={handleNext}
-                disabled={
-                  !deviceName ||
-                  !selectedCategory ||
-                  (!selectedRoom && !newRoom)
-                }
-              >
-                Add Device
+              <input
+                type="text"
+                placeholder="Category Icon (Emoji)"
+                value={newCategoryIcon}
+                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                className="new-category-input"
+              />
+              <button onClick={addNewCategory} className="add-category-btn">
+                Add Category
               </button>
             </div>
+
+            <div className="room-section">
+              <label className="room-label">Select or Remove Rooms</label>
+              <div className="room-grid">
+                {rooms.map((room) => (
+                  <div
+                    key={room}
+                    className={`room-tile ${
+                      selectedRoom === room ? "selected" : ""
+                    }`}
+                    onClick={() => setSelectedRoom(room)}
+                  >
+                    {room}
+                    <button
+                      className="remove-room-btn"
+                      title="Remove Room"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveRoomClick(room)
+                      }}
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="new-room">
+                <input
+                  type="text"
+                  placeholder="Or create a new room"
+                  value={newRoom}
+                  onChange={(e) => setNewRoom(e.target.value)}
+                  className="new-room-input"
+                />
+              </div>
+            </div>
+
+            <button
+              className="add-device-btn"
+              onClick={handleNext}
+              disabled={
+                !deviceName || !selectedCategory || (!selectedRoom && !newRoom)
+              }
+            >
+              Add Device
+            </button>
           </div>
         )
-
       case 3:
         return (
           <div className="device-step">
@@ -1420,7 +1357,6 @@ const DesktopDeviceFlow = () => {
                 ))}
               </div>
             </div>
-
             <div className="device-location">
               <h2>Device Location</h2>
               <div className="location-options">
@@ -1437,7 +1373,6 @@ const DesktopDeviceFlow = () => {
                 ))}
               </div>
             </div>
-
             <div className="consumption-limit">
               <h2>Consumption Limit</h2>
               <input
@@ -1469,13 +1404,11 @@ const DesktopDeviceFlow = () => {
                 </label>
               </div>
             </div>
-
             <button className="confirm-btn" onClick={handleNext}>
               Confirm
             </button>
           </div>
         )
-
       case 4:
         return (
           <div className="device-step success">
@@ -1493,7 +1426,6 @@ const DesktopDeviceFlow = () => {
             </button>
           </div>
         )
-
       default:
         return null
     }
@@ -1519,12 +1451,18 @@ const DesktopDeviceFlow = () => {
   }
 
   return (
-    <div className="device-flow-container">
-      <div className="device-flow-card">
+    <div className="device-flow-management">
+      <div className="flow-header">
+        <h1>Device Flow</h1>
+        <p>Follow the steps to add or configure your device</p>
+      </div>
+
+      <div className="flow-content">
         {renderStep()}
         {renderRemoveModal()}
-        <BottomNav isDesktop={true} />
       </div>
+
+      <BottomNav isDesktop={true} />
     </div>
   )
 }

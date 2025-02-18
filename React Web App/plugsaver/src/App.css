@@ -1,39 +1,4 @@
-/* ========================= */
-/* Rewards Page + Shared Layout Styles */
-/* ========================= */
 
-.rewards-container {
-  max-width: 100%;
-  min-height: 100vh;
-  background: #1a1a1a;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-
-.rewards-card {
-  background: white;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 480px;
-  padding: 20px;
-  position: relative;
-}
-
-.rewards-header {
-  background: linear-gradient(to right, #f99ac7, #fec9a3);
-  color: #fff;
-  text-align: center;
-  padding: 20px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  margin: -20px -20px 30px;
-}
-
-.rewards-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-}
 
 .points-section {
   text-align: center;
@@ -549,4 +514,118 @@
   .device-flow-card {
     max-width: 400px;
   }
+  
+}
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* Mobile Rewards Layout                */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.rewards-management-mobile {
+  min-height: 100vh;
+  background-color: #f9fafb; /* same as DeviceEdit or your mobile style */
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.rewards-mobile-header {
+  background: linear-gradient(to right, #f99ac7, #fec9a3);
+  color: white;
+  padding: 24px;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  text-align: center;
+}
+.rewards-mobile-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.rewards-mobile-header p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.rewards-mobile-content {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  /* Negative top margin to pull it up under the header */
+  margin: -32px 16px 0;
+  /* Extra bottom padding so it extends behind pinned nav */
+  padding-bottom: 80px;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* Desktop Rewards Layout               */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+.rewards-management-desktop {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* so we can have pinned nav on top if needed */
+}
+
+.rewards-desktop-header {
+  background: linear-gradient(to right, #f99ac7, #fec9a3);
+  color: white;
+  padding: 24px;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  text-align: center;
+}
+.rewards-desktop-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.rewards-desktop-header p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.rewards-desktop-content {
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 16px;
+  /* Negative top margin to pull it up under the header */
+  margin: -32px auto 0; /* center horizontally */
+  max-width: 1200px;    /* or whatever width you prefer */
+  width: 100%;
+  /* Extra bottom padding so it extends behind pinned nav */
+  padding-bottom: 80px;
+
+  /* 2-column layout on desktop */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+/* Left & right columns */
+.desktop-left,
+.desktop-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* BottomNav pinned for both            */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px;
+  z-index: 999; /* so it's on top of the content */
 }

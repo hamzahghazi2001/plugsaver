@@ -1,12 +1,13 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import "../App.css";
+import "../App.css"; // Where we'll place the matching CSS
 import PointsSection from "../Components/PointsSection";
 import ProgressBar from "../Components/ProgressBar";
 import FilterTabs from "../Components/FilterTabs";
 import Leaderboard from "../Components/Leaderboard";
 import BadgesSection from "../Components/BadgesSection";
 import BottomNav from "../Components/BottomNav";
-import DesktopLayout from "../Components/DesktopLayoutRP";
 
 // Hook to track window width
 const useViewport = () => {
@@ -21,50 +22,86 @@ const useViewport = () => {
 
 const defaultMilestones = [25, 50, 100, 300, 500];
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   1) MOBILE REWARDS LAYOUT
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 const RewardsPageMobile = ({
   leaderboardData,
   milestones,
   currentPoints,
   leaderboardType,
   setLeaderboardType,
-}) => (
-  <div className="rewards-container">
-    <div className="rewards-card">
-      <div className="rewards-header">
+}) => {
+  return (
+    <div className="rewards-management-mobile">
+      {/* Large rounded gradient header */}
+      <div className="rewards-mobile-header">
         <h1>Rewards</h1>
+        <p>Track your progress and earn badges</p>
       </div>
-      <PointsSection currentPoints={currentPoints} />
-      <ProgressBar milestones={milestones} currentPoints={currentPoints} />
-      <FilterTabs leaderboardType={leaderboardType} setLeaderboardType={setLeaderboardType} />
-      <Leaderboard leaderboardData={leaderboardData} />
-      <BadgesSection />
+
+      {/* White card, pulled up under header, with bottom padding */}
+      <div className="rewards-mobile-content">
+        <PointsSection currentPoints={currentPoints} />
+        <ProgressBar milestones={milestones} currentPoints={currentPoints} />
+        <FilterTabs
+          leaderboardType={leaderboardType}
+          setLeaderboardType={setLeaderboardType}
+        />
+        <Leaderboard leaderboardData={leaderboardData} />
+        <BadgesSection />
+      </div>
+
+      {/* Pinned bottom nav */}
       <BottomNav isDesktop={false} />
     </div>
-  </div>
-);
+  );
+};
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   2) DESKTOP REWARDS LAYOUT
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Similar gradient header, large bottom corners, 
+   but a 2-column white card underneath.
+*/
 const RewardsPageDesktop = ({
   leaderboardData,
   milestones,
   currentPoints,
   leaderboardType,
   setLeaderboardType,
-}) => (
-  <DesktopLayout headerContent={<h1>Rewards</h1>}>
-    <div className="desktop-left">
-      <PointsSection currentPoints={currentPoints} />
-      <ProgressBar milestones={milestones} currentPoints={currentPoints} />
-      <FilterTabs leaderboardType={leaderboardType} setLeaderboardType={setLeaderboardType} />
-      <BadgesSection />
-    </div>
-    <div className="desktop-right">
-      <Leaderboard leaderboardData={leaderboardData} />
-    </div>
-    <BottomNav isDesktop={true} />
-  </DesktopLayout>
-);
+}) => {
+  return (
+    <div className="rewards-management-desktop">
+      {/* Large rounded gradient header (same style as mobile) */}
+      <div className="rewards-desktop-header">
+        <h1>Rewards</h1>
+        <p>Track your progress and earn badges</p>
+      </div>
 
-const RewardsPage = () => {
+      {/* White card with negative margin + bottom padding, 2 columns inside */}
+      <div className="rewards-desktop-content">
+        <div className="desktop-left">
+          <PointsSection currentPoints={currentPoints} />
+          <ProgressBar milestones={milestones} currentPoints={currentPoints} />
+          <FilterTabs
+            leaderboardType={leaderboardType}
+            setLeaderboardType={setLeaderboardType}
+          />
+          <BadgesSection />
+        </div>
+        <div className="desktop-right">
+          <Leaderboard leaderboardData={leaderboardData} />
+        </div>
+      </div>
+
+      {/* Pinned bottom nav */}
+      <BottomNav isDesktop={true} />
+    </div>
+  );
+};
+
+export default function RewardsPage() {
   const { width } = useViewport();
   const breakpoint = 1024;
 
@@ -74,13 +111,14 @@ const RewardsPage = () => {
   const [currentPoints, setCurrentPoints] = useState(0);
 
   useEffect(() => {
-    // Update the endpoint to match your backend
     fetch(`/api/rewards?leaderboardType=${leaderboardType}`)
       .then((res) => res.json())
       .then((data) => {
         setLeaderboardData(data.leaderboardData || []);
         setMilestones(
-          data.milestones && data.milestones.length ? data.milestones : defaultMilestones
+          data.milestones && data.milestones.length
+            ? data.milestones
+            : defaultMilestones
         );
         setCurrentPoints(data.currentPoints || 0);
       })
@@ -92,6 +130,7 @@ const RewardsPage = () => {
       });
   }, [leaderboardType]);
 
+  // Switch between mobile vs. desktop layout
   return width >= breakpoint ? (
     <RewardsPageDesktop
       leaderboardData={leaderboardData}
@@ -109,6 +148,4 @@ const RewardsPage = () => {
       setLeaderboardType={setLeaderboardType}
     />
   );
-};
-
-export default RewardsPage;
+}

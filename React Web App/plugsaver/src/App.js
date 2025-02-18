@@ -10,6 +10,7 @@ import HouseholdManager from "./Pages/HouseholdManager";
 import HouseholdMember from "./Pages/HouseholdMember";
 import RewardsPage from "./Pages/RewardsPage";
 import DeviceFlow from "./Pages/DeviceFlow";
+import DeviceEdit from "./Pages/DeviceEdit";
 
 
 import "./App.css";
@@ -35,6 +36,7 @@ function App() {
         <Route path="/RewardsPage" element={<RewardsPage />} />
         <Route path="/deviceflow" element={<DeviceFlow />} />
         <Route path="/supportpage" element={<SupportPages />} />
+        <Route path="/DeviceEdit" element={<DeviceEdit />} />
       </Routes>
     </BrowserRouter>
   );
