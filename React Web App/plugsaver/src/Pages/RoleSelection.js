@@ -1,198 +1,250 @@
 import React, { useState } from "react";
-import logo from "./Images/arrow-back.png";
-import logoManager from "./Images/manager.png";
-import logoMember from "./Images/member.png";
+import { useNavigate } from "react-router-dom";
+import managerImage from "./Images/manager.png"; // Import manager image
+import memberImage from "./Images/member.png"; // Import member image
 
-function RoleSelection() {
-  const [selectedRole, setSelectedRole] = useState(null);
+export default function RoleSelectionPage() {
+  const navigate = useNavigate();
+  const [selectedRole, setSelectedRole] = useState(null); // Track selected role
+
+  const handleManagerClick = () => {
+    setSelectedRole("manager"); // Set selected role to manager
+  };
+
+  const handleMemberClick = () => {
+    setSelectedRole("member"); // Set selected role to member
+  };
+
+  const handleConfirmClick = () => {
+    if (selectedRole === "manager") {
+      navigate("/HouseholdManager"); // Navigate to HouseholdManager page
+    } else if (selectedRole === "member") {
+      navigate("/HouseholdMember"); // Navigate to HouseholdMember page
+    }
+  };
+
+  // Styles
+  const containerStyle = {
+    height: "100vh",
+    width: "100vw",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center", // Center content horizontally
+    background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+    color: "white",
+    fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    overflowX: "hidden", // Prevent horizontal overflow
+    overflowY: "auto", // Allow vertical scrolling
+    boxSizing: "border-box",
+    margin: 0,
+    position: "fixed",
+    top: 0,
+    left: 0,
+    padding: "16px", // Add padding to avoid touching the edges
+  };
+
+  const progressBarContainerStyle = {
+    backgroundColor: "#ffffff",
+    padding: "20px",
+    borderRadius: "10px",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+    width: "90%", // Responsive width
+    maxWidth: "800px", // Max width for larger screens
+    margin: "20px auto", // Center and add margin
+    boxSizing: "border-box", // Include padding in width calculation
+  };
+
+  const cardContainerStyle = {
+    flex: 1, // Take up remaining space
+    display: "flex",
+    justifyContent: "center", // Center horizontally
+    alignItems: "center", // Center vertically
+    width: "100%",
+  };
+
+  const cardStyle = {
+    backgroundColor: "#ffffff",
+    padding: "20px", // Reduced padding for better spacing on mobile
+    borderRadius: "10px",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+    width: "90%", // Responsive width
+    maxWidth: "900px", // Reduced maxWidth for better desktop layout
+    textAlign: "center",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column", // Ensure vertical stacking
+    alignItems: "center", // Center-align all items
+    marginTop: -90,
+  };
+
+  const titleStyle = {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginBottom: "20px",
+    color: "#333",
+  };
+
+  const progressTrackerStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    position: "relative",
+  };
+
+  const progressStepStyle = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    zIndex: 1, // Ensure steps are above the progress line
+  };
+
+  const progressCircleStyle = (isCompleted, isCurrent) => ({
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    backgroundColor: isCompleted ? "#4ADE80" : isCurrent ? "#007bff" : "#ddd",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "white",
+    fontSize: "14px",
+    fontWeight: "bold",
+    transition: "background-color 0.3s ease",
+  });
+
+  const progressLabelStyle = {
+    marginTop: "5px",
+    fontSize: "12px",
+    color: "#666",
+  };
+
+  const roleContainerStyle = {
+    display: "flex",
+    justifyContent: "space-between", // Space out the role cards
+    alignItems: "center", // Center items vertically
+    width: "100%", // Full width of the container
+    flexDirection: "row", // Default to row layout
+    gap: "10px", // Add gap between cards
+    "@media (max-width: 600px)": {
+      flexDirection: "column", // Stack vertically on mobile
+      gap: "10px", // Add gap between stacked cards
+    },
+  };
+
+  const roleCardStyle = (isSelected) => ({
+    width: "48%", // Slightly less than 50% to account for gap
+    padding: "20px",
+    borderRadius: "10px",
+    backgroundColor: isSelected ? "#007bff" : "#f9f9f9",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    cursor: "pointer",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+    "@media (max-width: 600px)": {
+      width: "100%", // Full width on mobile
+      padding: "15px", // Reduce padding for mobile
+    },
+    boxSizing: "border-box", // Include padding in width calculation
+  });
+
+  const roleImageStyle = {
+    width: "80px", // Smaller image size for mobile
+    height: "80px",
+    borderRadius: "10px",
+    marginBottom: "10px",
+    objectFit: "cover", // Ensure the image fits well
+    "@media (max-width: 600px)": {
+      width: "60px", // Even smaller image size for mobile
+      height: "60px",
+    },
+  };
+
+  const roleTitleStyle = (isSelected) => ({
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: isSelected ? "white" : "#333",
+    "@media (max-width: 600px)": {
+      fontSize: "16px", // Smaller font size for mobile
+    },
+  });
+
+  const confirmButtonStyle = {
+    width: "100%",
+    padding: "12px",
+    backgroundColor: selectedRole ? "#007bff" : "#ccc",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "16px",
+    cursor: selectedRole ? "pointer" : "not-allowed",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    marginTop: "20px",
+    pointerEvents: selectedRole ? "auto" : "none",
+    transition: "background-color 0.3s ease",
+  };
 
   return (
-    <div>
-      {/* Title Banner */}
-      <div
-        data-layer="TitleBanner"
-        className="Titlebanner"
-        style={{
-          width: "100vw",
-          height: 190,
-          position: "absolute",
-          top: 0,
-          left: 0,
-          background:
-            "linear-gradient(90deg, #236AF2, #34ECE1, #54DEE7, #B6FF7C)",
-          overflow: "hidden",
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-        }}
-      >
-        {/* Blurred background shapes */}
-        <div
-          style={{
-            width: 500,
-            height: 400,
-            background: "#34ECE1",
-            position: "absolute",
-            top: -100,
-            left: -50,
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 600,
-            height: 500,
-            background: "#236AF2",
-            position: "absolute",
-            top: -150,
-            left: "30%",
-            filter: "blur(120px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 450,
-            height: 350,
-            background: "#54DEE7",
-            position: "absolute",
-            top: -50,
-            left: "70%",
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 550,
-            height: 400,
-            background: "#B6FF7C",
-            position: "absolute",
-            top: 50,
-            left: "40%",
-            filter: "blur(110px)",
-          }}
-        ></div>
-      
-        {/* Progress Bar */}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "absolute",
-            top: "45%",
-            left: "50%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div
-            style={{
-              width: "80%",
-              maxWidth: 400,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                width: "90%",
-                height: 3,
-                background: "white",
-                position: "absolute",
-                top: "30%",
-                left: 10,
-                transform: "translateY(-50%)",
-              }}
-            ></div>
-            {["✓", "✓", "", ""].map((mark, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  zIndex: 2,
-                }}
-              >
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    background: "white",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    border: index === 2 ? "2px solid #FF0085" : "none",
-                    fontWeight: "bold",
-                    fontSize: "20px",
-                    color: "black",
-                  }}
-                >
-                  {mark}
-                </div>
-                <div style={{ marginTop: 5, color: "white", fontSize: 14 }}>
-                  {["Sign Up", "2FA", "Role", "Household"][index]}
-                </div>
-              </div>
-            ))}
+    <div style={containerStyle}>
+      {/* Progress Bar Container */}
+      <div style={progressBarContainerStyle}>
+        <div style={progressTrackerStyle}>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(true, false)}>✓</div>
+            <div style={progressLabelStyle}>Sign Up</div>
+          </div>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(false, true)}>2</div>
+            <div style={progressLabelStyle}>Role</div>
+          </div>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(false, false)}>3</div>
+            <div style={progressLabelStyle}>Household</div>
           </div>
         </div>
       </div>
 
-      <img
-        src={logo}
-        alt="Back"
-        style={{ width: "35px", height: "30px", position: "absolute", top: "30px", left: "10px" }}
-      />
+      {/* Card Container (Centered) */}
+      <div style={cardContainerStyle}>
+        {/* Role Selection Card */}
+        <div style={cardStyle}>
+          <div style={titleStyle}>Select Your Role</div>
 
-      {/* Role Selection */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "400px" }}>
-        <h2 style={{ color: "#008CFF" }}>Select Your Role</h2>
-        <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-          {[{ role: "Manager", img: logoManager }, { role: "Member", img: logoMember }].map(({ role, img }) => (
-            <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              style={{
-                padding: "10px 20px",
-                borderRadius: "25px",
-                border: "2px solid #008CFF",
-                background: selectedRole === role ? "#008CFF" : "white",
-                color: selectedRole === role ? "white" : "black",
-                cursor: "pointer",
-                fontSize: "16px",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
+          {/* Role Selection Cards */}
+          <div style={roleContainerStyle}>
+            <div
+              style={roleCardStyle(selectedRole === "manager")}
+              onClick={handleManagerClick}
             >
-              <img src={img} alt={role} style={{ width: "24px", height: "24px" }} />
-              {role}
-            </button>
-          ))}
-        </div>
+              <img
+                src={managerImage} // Use imported manager image
+                alt="Manager Role"
+                style={roleImageStyle}
+              />
+              <div style={roleTitleStyle(selectedRole === "manager")}>Manager</div>
+            </div>
+            <div
+              style={roleCardStyle(selectedRole === "member")}
+              onClick={handleMemberClick}
+            >
+              <img
+                src={memberImage} // Use imported member image
+                alt="Member Role"
+                style={roleImageStyle}
+              />
+              <div style={roleTitleStyle(selectedRole === "member")}>Member</div>
+            </div>
+          </div>
 
-        {/* Confirm Button */}
-        <button
-          style={{
-            width: 114,
-            height: 43,
-            background: "#FF0085",
-            color: "white",
-            fontSize: "20px",
-            borderRadius: "25px",
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-          }}
-        >
-          Confirm
-        </button>
+          {/* Confirm Button */}
+          <button
+            style={confirmButtonStyle}
+            onClick={handleConfirmClick}
+            disabled={!selectedRole} // Disable button if no role is selected
+          >
+            Confirm
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-export default RoleSelection;

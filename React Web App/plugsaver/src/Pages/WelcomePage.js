@@ -1,149 +1,148 @@
-import React, { useState, useEffect } from "react";
-import DesktopLayout from "../Components/DesktopLayout";
+"use client"
 
-export default function WelcomePage() {
-  // Track window width to decide desktop vs. mobile layout
-  const [width, setWidth] = useState(window.innerWidth);
+import { useState } from "react"
 
-  useEffect(() => {
-    const handleWindowResize = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handleWindowResize);
-    return () => window.removeEventListener("resize", handleWindowResize);
-  }, []);
+const PlugSaver = () => {
+  const [isLoading, setIsLoading] = useState({ login: false, create: false })
 
-  const isDesktop = width >= 1024;
+  const handleLogin = () => {
+    setIsLoading({ ...isLoading, login: true })
+    window.location.href = "/LoginPage"
+  }
 
-  // Inline container style (original gradient background, etc.)
-  const containerStyle = {
-    width: "100vw",
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center", // Center title vertically
-    alignItems: "center",     // Center title horizontally
-    background: "linear-gradient(135deg, #00C9FF, #92FE9D)",
-    padding: "20px",
-    boxSizing: "border-box",
-  };
+  const handleCreateAccount = () => {
+    setIsLoading({ ...isLoading, create: true })
+    window.location.href = "/RegistrationPage"
+  }
 
-  // Your existing content (title, buttons, T&C text, etc.)
-  const content = (
-    <>
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "1rem",
+        background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+        color: "white",
+        fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        overflow: "hidden",
+        boxSizing: "border-box",
+        margin: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+      }}
+    >
+      {/* Main Content */}
       <div
         style={{
           flex: 1,
           display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
           flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          maxWidth: "20rem",
+          padding: "1rem",
+          boxSizing: "border-box",
         }}
       >
-        <div
-          data-layer="Plug Saver"
-          className="PlugSaver"
+        <h1
           style={{
-            color: "white",
-            fontSize: 45,
-            fontWeight: 500,
-            marginBottom: "5px",
+            fontSize: "clamp(2.5rem, 10vw, 3.5rem)",
+            fontWeight: "700",
+            marginBottom: "0.5rem",
+            letterSpacing: "-0.05em",
+            textAlign: "center",
           }}
         >
           Plug Saver
-        </div>
+        </h1>
         <div
-          data-layer="Empower Your Home, Save More Energy!"
-          className="EmpowerYourHomeSaveMoreEnergy"
           style={{
-            color: "white",
-            fontSize: 17,
-            fontWeight: 400,
+            fontSize: "clamp(1rem, 4vw, 1.25rem)",
+            marginBottom: "3rem",
+            opacity: 0.9,
+            lineHeight: "1.2",
+            textAlign: "center",
           }}
         >
-          Empower Your Home, <br /> Save More Energy!
+          <p style={{ margin: 0 }}>Empower Your Home,</p>
+          <p style={{ margin: 0 }}>Save More Energy!</p>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <button
+            onClick={handleLogin}
+            disabled={isLoading.login}
+            style={{
+              width: "100%",
+              padding: "0.875rem",
+              fontSize: "clamp(0.875rem, 3vw, 1rem)",
+              fontWeight: "600",
+              borderRadius: "9999px",
+              backgroundColor: "#E91E63",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {isLoading.login ? "Redirecting..." : "Login"}
+          </button>
+          <button
+            onClick={handleCreateAccount}
+            disabled={isLoading.create}
+            style={{
+              width: "100%",
+              padding: "0.875rem",
+              fontSize: "clamp(0.875rem, 3vw, 1rem)",
+              fontWeight: "600",
+              borderRadius: "9999px",
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              backdropFilter: "blur(4px)",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {isLoading.create ? "Redirecting..." : "Create Account"}
+          </button>
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* Footer */}
       <div
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "20px",
-          padding: "70px",
-        }}
-      >
-        {/* Login Button */}
-        <div
-          data-layer="Login Button"
-          className="LoginButton"
-          style={{
-            width: 259,
-            height: 49,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#FF0085",
-            borderRadius: "25px",
-            color: "white",
-            fontSize: 20,
-            fontWeight: 400,
-            cursor: "pointer",
-          }}
-        >
-          Login
-        </div>
-
-        {/* Create Account Button */}
-        <div
-          data-layer="Create Account Button"
-          className="CreateAccountButton"
-          style={{
-            width: 259,
-            height: 49,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0, 0, 0, 0.22)",
-            borderRadius: "25px",
-            color: "white",
-            fontSize: 20,
-            fontWeight: 400,
-            cursor: "pointer",
-          }}
-        >
-          Create Account
-        </div>
-      </div>
-
-      {/* Terms and Conditions */}
-      <div
-        data-layer="By tapping Create Account or Login, I agree to the PlugSaver Terms and Conditions & Privacy Agreements."
-        className="ByTappingCreateAccountOrLoginIAgreeToThePlugsaverTermsAndConditionsPrivacyAgreements"
-        style={{
-          width: "305px",
           textAlign: "center",
-          fontSize: "11px",
-          fontWeight: 400,
-          lineHeight: "20px",
-          color: "black",
-          marginBottom: "20px",
+          fontSize: "clamp(0.75rem, 2.5vw, 0.875rem)",
+          opacity: 0.8,
+          padding: "1rem",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
-        <span>By tapping Create Account or Login, I agree to the PlugSaver </span>
-        <span style={{ color: "#FF0085" }}>Terms and Conditions</span>
-        <span> & </span>
-        <span style={{ color: "#FF0085" }}>Privacy Agreements.</span>
+        <p style={{ margin: 0 }}>
+          By tapping Create Account or Login, I agree to the PlugSaver{" "}
+          <a href="/terms" style={{ color: "white", textDecoration: "underline" }}>
+            Terms and Conditions
+          </a>{" "}
+          &{" "}
+          <a href="/privacy" style={{ color: "white", textDecoration: "underline" }}>
+            Privacy Agreements
+          </a>
+        </p>
       </div>
-    </>
-  );
-
-  // If desktop, wrap content in DesktopLayout. Otherwise, render normally.
-  return isDesktop ? (
-    <DesktopLayout containerStyle={containerStyle}>
-      {content}
-    </DesktopLayout>
-  ) : (
-    <div style={containerStyle}>{content}</div>
-  );
+    </div>
+  )
 }
+
+export default PlugSaver
+

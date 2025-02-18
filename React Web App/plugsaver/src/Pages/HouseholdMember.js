@@ -1,237 +1,240 @@
 import React, { useState } from "react";
-import logo from "./Images/arrow-back.png";
-import logo2 from "./Images/house.png"; // Assuming this is the house.png image
+import { useNavigate } from "react-router-dom";
+import houseEmoji from "./Images/house.png"; // Import house emoji/image
 
-function HouseholdMember() {
-  const [generatedCode, setGeneratedCode] = useState(""); // State for the generated code
+export default function HouseholdMemberPage() {
+  const navigate = useNavigate();
+  const [householdCode, setHouseholdCode] = useState(""); // State for household code
+
+  // Function to handle paste from clipboard
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (/^[A-Za-z0-9]{7}$/.test(text)) {
+        setHouseholdCode(text);
+      } else {
+        alert("Invalid code! Please ensure it's a 7-digit/letter code.");
+      }
+    } catch (err) {
+      alert("Failed to read from clipboard. Please paste manually.");
+    }
+  };
+
+  // Function to handle continue button click
+  const handleContinueClick = () => {
+    if (/^[A-Za-z0-9]{7}$/.test(householdCode)) {
+      navigate("/HomePage"); // Navigate to the next page
+    } else {
+      alert("Please enter a valid 7-digit/letter code.");
+    }
+  };
+
+  // Styles
+  const containerStyle = {
+    height: "100vh",
+    width: "100vw",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+    color: "white",
+    fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    overflowX: "hidden",
+    overflowY: "auto",
+    boxSizing: "border-box",
+    margin: 0,
+    position: "fixed",
+    top: 0,
+    left: 0,
+    padding: "16px", // Add padding to avoid touching the edges
+  };
+
+  const progressBarContainerStyle = {
+    backgroundColor: "#ffffff",
+    padding: "20px",
+    borderRadius: "10px",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+    width: "90%",
+    maxWidth: "800px",
+    margin: "20px auto", // Margin to position the progress bar at the top
+    boxSizing: "border-box",
+  };
+
+  const progressTrackerStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    position: "relative",
+  };
+
+  const progressStepStyle = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    zIndex: 1, // Ensure steps are above the progress line
+  };
+
+  const progressCircleStyle = (isCompleted, isCurrent) => ({
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    backgroundColor: isCompleted ? "#4ADE80" : isCurrent ? "#007bff" : "#ddd",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "white",
+    fontSize: "14px",
+    fontWeight: "bold",
+    transition: "background-color 0.3s ease",
+  });
+
+  const progressLabelStyle = {
+    marginTop: "5px",
+    fontSize: "12px",
+    color: "#666",
+  };
+
+  const cardContainerStyle = {
+    flex: 1, // Take up remaining space
+    display: "flex",
+    justifyContent: "center", // Center horizontally
+    alignItems: "center", // Center vertically
+    width: "100%",
+  };
+
+  const cardStyle = {
+    backgroundColor: "#ffffff",
+    padding: "40px", // Increased padding for better spacing
+    borderRadius: "10px",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+    width: "90%",
+    maxWidth: "800px", // Reduced maxWidth for better desktop layout
+    textAlign: "center",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column", // Ensure vertical stacking
+    alignItems: "center", // Center-align all items
+    marginTop: -90,
+  };
+
+  const titleStyle = {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginBottom: "20px",
+    color: "#333",
+  };
+
+  const codeContainerStyle = {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: "20px",
+    gap: "10px", // Added gap for better spacing
+    flexWrap: "wrap", // Allow wrapping on smaller screens
+  };
+
+  const codeInputStyle = {
+    width: "200px", // Reduced width of the input field
+    padding: "10px",
+    borderRadius: "5px",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+    fontSize: "16px",
+    textAlign: "center",
+    flex: "none", // Prevent input from growing
+  };
+
+  const buttonStyle = {
+    padding: "10px 20px",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "16px",
+    cursor: "pointer",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    transition: "background-color 0.3s ease",
+    flex: "none", // Prevent button from growing
+  };
+
+  const continueButtonStyle = {
+    width: "100%",
+    padding: "12px",
+    backgroundColor: householdCode ? "#007bff" : "#ccc",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "16px",
+    cursor: householdCode ? "pointer" : "not-allowed",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    marginTop: "20px",
+    pointerEvents: householdCode ? "auto" : "none",
+    transition: "background-color 0.3s ease",
+  };
+
+  const houseEmojiStyle = {
+    width: "60px",
+    height: "60px",
+    margin: "20px auto", // Center the image
+  };
 
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        textAlign: "center",
-        height: "100vh", // Full viewport height
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center", // Center vertically
-        alignItems: "center", // Center horizontally
-        position: "relative", // For absolute positioning of the "Share Code" text
-      }}
-    >
-      {/* Title Banner */}
-      <div
-        style={{
-          width: "100%",
-          height: "200px",
-          background: "linear-gradient(90deg, #236AF2, #34ECE1, #54DEE7, #B6FF7C)",
-          borderBottomLeftRadius: "24px",
-          borderBottomRightRadius: "24px",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          overflow: "hidden",
-        }}
-      >
-        {/* Blurred background shapes */}
-        <div
-          style={{
-            width: "500px",
-            height: "400px",
-            background: "#34ECE1",
-            position: "absolute",
-            top: "-100px",
-            left: "-50px",
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: "600px",
-            height: "500px",
-            background: "#236AF2",
-            position: "absolute",
-            top: "-150px",
-            left: "30%",
-            filter: "blur(120px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: "450px",
-            height: "350px",
-            background: "#54DEE7",
-            position: "absolute",
-            top: "-50px",
-            left: "70%",
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: "550px",
-            height: "400px",
-            background: "#B6FF7C",
-            position: "absolute",
-            top: "50px",
-            left: "40%",
-            filter: "blur(110px)",
-          }}
-        ></div>
-
-        {/* Progress Bar */}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "absolute",
-            top: "60%",
-            left: "50%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div
-            style={{
-              width: "80%",
-              maxWidth: "400px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                width: "90%",
-                height: "3px",
-                background: "white",
-                position: "absolute",
-                top: "30%",
-                left: "10px",
-                transform: "translateY(-50%)",
-              }}
-            ></div>
-            {["✓", "✓", "✓", ""].map((mark, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  zIndex: 2,
-                }}
-              >
-                <div
-                  style={{
-                    width: "30px",
-                    height: "30px",
-                    background: "white",
-                    borderRadius: "50%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    border: index === 3 ? "2px solid #FF0085" : "none",
-                    fontWeight: "bold",
-                    fontSize: "20px",
-                    color: "black",
-                  }}
-                >
-                  {mark}
-                </div>
-                <div style={{ marginTop: "5px", color: "white", fontSize: "14px" }}>
-                  {["Sign Up", "2FA", "Role", "Household"][index]}
-                </div>
-              </div>
-            ))}
+    <div style={containerStyle}>
+      {/* Progress Bar Container */}
+      <div style={progressBarContainerStyle}>
+        <div style={progressTrackerStyle}>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(true, false)}>✓</div>
+            <div style={progressLabelStyle}>Sign Up</div>
+          </div>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(true, false)}>✓</div>
+            <div style={progressLabelStyle}>Role</div>
+          </div>
+          <div style={progressStepStyle}>
+            <div style={progressCircleStyle(false, true)}>3</div>
+            <div style={progressLabelStyle}>Household</div>
           </div>
         </div>
       </div>
 
-      {/* Back Button */}
-      <img
-        src={logo}
-        alt="Back"
-        style={{
-          width: "35px",
-          height: "30px",
-          position: "absolute",
-          top: "30px",
-          left: "20px",
-          cursor: "pointer",
-        }}
-      />
+      {/* Card Container (Centered) */}
+      <div style={cardContainerStyle}>
+        {/* Household Member Card */}
+        <div style={cardStyle}>
+          {/* Title */}
+          <div style={titleStyle}>Join Household</div>
 
-      {/* Household Creation Section */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "30px", // Increased gap for more spacing
-          zIndex: 2, // Ensure it's above the banner
-        }}
-      >
-        {/* Create Household Text */}
-        <h2 style={{ color: "black", fontSize: "28px", fontWeight: "bold", marginBottom: "20px" }}>
-          Join Household
-        </h2>
+          {/* House Emoji/Image */}
+          <img src={houseEmoji} alt="House" style={houseEmojiStyle} />
 
-        {/* House Image */}
-        <img
-          src={logo2}
-          alt="House"
-          style={{ width: "80px", height: "auto", marginBottom: "20px" }}
-        />
+          {/* Household Code Input and Paste Button */}
+          <div style={codeContainerStyle}>
+            <input
+              type="text"
+              placeholder="Enter Household Code"
+              value={householdCode}
+              onChange={(e) => setHouseholdCode(e.target.value)}
+              style={codeInputStyle}
+              maxLength={7}
+            />
+            <button style={buttonStyle} onClick={handlePaste}>
+              Paste
+            </button>
+          </div>
 
-        {/* Enter Household Code Text */}
-        <div
-          style={{
-            color: "black",
-            fontSize: "16px",
-            marginBottom: "-23px", // Space between text and input field
-          }}
-        >
-          Enter Household Code
+          {/* Continue Button */}
+          <button
+            style={continueButtonStyle}
+            onClick={handleContinueClick}
+            disabled={!householdCode}
+          >
+            Continue
+          </button>
         </div>
-
-        {/* Generated Code Text Field */}
-        <input
-          type="text"
-          value={generatedCode}
-          onChange={(e) => setGeneratedCode(e.target.value)} // Allow user input
-          style={{
-            padding: "10px",
-            fontSize: "16px",
-            borderRadius: "10px",
-            border: "2px solid #ccc",
-            width: "160px",
-            textAlign: "center",
-          }}
-        />
-
-        {/* Continue Button */}
-        <button
-          style={{
-            width: "138px",
-            height: "50px",
-            background: "#FF0085",
-            color: "white",
-            fontSize: "18px",
-            borderRadius: "25px",
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-            transition: "background 0.3s ease",
-          }}
-          onMouseOver={(e) => (e.target.style.background = "#E00075")}
-          onMouseOut={(e) => (e.target.style.background = "#FF0085")}
-        >
-          Continue
-        </button>
       </div>
     </div>
   );
 }
-
-export default HouseholdMember;

@@ -1,390 +1,355 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function RegistrationPage() {
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isAgreed, setIsAgreed] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [twoFACode, setTwoFACode] = useState(""); // State for 2FA code
+  const [isCodeValid, setIsCodeValid] = useState(false); // State to track if the code is valid
+
+  const handleRegisterClick = () => {
+    navigate("/LoginPage");
+  };
+
+  const handleSignInClick = () => {
+    if (name && email && password && isAgreed) {
+      setShow2FAModal(true);
+      startTimer();
+    } else {
+      alert("Please fill all fields and agree to the terms.");
+    }
+  };
+
+  const startTimer = () => {
+    const interval = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime === 0) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendCode = () => {
+    setTimeLeft(60);
+    startTimer();
+  };
+
+  const handleCloseModal = () => {
+    setShow2FAModal(false);
+    setTimeLeft(60); // Reset the timer when the modal is closed
+    setTwoFACode(""); // Clear the 2FA code input
+    setIsCodeValid(false); // Reset code validation
+  };
+
+  const handleVerifyClick = () => {
+    // Redirect to /RoleSelection page
+    navigate("/RoleSelection");
+  };
+
+  // Handle 2FA code input change
+  const handleTwoFACodeChange = (e) => {
+    const value = e.target.value;
+    // Only allow numbers and limit to 6 digits
+    if (/^\d{0,6}$/.test(value)) {
+      setTwoFACode(value);
+      setIsCodeValid(value.length === 6); // Enable Verify button only if 6 digits are entered
+    }
+  };
+
   const containerStyle = {
+    height: "100vh",
+    width: "100vw",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
+    background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+    color: "white",
+    fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    overflow: "hidden",
+    boxSizing: "border-box",
     margin: 0,
-    flexDirection: "column", // Stack children vertically (form and button)
+    position: "fixed",
+    top: 0,
+    left: 0,
+    padding: "16px", // Add padding to ensure the container doesn't touch the edges
+  };
+
+  const cardStyle = {
+    backgroundColor: "#ffffff",
+    padding: "40px",
+    borderRadius: "10px",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+    width: "100%",
+    maxWidth: "400px",
+    textAlign: "center",
+    margin: "0 16px", // Add margin to ensure the card doesn't touch the edges
+  };
+
+  const titleStyle = {
+    fontSize: "24px",
+    fontWeight: "bold",
+    marginBottom: "10px",
+    color: "#333",
+  };
+
+  const subtitleStyle = {
+    fontSize: "14px",
+    color: "#666",
+    marginBottom: "20px",
   };
 
   const inputContainerStyle = {
     display: "flex",
-    flexDirection: "column", // Arrange label and input vertically
-    alignItems: "flex-start", // Align items to the left
-    padding: "20px",
-    borderRadius: "5px", // Keep the border radius (optional)
-    backgroundColor: "white", // Add a background color to the form
-  };
-
-  const labelStyle = {
-    alignSelf: "flex-start", // Align the label to the left
-    marginBottom: "5px", // Space between label and input
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "20px",
   };
 
   const inputStyle = {
-    border: "1px solid gray",
-    padding: "10px",
-    borderRadius: "3px",
-    width: "300px", // Increase the width of the input fields
-    marginBottom: "20px", // Add margin-bottom to increase the space between fields
+    width: "100%",
+    padding: "12px",
+    marginBottom: "15px",
+    borderRadius: "5px",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+    fontSize: "14px",
+    outline: "none",
   };
 
-  const buttonContainerStyle = {
+  const inputStyleCode = {
+    width: "100%",
+    padding: "12px",
+    marginBottom: "15px",
+    borderRadius: "5px",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
+    color: "#333",
+    fontSize: "14px",
+    outline: "none",
+    textAlign: "center", // Center the text inside the input
+  };
+
+  const checkboxContainerStyle = {
     display: "flex",
-    justifyContent: "center", // Center the button horizontally
     alignItems: "center",
-    marginTop: "10px", // Space between the inputs and the button
+    marginBottom: "20px",
+    justifyContent: "center",
+  };
+
+  const checkboxStyle = {
+    marginRight: "10px",
+    cursor: "pointer",
+    transform: isAgreed ? "scale(1.1)" : "scale(1)", // Scale effect when checked
+    transition: "transform 0.2s ease", // Smooth transition
+  };
+
+  const checkboxLabelStyle = {
+    color: isAgreed ? "#007bff" : "#666", // Change label color when checked
+    transition: "color 0.2s ease", // Smooth transition
   };
 
   const buttonStyle = {
-    width: "247px",
-    height: "43px",
-    position: "relative",
-    background: "#FF0085",
-    borderRadius: "25px",
-    cursor: "pointer", // Changes the cursor to a pointer to indicate it's clickable
-  };
-
-  const buttonTextStyle = {
-    width: "245px",
-    height: "43px",
-    position: "absolute",
-    textAlign: "center",
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#007bff",
     color: "white",
-    fontSize: "20px",
-    fontFamily: "",
-    fontWeight: "400",
-    wordWrap: "break-word",
-    lineHeight: "43px", // Vertically center the text inside the button
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "16px",
+    cursor: "pointer",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    marginBottom: "15px",
+    opacity: name && email && password && isAgreed ? 1 : 0.5,
+    pointerEvents: name && email && password && isAgreed ? "auto" : "none",
   };
 
-  const forgotPasswordStyle = {
-    marginTop: "15px", // Space between the button and "Forgot Password?"
-    textAlign: "center",
-    color: "black", // Change color to black
+  const linkStyle = {
+    color: "#007bff",
+    textDecoration: "none",
     fontSize: "14px",
-    cursor: "pointer", // Change cursor to pointer to indicate it's clickable
+    fontWeight: "bold",
+    cursor: "pointer",
   };
 
-  const createAccountContainerStyle = {
-    position: "absolute", // Position it at the bottom
-    bottom: "30px", // Distance from the bottom of the page
-    display: "inline-flex", // To align the "Don’t have an account?" and "Create Account" texts
-    flexDirection: "column",
+  const modalStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    gap: "7px", // Space between the texts
-    width: "100%", // Ensure it stretches across the page width
-    textAlign: "center", // Center-align the text
   };
 
-  const createAccountTextStyle = {
-    width: "123px",
-    height: "18px",
-    color: "#FF0085", // Color for "Create Account"
-    fontSize: "15px",
-    fontFamily: "",
-    fontWeight: "700",
-    wordWrap: "break-word",
-    cursor: "pointer", // Add cursor pointer to indicate it's clickable
+  const modalContentStyle = {
+    backgroundColor: "#ffffff",
+    padding: "20px",
+    borderRadius: "10px",
+    textAlign: "center",
+    width: "90%",
+    maxWidth: "400px",
+    position: "relative",
   };
 
-  const handleCreateAccountClick = () => {
-    alert("Create Account button clicked!");
+  const modalTitleStyle = {
+    fontSize: "20px",
+    fontWeight: "bold",
+    marginBottom: "10px",
+    color: "#007bff", // Matches the Verify button color
   };
 
-  const handleLoginClick = () => {
-    alert("Login clicked!");
+  const modalSubtitleStyle = {
+    fontSize: "14px",
+    color: "#666",
+    marginBottom: "20px",
+  };
+
+  const closeButtonStyle = {
+    position: "absolute",
+    top: "10px",
+    right: "10px",
+    background: "none",
+    border: "none",
+    fontSize: "16px",
+    cursor: "pointer",
+    color: "#666",
+  };
+
+  const timerStyle = {
+    fontSize: "14px",
+    color: "#666",
+    marginTop: "10px",
+  };
+
+  const verifyButtonStyle = {
+    width: "50%", // Decreased width of the Verify button
+    padding: "12px",
+    backgroundColor: isCodeValid ? "#007bff" : "#ccc", // Disabled style if code is invalid
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    fontSize: "16px",
+    cursor: isCodeValid ? "pointer" : "not-allowed", // Change cursor if disabled
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    margin: "20px auto", // Increased margin to add space between input and button
+    pointerEvents: isCodeValid ? "auto" : "none", // Disable button if code is invalid
   };
 
   return (
-    <div>
-      {/* Title Banner */}
-      <div
-        data-layer="TitleBanner"
-        className="Titlebanner"
-        style={{
-          width: "100vw",
-          height: 190,
-          position: "absolute",
-          top: 0,
-          left: 0,
-          background:
-            "linear-gradient(90deg, #236AF2, #34ECE1, #54DEE7, #B6FF7C)",
-          overflow: "hidden",
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-        }}
-      >
-        {/* Blurred background shapes */}
-        <div
-          style={{
-            width: 500,
-            height: 400,
-            background: "#34ECE1",
-            position: "absolute",
-            top: -100,
-            left: -50,
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 600,
-            height: 500,
-            background: "#236AF2",
-            position: "absolute",
-            top: -150,
-            left: "30%",
-            filter: "blur(120px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 450,
-            height: 350,
-            background: "#54DEE7",
-            position: "absolute",
-            top: -50,
-            left: "70%",
-            filter: "blur(100px)",
-          }}
-        ></div>
-        <div
-          style={{
-            width: 550,
-            height: 400,
-            background: "#B6FF7C",
-            position: "absolute",
-            top: 50,
-            left: "40%",
-            filter: "blur(110px)",
-          }}
-        ></div>
-
-        {/* Registration text */}
-        <div
-          data-layer="Registration"
-          className="Registration"
-          style={{
-            position: "absolute",
-            left: 30,
-            top: "25%", // Vertically centered
-            transform: "translateY(-70%)", // Adjust for exact centering
-            color: "white",
-            fontSize: 40,
-            fontFamily: "",
-            fontWeight: "500",
-            wordWrap: "break-word",
-          }}
-        >
-          Registration
-        </div>
-
-        {/* Progress Bar */}
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "absolute",
-            top: "45%", // Positioned below the "Registration" text
-            left: "50%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div
-            style={{
-              width: "80%",
-              maxWidth: 400,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              position: "relative",
-            }}
-          >
-            {/* Line connecting the circles */}
-            <div
-              style={{
-                width: "90%",
-                height: 3,
-                background: "white",
-                position: "absolute",
-                top: "30%",
-                left: 10,
-                transform: "translateY(-50%)",
-                zIndex: 1,
-              }}
-            ></div>
-
-            {/* Step 1: Sign Up */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "white",
-                  borderRadius: "50%",
-                  border: "2px solid #FF0085", // Pink border for the first step
-                }}
-              ></div>
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 400,
-                }}
-              >
-                Sign Up
-              </div>
-            </div>
-
-            {/* Step 2: 2FA */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "white",
-                  borderRadius: "50%",
-                }}
-              ></div>
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 400,
-                }}
-              >
-                2FA
-              </div>
-            </div>
-
-            {/* Step 3: Role */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "white",
-                  borderRadius: "50%",
-                }}
-              ></div>
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 400,
-                }}
-              >
-                Role
-              </div>
-            </div>
-
-            {/* Step 4: Household */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "white",
-                  borderRadius: "50%",
-                }}
-              ></div>
-              <div
-                style={{
-                  marginTop: 5,
-                  color: "white",
-                  fontSize: 14,
-                  fontWeight: 400,
-                }}
-              >
-                Household
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Registration Form */}
-      <div style={containerStyle}>
+    <div style={containerStyle}>
+      <div style={cardStyle}>
+        <div style={titleStyle}>Registration</div>
+        <div style={subtitleStyle}>Enter your name, email, and password to register</div>
         <div style={inputContainerStyle}>
-          <div style={labelStyle}>Name</div>
-          <input type="text" style={inputStyle} />
-          <div style={labelStyle}>Email</div>
-          <input type="text" style={inputStyle} />
-          <div style={labelStyle}>Password</div>
-          <input type="password" style={inputStyle} />
+          <input
+            type="text"
+            placeholder="Name"
+            style={inputStyle}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            style={inputStyle}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            style={inputStyle}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
+        <div style={checkboxContainerStyle}>
+          <input
+            type="checkbox"
+            style={checkboxStyle}
+            checked={isAgreed}
+            onChange={(e) => setIsAgreed(e.target.checked)}
+          />
+          <span style={checkboxLabelStyle}>I agree the Terms and Conditions</span>
+        </div>
+        <button style={buttonStyle} onClick={handleSignInClick}>
+          SIGN IN
+        </button>
+        <div style={{ color: "#666" }}>
+          <span>Already have an account? </span>
+          <a onClick={handleRegisterClick} style={linkStyle}>
+            Login
+          </a>
+        </div>
+      </div>
 
-        {/* Create Account Button */}
-        <div style={buttonContainerStyle}>
-          <div
-            style={buttonStyle}
-            onClick={handleCreateAccountClick}
-          >
-            <div style={buttonTextStyle}>Create Account</div>
+      {show2FAModal && (
+        <div style={modalStyle}>
+          <div style={modalContentStyle}>
+            {/* Exit Button */}
+            <button style={closeButtonStyle} onClick={handleCloseModal}>
+              ×
+            </button>
+
+            {/* Modal Title and Subtitle */}
+            <div style={modalTitleStyle}>Two-Factor Authentication</div>
+            <div style={modalSubtitleStyle}>
+              Enter the 6 Digit Code Sent To Your Email
+            </div>
+
+            {/* 2FA Input Field */}
+            <input
+              type="text"
+              placeholder="Enter 6 Digit Code"
+              value={twoFACode}
+              onChange={handleTwoFACodeChange}
+              style={{
+                ...inputStyleCode,
+                marginBottom: "20px", // Increased space below the input
+                width: "80%", // Centered and fixed width for the input
+                margin: "0 auto", // Center the input field
+                textAlign: "center", // Center the text inside the input
+              }}
+              maxLength={6} // Restrict input to 6 digits
+            />
+
+            {/* Verify Button */}
+            <button
+              style={verifyButtonStyle}
+              onClick={handleVerifyClick} // Redirect to /RoleSelection
+              disabled={!isCodeValid} // Disable button if code is invalid
+            >
+              Verify
+            </button>
+
+            {/* Timer and Resend Code */}
+            <div style={timerStyle}>
+              {timeLeft > 0
+                ? `Request new code in ${timeLeft} seconds`
+                : "Didn't receive the code?"}
+            </div>
+            {timeLeft === 0 && (
+              <button
+                style={{ ...linkStyle, border: "none", background: "none" }}
+                onClick={handleResendCode}
+              >
+                Request New Code
+              </button>
+            )}
           </div>
         </div>
-      </div>
-
-      {/* Already have an account? Login section at the bottom */}
-      <div style={createAccountContainerStyle}>
-        <div
-          style={{
-            width: "178px",
-            height: "18px",
-            color: "black",
-            fontSize: "15px",
-            fontFamily: "",
-            fontWeight: "400",
-            wordWrap: "break-word",
-          }}
-        >
-          Already have an account?
-        </div>
-        <div
-          style={createAccountTextStyle}
-          onClick={handleLoginClick} // Add onClick handler for "Login"
-        >
-          Login
-        </div>
-      </div>
+      )}
     </div>
   );
 }
