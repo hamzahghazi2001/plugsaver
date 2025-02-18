@@ -1,6 +1,10 @@
 # main.py
 from app.auth import signup,login
 from app.email import verify
+from fastapi import FastAPI, HTTPException
+from app.household import create_household, join_household
+
+app=FastAPI()
 
 def test_signup():
     email = "e@example.com"
@@ -37,6 +41,24 @@ def test_email():
     verify("joseph.kariampally@gmail.com")
     print("TEST COMPLETE")
 
-test_email()
+@app.post("/create-household")
+def create_household_endpoint(email: str):
+    result = create_household(email)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"household_code": result["household_code"]}
+
+@app.post("/join-household")
+def join_household_endpoint(email: str, household_code: str):
+    result = join_household(email, household_code)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+
+#test_email()
 #test_signup()
+#create_household_endpoint("testuser@example.com")
+join_household_endpoint("test@example.com", "388488")
+
 #test_login()
