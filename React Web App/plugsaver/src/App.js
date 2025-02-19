@@ -22,12 +22,6 @@ function App() {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/LoginPage" element={<LoginPage />} />
-        <Route path="/test" element={<TestPage />} />
-        <Route path="/LoginVerification" element={<LoginVerification />} />
-        <Route
-          path="/registrationverification"
-          element={<RegistrationVerification />}
-        />
         <Route path="/RegistrationPage" element={<RegistrationPage />} />
         <Route path="/roleselection" element={<RoleSelection />} />
         <Route path="/householdmanager" element={<HouseholdManager />} />
