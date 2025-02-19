@@ -7,9 +7,9 @@ import app.config as config
 
 supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)
 
-def verify(recipient_email):
-    verificationcode = random.randint(100000, 999999)
-    msg = MIMEText(f"This is the Verification code for the PlugSaver App : {verificationcode}")
+def email_code_gen(recipient_email):
+    generatedcode = random.randint(100000, 999999)
+    msg = MIMEText(f"This is the Verification code for the PlugSaver App : {generatedcode}")
     msg['Subject'] = "Verification Code"
     msg['From'] = "plugsaver7@gmail.com"
     msg['To'] = recipient_email
@@ -18,7 +18,7 @@ def verify(recipient_email):
     server.login('plugsaver7@gmail.com', 'jjrhjrfdkdceeonc')
     server.send_message(msg)
     server.quit()
-    return verificationcode
+    return generatedcode
 
 #def forgot_pass_change()
 
