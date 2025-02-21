@@ -2,7 +2,7 @@
 from app.auth import create_account, registration_verify
 from fastapi import FastAPI, HTTPException
 from app.household import create_household, join_household
-from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission
+from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
 
 app=FastAPI()
 
@@ -105,5 +105,7 @@ def give_permission_endpoint(manager_id: int, user_id: int, household_code: str,
 #create_household_endpoint("joseph.kariampally@gmail.com")
 #join_household_endpoint("testser@example.com", "255990")
 #add_room("255990","kids room")
-#add_device_endpoint("255990",5,2,"someone's light","light",["monday","tuesday"],"9:00","16:00")
-#give_permission_endpoint(10,5,"255990",2,27,True,True)
+#add_device_endpoint("255990",5,3,"someone's tv","tv",["monday","tuesday"],"9:00","16:00")
+#give_permission_endpoint(10,5,"255990",3,32,False,False)
+#delete_device("388488",6,23)
+#delete_room("388488",3,1)
