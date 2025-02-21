@@ -2,7 +2,7 @@
 from app.auth import create_account, registration_verify
 from fastapi import FastAPI, HTTPException
 from app.household import create_household, join_household
-from app.devicecreation import add_device,add_device_category,get_device_categories,insert_default_categories,add_room
+from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission
 
 app=FastAPI()
 
@@ -66,6 +66,14 @@ def add_device_category_endpoint(category_name: str):
 def add_device_endpoint(household_code: str, user_id: int, room_id: int, device_name: str, device_category: str,active_days: list, active_time_start: str, active_time_end: str):
     return add_device(household_code, user_id, room_id, device_name, device_category,active_days, active_time_start, active_time_end)
 
+def give_permission_endpoint(manager_id: int, user_id: int, household_code: str, room_id: int = None, device_id: int = None, can_control: bool = False, can_configure: bool = False):
+    result = give_permission(manager_id, user_id, household_code, room_id, device_id, can_control, can_configure)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    return result
+
 
 
 #test_email()
@@ -73,11 +81,15 @@ def add_device_endpoint(household_code: str, user_id: int, room_id: int, device_
 #create_household_endpoint("testuser@example.com")
 #join_household_endpoint("test@example.com", "388488")
 
+#join_household_endpoint("te@example.com", "388488")
+
 #get_device_categories_endpoint()
 #add_device_category_endpoint("pc")
 #add_room("388488","masterbedroom")
-add_device_endpoint("388488",3,1,"asma's pc","pc",["monday","tuesday"],"9:00","16:00")
+#add_device_endpoint("388488",3,1,"asma's pc","pc",["monday","tuesday"],"9:00","16:00")
+#add_device_endpoint("388488",8,1,"someone's pc","pc",["monday","tuesday"],"9:00","16:00")
 
+#add_device_endpoint("388488",8,1,"someone's pc","pc",["monday","tuesday"],"9:00","16:00")
 
 
 #test_login()
@@ -88,3 +100,10 @@ add_device_endpoint("388488",3,1,"asma's pc","pc",["monday","tuesday"],"9:00","1
 
 # Run the function to insert default categories
 #insert_default_categories()
+
+
+#create_household_endpoint("joseph.kariampally@gmail.com")
+#join_household_endpoint("testser@example.com", "255990")
+#add_room("255990","kids room")
+#add_device_endpoint("255990",5,2,"someone's light","light",["monday","tuesday"],"9:00","16:00")
+#give_permission_endpoint(10,5,"255990",2,27,True,True)
