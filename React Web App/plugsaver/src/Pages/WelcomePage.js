@@ -131,11 +131,11 @@ const PlugSaver = () => {
       >
         <p style={{ margin: 0 }}>
           By tapping Create Account or Login, I agree to the PlugSaver{" "}
-          <a href="/terms" style={{ color: "white", textDecoration: "underline" }}>
+          <a href="/terms" style={{ color: "#E91E63", textDecoration: "underline" }}>
             Terms and Conditions
           </a>{" "}
           &{" "}
-          <a href="/privacy" style={{ color: "white", textDecoration: "underline" }}>
+          <a href="/privacy" style={{ color: "#E91E63", textDecoration: "underline" }}>
             Privacy Agreements
           </a>
         </p>
