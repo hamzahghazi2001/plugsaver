@@ -68,7 +68,7 @@ export default function RoleSelectionPage() {
     borderRadius: "10px",
     boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
     width: "90%", // Responsive width
-    maxWidth: "900px", // Reduced maxWidth for better desktop layout
+    maxWidth: "800px", // Reduced maxWidth for better desktop layout
     textAlign: "center",
     boxSizing: "border-box",
     display: "flex",
