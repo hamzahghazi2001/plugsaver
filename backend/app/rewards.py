@@ -6,8 +6,8 @@ supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)
 #function to insert or update points and set badge booleans
 def Points_and_badges(rewards_id):
     try:
-        cost_saved = supabase.table('analytics').select('cost_saved').eq('analytics_id', rewards_id).execute()
-        energy_saved = supabase.table('analytics').select('energy_saved').eq('analytics_id', rewards_id).execute()
+        cost_saved = supabase.table('analytics').select('sum(cost_saved)').eq('user_id', rewards_id).execute()
+        energy_saved = supabase.table('analytics').select('sum(energy_saved)').eq('user_id', rewards_id).execute()
         points = (0.5 * cost_saved["data"][0]["cost_saved"]) + (0.5 * energy_saved["data"][0]["energy_saved"])
         existing_record = supabase.table('rewards').select('*').eq('rewards_id', rewards_id).execute()
         #updates points if record already exists, adds otherwise
@@ -32,15 +32,22 @@ def update_badges(rewards_id, points, energy_saved):
         beginner_points = True if points >= 25 else False
         competent_points = True if points >= 100 else False
         professional_points = True if points >= 500 else False
-        #find status of champion badges
+        #initialize champion badges to false
         household_champion, local_champion, global_champion = False
+        #find if household champion or not
         household_code = supabase.table('users').select('household_code').eq('user_id', rewards_id).execute()
         household_members = supabase.table('users').select('user_id').eq('household_code', household_code["data"][0]["household_code"]).execute()
         for x in household_members["data"]:
             member = supabase.table('rewards').select('points').eq('rewards_id', x["user_id"]).execute()
             household_champion = True if points > member else False
-        #insert local_champion logic here when found
-        max_global = supabase.table('rewards').select('max(points)').eq('rewards_id', rewards_id).execute()
+        #find if local champion or not
+        country = supabase.table('users').select('country').eq('user_id', rewards_id).execute()
+        country_members = supabase.table('users').select('user_id').eq('country', country["data"][0]["country"]).execute()
+        for x in country_members["data"]:
+            member = supabase.table('rewards').select('points').eq('rewards_id', x["user_id"]).execute()
+            local_champion = True if points > member else False
+        #find if global champion or not
+        max_global = supabase.table('rewards').select('max(points)').execute()
         global_champion = True if points > max_global else False
         #update badges with found results
         supabase.table('rewards').update(
@@ -56,3 +63,5 @@ def update_badges(rewards_id, points, energy_saved):
     except Exception as e:
         print("Error:", e)  
         return 0
+
+Points_and_badges(101)
