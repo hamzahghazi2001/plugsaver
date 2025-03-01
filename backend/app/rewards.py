@@ -1,5 +1,6 @@
 from supabase import create_client
 import app.config as config
+from operator import itemgetter
 
 supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)
 
@@ -75,3 +76,40 @@ def update_badges(rewards_id, points, energy_saved):
     except Exception as e:
         print("Error:", e)  
         return 0
+    
+#returns top 4 from passed list, called by each leaderboard function
+def send_results(sorted_list,list_size):
+    if list_size < 5:
+        print (sorted_list)
+        return sorted_list
+    else:
+        print([sorted_list[-4],sorted_list[-3],sorted_list[-2],sorted_list[-1]])
+        return [sorted_list[-4],sorted_list[-3],sorted_list[-2],sorted_list[-1]]
+
+#leaderboard function for global leaderboard
+def get_global():
+    all_global = supabase.table('rewards').select('rewards_id, points').execute().data
+    sorted_global = sorted(all_global, key=itemgetter('points'))
+    send_results(sorted_global, len(sorted_global))
+
+#leaderboard function for local leaderboard
+def get_local(rewards_id):
+    country = supabase.table('users').select('country').eq('user_id', rewards_id).execute()
+    country_members = supabase.table('users').select('user_id').eq('country', country.data[0].get("country")).execute()
+    all_local = []
+    for x in country_members.data:
+        member = supabase.table('rewards').select('rewards_id, points').eq('rewards_id', x.get("user_id")).execute().data[0]
+        all_local.append(member)
+    sorted_local = sorted(all_local, key=itemgetter('points'))
+    send_results(sorted_local, len(sorted_local))
+
+#leaderboard function for global leaderboard
+def get_household(rewards_id):
+    household_code = supabase.table('users').select('household_code').eq('user_id', rewards_id).execute()
+    household_members = supabase.table('users').select('user_id').eq('household_code', household_code.data[0].get("household_code")).execute()
+    all_household = []
+    for x in household_members.data:
+        member = supabase.table('rewards').select('rewards_id, points').eq('rewards_id', x.get("user_id")).execute().data[0]
+        all_household.append(member)
+    sorted_household = sorted(all_household, key=itemgetter('points'))
+    send_results(sorted_household, len(sorted_household))
