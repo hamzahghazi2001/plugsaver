@@ -3,7 +3,7 @@ from app.auth import create_account, registration_verify
 from fastapi import FastAPI, HTTPException
 from app.household import create_household, join_household
 from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
-
+from app.rewards import Points_and_badges, update_badges
 app=FastAPI()
 
 def test_signup():
@@ -74,7 +74,9 @@ def give_permission_endpoint(manager_id: int, user_id: int, household_code: str,
     
     return result
 
-
+@app.post("/points_and_badges")
+def points_and_badges_endpoint(rewards_id: int):
+    return Points_and_badges(rewards_id)
 
 #test_email()
 #test_signup()
@@ -109,3 +111,5 @@ def give_permission_endpoint(manager_id: int, user_id: int, household_code: str,
 #give_permission_endpoint(10,5,"255990",3,32,False,False)
 #delete_device("388488",6,23)
 #delete_room("388488",3,1)
+
+#points_and_badges_endpoint(101)
