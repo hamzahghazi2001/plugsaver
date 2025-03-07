@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from app.household import create_household, join_household
 from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
 from app.rewards import Points_and_badges, get_global, get_local, get_household
+from app.feedback import put_feedback, get_feedback, change_feedback_status
 app=FastAPI()
 
 def test_signup():
@@ -87,6 +88,16 @@ def get_local_endpoint(rewards_id: int):
 def get_household_endpoint(rewards_id: int):
     return get_household(rewards_id)
 
+@app.post("/feedback")
+def put_feedback_endpoint(user_id: int, message: str):
+    return put_feedback(user_id, message)
+
+def get_feedback_endpoint(feedback_id: int):
+    return get_feedback(feedback_id)
+
+def change_feedback_status_endpoint(feedback_id: int):
+    return change_feedback_status(feedback_id)
+
 #test_email()
 #test_signup()
 #create_household_endpoint("testuser@example.com")
@@ -125,3 +136,9 @@ def get_household_endpoint(rewards_id: int):
 #get_global()
 #get_local(101)
 #get_household(101)
+
+#IMPORTANT: to test this part, follow the instruction on feedback.py line 18 before running, else will fail
+#put_feedback_endpoint(8, "message 1")
+#put_feedback_endpoint(9, "message 2")
+#get_feedback_endpoint(8)
+#change_feedback_status_endpoint(9)
