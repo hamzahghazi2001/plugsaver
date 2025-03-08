@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   User,
   Info,
@@ -12,8 +12,7 @@ import {
   Home,
   LayoutDashboard,
   ChevronRight,
-} from "lucide-react";
-import Link from "next/link";
+} from "lucide-react"
 
 export default function SettingsPage() {
   return (
@@ -64,6 +63,7 @@ export default function SettingsPage() {
               { icon: Bell, label: "Notifications" },
               { icon: Users, label: "Members" },
               { icon: Accessibility, label: "Accessibility" },
+              { icon: HelpCircle, label: "Support" },
               { icon: Home, label: "Household" },
               { icon: LayoutDashboard, label: "Dashboard" },
             ].map(({ icon: Icon, label }) => (
@@ -79,21 +79,8 @@ export default function SettingsPage() {
             ))}
           </div>
         </section>
-
-        {/* Customer Support Section */}
-        <section>
-          <h2 className="text-lg font-medium text-purple-300 mb-4">Support</h2>
-          <Card className="gradient-card">
-            <Link href="/customer-support" className="w-full flex items-center justify-between p-2">
-              <div className="flex items-center gap-4">
-                <HelpCircle className="w-5 h-5" />
-                <span>Customer Support</span>
-              </div>
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-          </Card>
-        </section>
       </div>
     </div>
-  );
+  )
 }
+
