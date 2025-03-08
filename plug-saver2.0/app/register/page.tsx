@@ -153,16 +153,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm Password"
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
-            />
-          </div>
+          
 
           <div className="flex items-center justify-center space-x-2">
             <input
@@ -181,7 +172,7 @@ export default function RegisterPage() {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md transition-all duration-300"
             disabled={loading}
           >
-            {loading ? "Creating account..." : "SIGN IN"}
+            {loading ? "Creating account..." : "SIGN UP"}
           </Button>
         </form>
 
