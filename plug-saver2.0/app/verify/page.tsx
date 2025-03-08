@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -14,14 +13,17 @@ export default function VerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
+  const name = searchParams.get("name")
+  const password = searchParams.get("password")
   const [error, setError] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [timeLeft, setTimeLeft] = useState(30)
   const [canResend, setCanResend] = useState(false)
+  const [twoFACode, setTwoFACode] = useState("")
 
   useEffect(() => {
-    if (!email) {
-      router.push("/register")
+    if (!email || !name || !password) {
+      router.push("/register") // Redirect to register if data is missing
       return
     }
 
@@ -37,25 +39,31 @@ export default function VerifyPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [email, router])
+  }, [email, name, password, router])
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError("")
     setLoading(true)
 
-    const formData = new FormData(event.currentTarget)
-
     try {
       const response = await fetch("/api/auth/verify", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          name,
+          password,
+          userverifycode: twoFACode,
+        }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-        router.push("/login")
+        router.push("/login") // Redirect to login page
       } else {
         setError(data.error || "Invalid verification code")
       }
@@ -66,13 +74,14 @@ export default function VerifyPage() {
     }
   }
 
-  async function handleResendCode() {
+  const handleResendCode = async () => {
     setError("")
     setLoading(true)
     setCanResend(false)
     setTimeLeft(30)
 
     try {
+      // Call the backend to resend the verification code
       const response = await fetch("/api/auth/resend-code", {
         method: "POST",
         headers: {
@@ -94,14 +103,18 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-6" style={{ background: "var(--gradient-welcome)" }}>
-      <Link href="/register" className="text-white mb-8">
-        <ArrowLeft className="w-6 h-6" />
-      </Link>
-
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
-        <h1 className="text-2xl font-bold mb-2">Verify your email</h1>
-        <p className="text-gray-200 mb-6">We've sent a verification code to {email}</p>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{
+        background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+        color: "white",
+        fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      }}
+    >
+      {/* Main Card */}
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Verify your email</h1>
+        <p className="text-sm text-gray-600 mb-6">We've sent a verification code to {email}</p>
 
         {error && (
           <Alert variant="destructive" className="mb-6">
@@ -119,20 +132,30 @@ export default function VerifyPage() {
               placeholder="Enter verification code"
               required
               maxLength={6}
-              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 text-center text-2xl tracking-widest"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 text-center text-2xl tracking-widest"
+              value={twoFACode}
+              onChange={(e) => setTwoFACode(e.target.value)}
             />
           </div>
 
-          <Button type="submit" className="w-full bg-pink-500 hover:bg-pink-600 text-white" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md transition-all duration-300"
+            disabled={loading}
+          >
             {loading ? "Verifying..." : "Verify Email"}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-200">
+          <p className="text-sm text-gray-600">
             Didn't receive the code?{" "}
             {canResend ? (
-              <button onClick={handleResendCode} className="text-pink-300 hover:text-pink-200" disabled={loading}>
+              <button
+                onClick={handleResendCode}
+                className="text-blue-600 hover:text-blue-500 font-semibold"
+                disabled={loading}
+              >
                 Resend Code
               </button>
             ) : (
@@ -144,4 +167,3 @@ export default function VerifyPage() {
     </div>
   )
 }
-

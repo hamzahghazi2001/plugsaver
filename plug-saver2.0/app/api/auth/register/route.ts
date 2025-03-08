@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+// import { NextResponse } from "next/server"
 
 // export async function POST(request: Request) {
 //   const formData = await request.formData()
@@ -15,23 +15,35 @@ import { NextResponse } from "next/server"
 //   })
 // }
 
-export async function POST(request: Request) {
-  const formData = await request.formData();
-  const name = formData.get("name");
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const confirmpass = formData.get("confirmpass");
+import { NextResponse } from 'next/server';
 
-  // Send registration request to backend
-  const backendResponse = await fetch("http://localhost:8000", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, email, password, confirmpass }),
-  });
+export async function POST(req: Request) {
+  try {
+    const data = await req.json();
+    const { email, password, confirmpass, name } = data;
 
-  const data = await backendResponse.json();
-  return NextResponse.json(data);
+    // Call the /create_account endpoint
+    const createAccountResponse = await fetch('http://localhost:8000/create_account', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        confirmpass,
+        name,
+      }),
+    });
+
+    if (!createAccountResponse.ok) {
+      const errorData = await createAccountResponse.json();
+      throw new Error(errorData.message || 'Account creation failed');
+    }
+
+    const createAccountData = await createAccountResponse.json();
+    return NextResponse.json(createAccountData, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 }
-

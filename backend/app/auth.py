@@ -2,7 +2,7 @@
 from supabase import create_client
 import bcrypt
 import app.config as config
-import secure_smtplib
+
 import smtplib
 import random
 from email.mime.text import MIMEText
@@ -50,35 +50,48 @@ def make_hash(input):
 
 def create_account(email, password, confirmpass):
     try:
-        #Checking if email already exists
+        # Check if the email already exists
         existing_user = supabase.table('users').select('email').eq('email', email).execute()
         if existing_user.data:
             print(f"Error: The email {email} is already in use.")
-            return 0
-        #Checking if passwords match
-        if str(password)!=str(confirmpass):
+            return {"success": False, "message": "Email already in use."}  # Return a dictionary
+        
+        # Check if passwords match
+        if password != confirmpass:
             print(f"Error: The passwords do not match.")
-            return 0            
-        return email_code_gen(email)
+            return {"success": False, "message": "Passwords do not match."}  # Return a dictionary
+        
+        # Generate and send verification code
+        verification_code = email_code_gen(email)
+        return {"success": True, "message": "Verification code sent.", "verification_code": verification_code}  # Return a dictionary
+    
     except Exception as e:
-        print("Error during signup:", e)  
-        return 0
+        print("Error during signup:", e)
+        return {"success": False, "message": "An error occurred during signup."}  # Return a dictionary   
+    
     
 def registration_verify(email, name, password, userverifycode, systemverifycode):
-    if userverifycode!=systemverifycode:
+    if userverifycode != systemverifycode:
         print(f"Error: Incorrect verification code.")
-        return 0  
-    #Hashing Password 
+        return {"success": False, "message": "Incorrect verification code."}
+    
+    # Hash the password
     hashed_password = make_hash(password)
-    #Inputing data into Database
-    response = supabase.table('users').insert({'email': email,'password': hashed_password.decode(),'name': name,'is_verified': True }).execute()
-    print("Supabase Response:", response)  
+    
+    # Insert data into the database
+    response = supabase.table('users').insert({
+        'email': email,
+        'password': hashed_password.decode(),
+        'name': name,
+        'is_verified': True
+    }).execute()
+    
+    print("Supabase Response:", response)
     if response.data:
         print("Signup successful!")
-        return 1
+        return {"success": True, "message": "Account verified and created."}
     else:
-        return 0
-
+        return {"success": False, "message": "Failed to create account."}
 def login(email, password):
     try:
         response = supabase.table('users').select('email', 'password', 'is_verified').eq('email', email).execute()

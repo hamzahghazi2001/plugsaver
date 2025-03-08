@@ -28,6 +28,7 @@ export default function RegisterPage() {
     const formData = new FormData(event.currentTarget)
     const password = formData.get("password") as string
     const confirmPassword = formData.get("confirmPassword") as string
+    const name = formData.get("name") as string;
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
@@ -36,16 +37,26 @@ export default function RegisterPage() {
     }
 
     try {
+      // Send registration data to the backend
       const response = await fetch("/api/auth/register", {
         method: "POST",
-        body: formData,
-      })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          confirmpass: confirmPassword,
+          name,
+        }),
+      });
 
       const data = await response.json()
 
       if (data.success) {
-        setShow2FAModal(true)
-        startTimer()
+        //setShow2FAModal(true)
+        //startTimer()
+        router.push(`/verify?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`);
       } else {
         setError(data.error || "An error occurred")
       }
@@ -80,9 +91,30 @@ export default function RegisterPage() {
     setIsCodeValid(false)
   }
 
-  const handleVerifyClick = () => {
-    router.push("/roleselect"); // Updated to redirect to /roleselect
-  }
+  const handleVerifyClick = async () => {
+    try {
+      const response = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          userverifycode: twoFACode,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        router.push("/roleselect"); // Redirect to role selection page
+      } else {
+        setError(data.error || "Verification failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    }
+  };
 
   const handleReferralSubmit = () => {
     console.log("Referral Code Submitted:", referralCode)

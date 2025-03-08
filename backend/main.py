@@ -1,5 +1,5 @@
 # main.py
-from app.auth import create_account, registration_verify
+from app.auth import create_account, registration_verify, email_code_gen
 from fastapi import FastAPI, HTTPException
 from app.household import create_household, join_household
 from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
@@ -36,26 +36,65 @@ class VerifyRequest(BaseModel):
 
 @app.post("/create_account")
 async def create_account_endpoint(request: RegisterRequest):
-    verification_code = create_account(request.email, request.password, request.confirmpass)
-    if verification_code == 0:
-        raise HTTPException(status_code=400, detail="Account creation failed")
+    # Call create_account to check if the user exists and passwords match
+    result = create_account(request.email, request.password, request.confirmpass)
     
-    # Store the verification code temporarily
-    verification_codes[request.email] = verification_code
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
     
-    return {"success": True, "message": "Verification code sent"}
+    # Store the verification code in the dictionary
+    verification_codes[request.email] = result["verification_code"]
+    
+    return {"success": True, "message": "Verification code sent."}
+
 
 @app.post("/verify_registration")
 async def verify_registration_endpoint(request: VerifyRequest):
-    system_verify_code = verification_codes.get(request.email)
-    if system_verify_code is None:
-        raise HTTPException(status_code=400, detail="No verification code found")
+    # Retrieve the system-generated verification code from the dictionary
+    systemverifycode = verification_codes.get(request.email)
     
-    success = registration_verify(request.email, request.name, request.password, request.userverifycode, system_verify_code)
-    if success == 0:
-        raise HTTPException(status_code=400, detail="Verification failed")
+    if systemverifycode is None:
+        raise HTTPException(status_code=400, detail="No verification code found for this email.")
+    
+    # Validate the request payload
+    if not all([request.email, request.name, request.password, request.userverifycode]):
+        raise HTTPException(status_code=422, detail="Missing required fields.")
+    
+    # Call the registration_verify function
+    result = registration_verify(
+        email=request.email,
+        name=request.name,
+        password=request.password,
+        userverifycode=request.userverifycode,
+        systemverifycode=systemverifycode
+    )
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    # Remove the verification code from the dictionary after successful verification
+    del verification_codes[request.email]
+    
+    return {"success": True, "message": "Account verified and created."}
 
-    return {"success": True, "message": "Account verified"}
+class ResendCodeRequest(BaseModel):
+    email: str
+
+@app.post("/resend-code")
+async def resend_code(request: ResendCodeRequest):
+    # Generate a new verification code
+    verification_code = email_code_gen(request.email)
+    
+    # Store the new verification code in the dictionary
+    verification_codes[request.email] = verification_code
+    
+    return {"success": True, "message": "Verification code resent."}
+
+@app.get("/")
+
+async def read_root():
+    return {"message": "Welcome to the backend!"}
+
 
 # def test_signup():
 #     email = "e@example.com"
