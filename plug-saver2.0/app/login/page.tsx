@@ -1,0 +1,198 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowLeft } from "lucide-react"
+
+export default function LoginPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [error, setError] = useState<string>("")
+  const [loading, setLoading] = useState(false)
+  const [show2FAModal, setShow2FAModal] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(60)
+  const [twoFACode, setTwoFACode] = useState("")
+  const [isCodeValid, setIsCodeValid] = useState(false)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError("")
+    setLoading(true)
+
+    const formData = new FormData(event.currentTarget)
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setShow2FAModal(true)
+        startTimer()
+      } else {
+        setError(data.error || "An error occurred")
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const startTimer = () => {
+    const interval = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime === 0) {
+          clearInterval(interval)
+          return 0
+        }
+        return prevTime - 1
+      })
+    }, 1000)
+  }
+
+  const handleResendCode = () => {
+    setTimeLeft(60)
+    startTimer()
+  }
+
+  const handleCloseModal = () => {
+    setShow2FAModal(false)
+    setTimeLeft(60)
+    setTwoFACode("")
+    setIsCodeValid(false)
+  }
+
+  const handleVerifyClick = () => {
+    const nextUrl = searchParams.get("next") || "/home"
+    router.push(nextUrl)
+    router.refresh()
+  }
+
+  const handleTwoFACodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (/^\d{0,6}$/.test(value)) {
+      setTwoFACode(value)
+      setIsCodeValid(value.length === 6)
+    }
+  }
+
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{
+        background: "linear-gradient(to top, #4ADE80, #22D3EE, #3B82F6)",
+        color: "white",
+        fontFamily: '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      }}
+    >
+      {/* Main Card */}
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Login</h1>
+        <p className="text-sm text-gray-600 mb-6">Enter your email and password to login</p>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email"
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md transition-all duration-300"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "SIGN IN"}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-sm text-gray-600">
+          Don't have an account?{" "}
+          <Link href="/register" className="text-blue-600 hover:text-blue-500 font-semibold">
+            Register
+          </Link>
+        </div>
+      </div>
+
+      {/* 2FA Modal */}
+      {show2FAModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+            >
+              ×
+            </button>
+
+            <h2 className="text-xl font-bold text-blue-600 mb-2">Two-Factor Authentication</h2>
+            <p className="text-sm text-gray-600 mb-4">Enter the 6 Digit Code Sent To Your Email</p>
+
+            <Input
+              type="text"
+              placeholder="Enter 6 Digit Code"
+              value={twoFACode}
+              onChange={handleTwoFACodeChange}
+              className="w-3/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 text-center mx-auto mb-4"
+              maxLength={6}
+            />
+
+            <Button
+              onClick={handleVerifyClick}
+              className="w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md transition-all duration-300 mx-auto"
+              disabled={!isCodeValid}
+            >
+              Verify
+            </Button>
+
+            <div className="text-sm text-gray-600 mt-4">
+              {timeLeft > 0
+                ? `Request new code in ${timeLeft} seconds`
+                : "Didn't receive the code?"}
+            </div>
+
+            {timeLeft === 0 && (
+              <button
+                onClick={handleResendCode}
+                className="text-blue-600 hover:text-blue-500 font-semibold mt-2"
+              >
+                Request New Code
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
