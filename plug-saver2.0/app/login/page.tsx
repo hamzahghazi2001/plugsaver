@@ -18,34 +18,77 @@ export default function LoginPage() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [twoFACode, setTwoFACode] = useState("")
   const [isCodeValid, setIsCodeValid] = useState(false)
+  const [email,setEmail] = useState("");
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError("")
-    setLoading(true)
+// page.tsx
 
-    const formData = new FormData(event.currentTarget)
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        body: formData,
+  const formData = new FormData(event.currentTarget);
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  setEmail(email); // Store the email in state
+
+  try {
+    console.log("Sending login request...");
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    console.log("Response received:", response);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Response data:", data);
+
+    if (data.success) {
+      setShow2FAModal(true);
+      startTimer();
+    } else {
+      setError(data.message || "An error occurred");
+    }
+  } catch (err : any) {
+    console.error("Error during login:", err);
+    setError(err.message || "An error occurred. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+const handleVerifyClick = async () => {
+  try {
+      const response = await fetch("/api/auth/verify_login", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, userverifycode: twoFACode }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-        setShow2FAModal(true)
-        startTimer()
+          const nextUrl = searchParams.get("next") || "/home"
+          router.push(nextUrl)
+          router.refresh()
       } else {
-        setError(data.error || "An error occurred")
+          setError(data.message || "Verification failed.")
       }
-    } catch (err) {
+  } catch (err) {
       setError("An error occurred. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
+}
 
   const startTimer = () => {
     const interval = setInterval(() => {
@@ -71,11 +114,6 @@ export default function LoginPage() {
     setIsCodeValid(false)
   }
 
-  const handleVerifyClick = () => {
-    const nextUrl = searchParams.get("next") || "/home"
-    router.push(nextUrl)
-    router.refresh()
-  }
 
   const handleTwoFACodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value

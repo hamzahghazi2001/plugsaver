@@ -63,7 +63,8 @@ export default function VerifyPage() {
       const data = await response.json()
 
       if (data.success) {
-        router.push("/login") // Redirect to login page
+        const safeEmail = email || "";
+        router.push(`/roleselect?email=${encodeURIComponent(safeEmail)}`) 
       } else {
         setError(data.error || "Invalid verification code")
       }

@@ -1,62 +1,114 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react" // Import back button icon
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 export default function RoleSelectionPage() {
-  const router = useRouter()
-  const [selectedRole, setSelectedRole] = useState<"manager" | "member" | null>(null)
-  const [householdCode, setHouseholdCode] = useState("")
-  const [isRoleConfirmed, setIsRoleConfirmed] = useState(false) // Track if role is confirmed
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email"); // Get email from query params
+  const [selectedRole, setSelectedRole] = useState<"manager" | "member" | null>(null);
+  const [householdCode, setHouseholdCode] = useState("");
+  const [isRoleConfirmed, setIsRoleConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Redirect if email is missing
+  useEffect(() => {
+    if (!email) {
+      alert("Email not found. Please complete registration.");
+      router.push("/register");
+    }
+  }, [email, router]);
 
   const generateHouseholdCode = () => {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    let code = ""
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
     for (let i = 0; i < 7; i++) {
-      code += characters.charAt(Math.floor(Math.random() * characters.length))
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
-    setHouseholdCode(code)
-  }
+    setHouseholdCode(code);
+  };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(householdCode)
-    alert("Code copied to clipboard!")
-  }
+    navigator.clipboard.writeText(householdCode);
+    alert("Code copied to clipboard!");
+  };
 
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText()
+      const text = await navigator.clipboard.readText();
       if (/^[A-Za-z0-9]{7}$/.test(text)) {
-        setHouseholdCode(text)
+        setHouseholdCode(text);
       } else {
-        alert("Invalid code! Please ensure it's a 7-digit/letter code.")
+        alert("Invalid code! Please ensure it's a 7-digit/letter code.");
       }
     } catch (err) {
-      alert("Failed to read from clipboard. Please paste manually.")
+      alert("Failed to read from clipboard. Please paste manually.");
     }
-  }
+  };
 
-  const handleContinueClick = () => {
-    if (selectedRole === "manager" && householdCode) {
-      router.push("/dashboard") // Redirect to dashboard
-    } else if (selectedRole === "member" && householdCode) {
-      router.push("/dashboard") // Redirect to dashboard
-    } else {
-      alert("Please complete the required steps.")
+  const handleContinueClick = async () => {
+    if (!email) {
+      alert("Email not found. Please try again.");
+      return;
     }
-  }
+
+    if (selectedRole === "manager" && householdCode) {
+      try {
+        const response = await fetch("/api/auth/create_household", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, household_code: householdCode }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          router.push("/home"); // Redirect to home page
+        } else {
+          alert(data.message || "Failed to create household.");
+        }
+      } catch (err) {
+        alert("An error occurred. Please try again.");
+      }
+    } else if (selectedRole === "member" && householdCode) {
+      try {
+        const response = await fetch("/api/auth/join_household", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, household_code: householdCode }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          router.push("/home"); // Redirect to home page
+        } else {
+          alert(data.message || "Failed to join household.");
+        }
+      } catch (err) {
+        alert("An error occurred. Please try again.");
+      }
+    } else {
+      alert("Please complete the required steps.");
+    }
+  };
 
   const handleConfirmRole = () => {
     if (selectedRole) {
-      setIsRoleConfirmed(true) // Confirm the selected role
+      setIsRoleConfirmed(true);
     }
-  }
+  };
 
   const handleBackToRoleSelection = () => {
-    setIsRoleConfirmed(false) // Go back to role selection
-    setSelectedRole(null) // Reset selected role
-  }
+    setIsRoleConfirmed(false);
+    setSelectedRole(null);
+  };
 
   return (
     <div
@@ -165,9 +217,9 @@ export default function RoleSelectionPage() {
                 selectedRole ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"
               }`}
               onClick={handleConfirmRole}
-              disabled={!selectedRole}
+              disabled={!selectedRole || loading}
             >
-              Confirm
+              {loading ? "Loading..." : "Confirm"}
             </button>
           </div>
         ) : selectedRole === "manager" ? (
@@ -221,9 +273,9 @@ export default function RoleSelectionPage() {
                 householdCode ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"
               }`}
               onClick={handleContinueClick}
-              disabled={!householdCode}
+              disabled={!householdCode || loading}
             >
-              Continue
+              {loading ? "Loading..." : "Continue"}
             </button>
           </div>
         ) : (
@@ -270,13 +322,13 @@ export default function RoleSelectionPage() {
                 householdCode ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"
               }`}
               onClick={handleContinueClick}
-              disabled={!householdCode}
+              disabled={!householdCode || loading}
             >
-              Continue
+              {loading ? "Loading..." : "Continue"}
             </button>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

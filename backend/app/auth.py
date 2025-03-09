@@ -92,32 +92,31 @@ def registration_verify(email, name, password, userverifycode, systemverifycode)
         return {"success": True, "message": "Account verified and created."}
     else:
         return {"success": False, "message": "Failed to create account."}
+# app/auth.py
+
 def login(email, password):
     try:
         response = supabase.table('users').select('email', 'password', 'is_verified').eq('email', email).execute()
         print("Supabase Response:", response)
         if response.data:
             user = response.data[0]
-            # Check if the email is verified
-            # if not user['is_verified']:
-            #print("Error: Your email is not verified.")
-            #return None
-            if bcrypt.checkpw(password, user['password']):
-                return 1
+            if bcrypt.checkpw(password.encode(), user['password'].encode()):
+                # Generate and send verification code
+                verification_code = email_code_gen(email)
+                return {"success": True, "message": "Verification code sent.", "verification_code": verification_code}
             else:
                 print("Error: Incorrect password.")
-                return 0
+                return {"success": False, "message": "Incorrect password."}
         else:
             print(f"Error: No user found with email {email}.")
-            return 0
+            return {"success": False, "message": "No user found with this email."}
     except Exception as e:
         print("Error during login:", e)
-        return 0
+        return {"success": False, "message": "An error occurred during login."}
 
 def login_verify(userverifycode, systemverifycode):
-    if userverifycode!=systemverifycode:
+    if userverifycode != systemverifycode:
         print(f"Error: Incorrect verification code.")
-        return 0  
+        return {"success": False, "message": "Incorrect verification code."}
     else:
-        return 1
-    
+        return {"success": True, "message": "Verification successful."}

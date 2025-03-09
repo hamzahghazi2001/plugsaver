@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+  const { email, household_code } = await req.json();
 
   try {
-    const response = await fetch("http://localhost:8000/login", {
+    const response = await fetch("http://localhost:8000/join_household", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, household_code }),
     });
 
     const data = await response.json();

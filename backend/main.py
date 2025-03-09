@@ -1,6 +1,6 @@
 # main.py
-from app.auth import create_account, registration_verify, email_code_gen
-from fastapi import FastAPI, HTTPException
+from app.auth import create_account, registration_verify, email_code_gen,login,login_verify
+from fastapi import FastAPI, HTTPException, Depends
 from app.household import create_household, join_household
 from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
 from app.rewards import Points_and_badges, get_global, get_local, get_household
@@ -8,8 +8,14 @@ from app.feedback import put_feedback, get_feedback, change_feedback_status
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from supabase import create_client
+import app.config as config
+
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
 app = FastAPI()
+security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
@@ -90,8 +96,74 @@ async def resend_code(request: ResendCodeRequest):
     
     return {"success": True, "message": "Verification code resent."}
 
-@app.get("/")
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
+class VerifyLoginRequest(BaseModel):
+    email: str
+    userverifycode: int
+
+@app.post("/login")
+async def login_endpoint(request: LoginRequest):
+    result = login(request.email, request.password)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    # Store the verification code in the dictionary
+    verification_codes[request.email] = result["verification_code"]
+    
+    return {"success": True, "message": "Verification code sent."}
+@app.post("/verify_login")
+async def verify_login_endpoint(request: VerifyLoginRequest):
+    systemverifycode = verification_codes.get(request.email)
+    if systemverifycode is None:
+        raise HTTPException(status_code=400, detail="No verification code found for this email.")
+    
+    result = login_verify(request.userverifycode, systemverifycode)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    # Remove the verification code after successful verification
+    del verification_codes[request.email]
+    
+    return {"success": True, "message": "Login successful."}
+
+class CreateHouseholdRequest(BaseModel):
+    email: str
+    household_code: str
+
+class JoinHouseholdRequest(BaseModel):
+    email: str
+    household_code: str
+
+@app.post("/create_household")
+async def create_household_endpoint(request: CreateHouseholdRequest):
+    result = create_household(request.email, request.household_code)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "household_code": result["household_code"]}
+
+@app.post("/join_household")
+async def join_household_endpoint(request: JoinHouseholdRequest):
+    result = join_household(request.email, request.household_code)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "message": result["message"]}
+
+@app.get("/user_email")
+async def get_user_email(token: str = Depends(security)):
+    try:
+        # Verify the token using Supabase's built-in auth
+        user = supabase.auth.get_user(token.credentials)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        return {"success": True, "email": user.email}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/")
 async def read_root():
     return {"message": "Welcome to the backend!"}
 

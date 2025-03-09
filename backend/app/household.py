@@ -1,14 +1,9 @@
-import random
 from supabase import create_client
 import app.config as config
 
-supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
-def generate_household_code():
-
-    return str(random.randint(100000, 999999))
-
-def create_household(user_email):
+def create_household(user_email, household_code):
     # Get user_id from the users table
     user = supabase.table("users").select("user_id").eq("email", user_email).execute()
 
@@ -23,10 +18,7 @@ def create_household(user_email):
     if existing.data:
         return {"success": False, "message": "Household already exists!"}
 
-    # Generate a household code
-    household_code = generate_household_code()
-
-    # Insert the new household
+    # Insert the new household with the provided household code
     supabase.table("households").insert({"manager_id": user_id, "household_code": household_code}).execute()
 
     # Add the user as a member of the household
@@ -37,9 +29,7 @@ def create_household(user_email):
         "household_code": household_code
     }).eq("email", user_email).execute()
 
-
     return {"success": True, "household_code": household_code}
-
 
 def join_household(user_email, household_code):
     # Get user_id of the joining user
