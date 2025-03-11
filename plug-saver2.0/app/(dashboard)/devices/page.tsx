@@ -229,8 +229,8 @@ export default function DevicesPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-gray-300 mb-4">You haven't added any devices yet.</p>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-white-300 mb-4">You haven't added any devices yet.</p>
+                      <p className="text-white-400 text-sm">
                         Add your first device to start monitoring energy consumption.
                       </p>
                     </>
@@ -666,7 +666,7 @@ function AddDeviceFlow({ onDeviceAdded }) {
                       </div>
                     ) : foundDevices.length > 0 ? (
                       <div className="w-full space-y-2">
-                        <p className="text-sm text-white mb-2">Select a device to pair:</p>
+                        <p className="text-sm text-black mb-2">Select a device to pair:</p>
                         {foundDevices.map((device) => (
                           <div
                             key={device.id}
@@ -697,7 +697,7 @@ function AddDeviceFlow({ onDeviceAdded }) {
                     ) : (
                       <div className="flex flex-col items-center">
                         <Wifi className="w-12 h-12 text-gray-400 mb-2" />
-                        <p className="text-white mb-4">No devices found</p>
+                        <p className="text-black mb-4">No devices found</p>
                       </div>
                     )}
                   </div>
@@ -720,7 +720,7 @@ function AddDeviceFlow({ onDeviceAdded }) {
                 <TabsContent value="qr">
                   <div className="flex flex-col items-center justify-center py-8">
                     <Scan className="w-16 h-16 text-gray-400 mb-4" />
-                    <p className="text-center text-white mb-4">
+                    <p className="text-center text-black mb-4">
                       Position the QR code on your smart plug within the camera view
                     </p>
                     <Button
