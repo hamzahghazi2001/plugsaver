@@ -45,7 +45,6 @@ import {
   RotateCw,
   Search,
   Scan,
-  Wifi,
   Lightbulb,
   LampDesk,
   LampFloor,
@@ -88,18 +87,12 @@ import {
   Dumbbell,
 } from "lucide-react"
 
+// Update the DevicesPage component
 export default function DevicesPage() {
-  // Use original devices as default data (with added id property)
-  const [devices, setDevices] = useState([
-    // { id: "1", icon: Lamp, name: "Desk Lamp", room: "Office", power: "25W", isOn: false },
-    // { id: "2", icon: Speaker, name: "Speakers", room: "Living Room", power: "12W", isOn: true },
-    // { id: "3", icon: Tv, name: "Smart TV", room: "Living Room", power: "150W", isOn: false },
-    // { id: "4", icon: Computer, name: "Desktop PC", room: "Office", power: "200W", isOn: true },
-    // { id: "5", icon: Fan, name: "Ceiling Fan", room: "Bedroom", power: "60W", isOn: false },
-  ])
+  const [devices, setDevices] = useState([])
   const [rooms, setRooms] = useState(["Office", "Living Room", "Bedroom", "Kitchen"])
   const [selectedRoom, setSelectedRoom] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState(false)
 
   // Load rooms from localStorage on mount
   useEffect(() => {
@@ -110,6 +103,14 @@ export default function DevicesPage() {
       localStorage.setItem("plugSaver_rooms", JSON.stringify(rooms))
     }
   }, [])
+
+  const addDevice = (newDevice) => {
+    setDevices([...devices, newDevice])
+  }
+
+  const removeDevice = (deviceId) => {
+    setDevices(devices.filter((device) => device.id !== deviceId))
+  }
 
   // Filter devices by selected room if set
   const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
@@ -126,7 +127,7 @@ export default function DevicesPage() {
     <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Devices</h1>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
         <Card className="gradient-card md:col-span-2 lg:col-span-3">
           <div className="flex justify-between mb-4">
@@ -172,7 +173,7 @@ export default function DevicesPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <Icon className={`w-6 h-6 ${isOn ? "text-blue-400" : "text-gray-400"}`} />
+                            <Icon className={`w-5 h-5 ${isOn ? "text-blue-400" : "text-gray-400"}`} />
                             <div>
                               <div className="flex items-center">
                                 <p className="font-medium">{name}</p>
@@ -188,7 +189,17 @@ export default function DevicesPage() {
                               <p className="text-sm text-gray-300">{room || "No Room Assigned"}</p>
                             </div>
                           </div>
-                          <Switch checked={isOn} onCheckedChange={() => toggleDevice(id)} />
+                          <div className="flex items-center gap-2">
+                            <Switch checked={isOn} onCheckedChange={() => toggleDevice(id)} />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDevice(id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="mt-2">
                           <p className="text-sm text-gray-300">{power}</p>
@@ -242,7 +253,15 @@ export default function DevicesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: devices.length * 0.1 }}
               >
-                <AddDeviceFlow onDeviceAdded={(newDevice) => setDevices([...devices, newDevice])} />
+                <Card
+                  className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20"
+                  onClick={() => setAddDeviceDialogOpen(true)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    <span>Add Device</span>
+                  </div>
+                </Card>
               </motion.div>
             </div>
           </div>
@@ -290,29 +309,33 @@ export default function DevicesPage() {
             </div>
 
             <div className="mb-4">
-              <div className="flex items-center space-x-2 mb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <span className="text-sm text-gray-300">Filter by room:</span>
-                <Button
-                  variant={selectedRoom === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedRoom(null)}
-                  className={selectedRoom === null ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"}
-                >
-                  All
-                </Button>
-                {rooms.map((room) => (
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    key={room}
-                    variant={selectedRoom === room ? "default" : "outline"}
+                    variant={selectedRoom === null ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedRoom(room)}
+                    onClick={() => setSelectedRoom(null)}
                     className={
-                      selectedRoom === room ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                      selectedRoom === null ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
                     }
                   >
-                    {room}
+                    All
                   </Button>
-                ))}
+                  {rooms.map((room) => (
+                    <Button
+                      key={room}
+                      variant={selectedRoom === room ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedRoom(room)}
+                      className={
+                        selectedRoom === room ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                      }
+                    >
+                      {room}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -398,34 +421,25 @@ export default function DevicesPage() {
           </div>
         </section>
       </div>
+      <AddDeviceDialog
+        open={addDeviceDialogOpen}
+        setOpen={setAddDeviceDialogOpen}
+        onDeviceAdded={addDevice}
+        onDeviceRemoved={removeDevice}
+      />
     </div>
   )
 }
 
-// The multi–step Add Device flow with scanning, device info and scheduling
-function AddDeviceFlow({ onDeviceAdded }) {
-  const [open, setOpen] = useState(false)
+// Update the AddDeviceFlow component
+function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isScanning, setIsScanning] = useState(false)
   const [foundDevices, setFoundDevices] = useState([])
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [error, setError] = useState(null)
   const [availableRooms, setAvailableRooms] = useState([])
-  const [deviceInfo, setDeviceInfo] = useState({
-    name: "",
-    type: "",
-    room: "",
-    icon: Lamp,
-    power: "0W",
-    isOn: false,
-    consumptionLimit: 100,
-    schedule: {
-      enabled: false,
-      startTime: "08:00",
-      endTime: "22:00",
-      days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-    },
-  })
+  const [pairedDevices, setPairedDevices] = useState([])
 
   useEffect(() => {
     const savedRooms = localStorage.getItem("plugSaver_rooms")
@@ -524,42 +538,45 @@ function AddDeviceFlow({ onDeviceAdded }) {
   const startScan = () => {
     setIsScanning(true)
     setError(null)
-    setTimeout(() => {
-      const randomDevices = [
-        {
+    setFoundDevices([])
+
+    const totalDevices = Math.floor(Math.random() * 5) + 5 // Random number of devices (5-9)
+    let devicesAdded = 0
+
+    const addDevice = () => {
+      if (devicesAdded < totalDevices) {
+        const newDevice = {
           id: "SP" + Math.floor(Math.random() * 10000),
           name: "Smart Plug " + Math.floor(Math.random() * 100),
           status: "Available",
-        },
-        {
-          id: "SP" + Math.floor(Math.random() * 10000),
-          name: "Smart Plug " + Math.floor(Math.random() * 100),
-          status: "Available",
-        },
-        {
-          id: "SP" + Math.floor(Math.random() * 10000),
-          name: "Smart Plug " + Math.floor(Math.random() * 100),
-          status: "Already paired",
-        },
-      ]
-      setFoundDevices(randomDevices)
-      setIsScanning(false)
-    }, 3000)
+        }
+        setFoundDevices((prev) => [...prev, newDevice])
+        devicesAdded++
+        setTimeout(addDevice, Math.random() * 1000 + 500) // Add next device after 0.5-1.5 seconds
+      } else {
+        setIsScanning(false)
+      }
+    }
+
+    setTimeout(addDevice, 1000) // Start adding devices after 1 second
   }
 
   const selectDevice = (device) => {
-    if (device.status === "Already paired") {
-      setError("This device is already paired with your account.")
-      return
-    }
+    setFoundDevices((prevDevices) => prevDevices.map((d) => (d.id === device.id ? { ...d, status: "Paired" } : d)))
     setSelectedDevice(device)
     setCurrentStep(1)
+  }
+
+  const removeDevice = (deviceId) => {
+    setPairedDevices((prevDevices) => prevDevices.filter((d) => d.id !== deviceId))
+    setFoundDevices((prevDevices) => prevDevices.map((d) => (d.id === deviceId ? { ...d, status: "Available" } : d)))
+    onDeviceRemoved(deviceId)
   }
 
   const onSubmit = (data) => {
     const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0]
     const newDevice = {
-      id: selectedDevice.id || `device_${Date.now()}`,
+      id: selectedDevice.id,
       name: data.name,
       room: data.room,
       icon: selectedIconObj.icon,
@@ -578,6 +595,7 @@ function AddDeviceFlow({ onDeviceAdded }) {
       setError("Device registration failed. Please check your connection and try again.")
       return
     }
+    setPairedDevices((prev) => [...prev, newDevice])
     onDeviceAdded(newDevice)
     setOpen(false)
     setCurrentStep(0)
@@ -593,519 +611,503 @@ function AddDeviceFlow({ onDeviceAdded }) {
   ]
 
   return (
-    <>
-      <Card
-        className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300"
-        onClick={() => setOpen(true)}
-      >
-        <div className="flex items-center justify-center gap-2 h-full min-h-[100px]">
-          <Plus className="w-5 h-5" />
-          <span>Add Device</span>
-        </div>
-      </Card>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-white">Add New Device</DialogTitle>
+          <DialogDescription className="text-gray-300">{steps[currentStep].description}</DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-white">Add New Device</DialogTitle>
-            <DialogDescription className="text-gray-300">{steps[currentStep].description}</DialogDescription>
-          </DialogHeader>
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex justify-between mb-4">
-            {steps.map((step, index) => (
+        <div className="flex justify-between mb-4">
+          {steps.map((step, index) => (
+            <div
+              key={index}
+              className={`flex flex-col items-center ${index === currentStep ? "text-pink-500" : "text-gray-400"}`}
+            >
               <div
-                key={index}
-                className={`flex flex-col items-center ${index === currentStep ? "text-pink-500" : "text-gray-400"}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                  index === currentStep
+                    ? "bg-pink-500 text-white"
+                    : index < currentStep
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                }`}
               >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
-                    index === currentStep
-                      ? "bg-pink-500 text-white"
-                      : index < currentStep
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-500"
-                  }`}
-                >
-                  {index < currentStep ? index + 1 : index + 1}
-                </div>
-                <span className="text-xs text-center">{step.title}</span>
+                {index < currentStep ? index + 1 : index + 1}
               </div>
-            ))}
-          </div>
+              <span className="text-xs text-center">{step.title}</span>
+            </div>
+          ))}
+        </div>
 
-          {currentStep === 0 && (
-            <div className="space-y-4 text-white">
-              <Tabs defaultValue="scan">
-                <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                  <TabsTrigger
-                    value="scan"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
-                  >
-                    Scan Nearby
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="qr"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
-                  >
-                    Scan QR Code
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="scan" className="space-y-4">
-                  <div className="flex justify-center my-4">
-                    {isScanning ? (
-                      <div className="flex flex-col items-center">
-                        <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-2" />
-                        <p className="text-white">Scanning for devices...</p>
-                      </div>
-                    ) : foundDevices.length > 0 ? (
-                      <div className="w-full space-y-2">
-                        <p className="text-sm text-black mb-2">Select a device to pair:</p>
-                        {foundDevices.map((device) => (
-                          <div
-                            key={device.id}
-                            onClick={() => selectDevice(device)}
-                            className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${
-                              device.status === "Already paired"
-                                ? "border-yellow-500 bg-yellow-50/10"
-                                : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Plug
-                                className={device.status === "Already paired" ? "text-yellow-500" : "text-blue-500"}
-                              />
-                              <div>
-                                <p className="font-medium text-white">{device.name}</p>
-                                <p className="text-xs text-gray-300">ID: {device.id}</p>
-                              </div>
+        {currentStep === 0 && (
+          <div className="space-y-4 text-white">
+            <Tabs defaultValue="scan">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+                <TabsTrigger
+                  value="scan"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+                >
+                  Scan Nearby
+                </TabsTrigger>
+                <TabsTrigger
+                  value="qr"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+                >
+                  Scan QR Code
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="scan" className="space-y-4">
+                <div className="flex justify-center my-4">
+                  {isScanning ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-2" />
+                      <p className="text-white">Scanning for devices...</p>
+                    </div>
+                  ) : (
+                    <div className="w-full space-y-2">
+                      <p className="text-sm text-white mb-2">
+                        {isScanning
+                          ? `Scanning... (${foundDevices.length} device${foundDevices.length !== 1 ? "s" : ""} found)`
+                          : `Select a device to pair (${foundDevices.filter((d) => d.status === "Available").length} available):`}
+                      </p>
+                      {foundDevices.map((device) => (
+                        <motion.div
+                          key={device.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          onClick={() => device.status === "Available" && selectDevice(device)}
+                          className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${
+                            device.status === "Paired"
+                              ? "border-green-500 bg-green-50/10 cursor-not-allowed"
+                              : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Plug className={device.status === "Paired" ? "text-green-500" : "text-blue-500"} />
+                            <div>
+                              <p className="font-medium text-white">{device.name}</p>
+                              <p className="text-xs text-gray-300">ID: {device.id}</p>
                             </div>
-                            <span
-                              className={`text-sm ${device.status === "Already paired" ? "text-yellow-500" : "text-green-500"}`}
-                            >
-                              {device.status}
-                            </span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <Wifi className="w-12 h-12 text-gray-400 mb-2" />
-                        <p className="text-black mb-4">No devices found</p>
-                      </div>
-                    )}
-                  </div>
-                  <Button onClick={startScan} disabled={isScanning} className="w-full">
+                          <span
+                            className={`text-sm ${device.status === "Paired" ? "text-green-500" : "text-blue-500"}`}
+                          >
+                            {device.status}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <Button onClick={startScan} disabled={isScanning} className="w-full">
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
+                    </>
+                  ) : foundDevices.length > 0 ? (
+                    <>
+                      <RotateCw className="mr-2 h-4 w-4" /> Scan Again
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" /> Start Scanning
+                    </>
+                  )}
+                </Button>
+              </TabsContent>
+              <TabsContent value="qr">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Scan className="w-16 h-16 text-gray-400 mb-4" />
+                  <p className="text-center text-black mb-4">
+                    Position the QR code on your smart plug within the camera view
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setIsScanning(true)
+                      setTimeout(() => {
+                        const randomDevice = {
+                          id: "SP" + Math.floor(Math.random() * 10000),
+                          name: "Smart Plug " + Math.floor(Math.random() * 100),
+                          status: "Available",
+                        }
+                        setSelectedDevice(randomDevice)
+                        setIsScanning(false)
+                        setCurrentStep(1)
+                      }, 2000)
+                    }}
+                  >
                     {isScanning ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
                       </>
-                    ) : foundDevices.length > 0 ? (
-                      <>
-                        <RotateCw className="mr-2 h-4 w-4" /> Scan Again
-                      </>
                     ) : (
                       <>
-                        <Search className="mr-2 h-4 w-4" /> Start Scanning
+                        <Scan className="mr-2 h-4 w-4" /> Scan QR Code
                       </>
                     )}
                   </Button>
-                </TabsContent>
-                <TabsContent value="qr">
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Scan className="w-16 h-16 text-gray-400 mb-4" />
-                    <p className="text-center text-black mb-4">
-                      Position the QR code on your smart plug within the camera view
-                    </p>
-                    <Button
-                      onClick={() => {
-                        setIsScanning(true)
-                        setTimeout(() => {
-                          const randomDevice = {
-                            id: "SP" + Math.floor(Math.random() * 10000),
-                            name: "Smart Plug " + Math.floor(Math.random() * 100),
-                            status: "Available",
-                          }
-                          setSelectedDevice(randomDevice)
-                          setIsScanning(false)
-                          setCurrentStep(1)
-                        }, 2000)
-                      }}
-                    >
-                      {isScanning ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
-                        </>
-                      ) : (
-                        <>
-                          <Scan className="mr-2 h-4 w-4" /> Scan QR Code
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          )}
-
-          {currentStep === 1 && (
-            <Form {...form}>
-              <form className="space-y-4 text-gray-800">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  rules={{ required: "Device name is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-800 font-medium">Device Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. Living Room Lamp"
-                          className="text-gray-800 bg-white border-gray-300"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-gray-600">Give your device a unique name</FormDescription>
-                      <FormMessage className="text-red-300" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="type"
-                  rules={{ required: "Device type is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-800 font-medium">Device Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-white border-gray-300 text-gray-800">
-                            <SelectValue placeholder="Select device type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {deviceTypeOptions.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-red-300" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="room"
-                  rules={{ required: "Room is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-800 font-medium">Room</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="bg-white border-gray-300 text-gray-800">
-                            <SelectValue placeholder="Select room" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableRooms.map((room) => (
-                            <SelectItem key={room} value={room}>
-                              {room}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-red-300" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="icon"
-                  rules={{ required: "Icon is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-800 font-medium">Device Icon</FormLabel>
-                      <FormControl>
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 p-2 border border-gray-600 rounded-md max-h-[300px] overflow-y-auto bg-gray-800/50">
-                          {deviceIcons.map((iconObj) => {
-                            const IconComponent = iconObj.icon
-                            return (
-                              <div
-                                key={iconObj.name}
-                                onClick={() => field.onChange(iconObj.name)}
-                                className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${
-                                  field.value === iconObj.name
-                                    ? "bg-blue-900/70 border border-blue-400 text-white"
-                                    : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
-                                }`}
-                              >
-                                <IconComponent className="w-6 h-6 mb-1 text-white" />
-                                <span className="text-xs text-center truncate w-full font-medium">{iconObj.name}</span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </FormControl>
-                      <FormDescription className="text-gray-600">
-                        Select the icon that best represents your device
-                      </FormDescription>
-                      <FormMessage className="text-red-300" />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setCurrentStep(0)}>
-                    Back
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const nameValid = form.trigger("name")
-                      const typeValid = form.trigger("type")
-                      const roomValid = form.trigger("room")
-                      const iconValid = form.trigger("icon")
-                      if (nameValid && typeValid && roomValid && iconValid) {
-                        setCurrentStep(2)
-                      }
-                    }}
-                  >
-                    Next
-                  </Button>
                 </div>
-              </form>
-            </Form>
-          )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
 
-          {currentStep === 2 && (
-            <Form {...form}>
-              <form className="space-y-4 text-gray-800">
-                <FormField
-                  control={form.control}
-                  name="consumptionLimit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-800 font-medium">Energy Consumption Limit (kWh/month)</FormLabel>
-                      <FormControl>
-                        <div className="space-y-2">
-                          <div className="px-1">
-                            <Slider
-                              min={0}
-                              max={500}
-                              step={10}
-                              value={[field.value]}
-                              onValueChange={(values) => field.onChange(values[0])}
-                              className="bg-gray-200"
-                            />
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-600">0 kWh</span>
-                            <span className="text-sm font-medium bg-gray-700 text-white px-2 py-1 rounded-md">
-                              {field.value} kWh
-                            </span>
-                            <span className="text-xs text-gray-600">500 kWh</span>
-                          </div>
-                        </div>
-                      </FormControl>
-                      <FormDescription className="text-gray-600">
-                        You'll receive alerts when this device exceeds the limit
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
+        {currentStep === 1 && (
+          <Form {...form}>
+            <form className="space-y-4 text-gray-800">
+              <FormField
+                control={form.control}
+                name="name"
+                rules={{ required: "Device name is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-800 font-medium">Device Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Living Room Lamp"
+                        className="text-gray-800 bg-white border-gray-300"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-gray-600">Give your device a unique name</FormDescription>
+                    <FormMessage className="text-red-300" />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="scheduleEnabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormField
+                control={form.control}
+                name="type"
+                rules={{ required: "Device type is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-800 font-medium">Device Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <SelectTrigger className="bg-white border-gray-300 text-gray-800">
+                          <SelectValue placeholder="Select device type" />
+                        </SelectTrigger>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-gray-800 font-medium">Enable Scheduled Operation</FormLabel>
-                        <FormDescription className="text-gray-600">
-                          Automatically turn the device on and off at specific times
-                        </FormDescription>
+                      <SelectContent>
+                        {deviceTypeOptions.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-red-300" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="room"
+                rules={{ required: "Room is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-800 font-medium">Room</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-white border-gray-300 text-gray-800">
+                          <SelectValue placeholder="Select room" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableRooms.map((room) => (
+                          <SelectItem key={room} value={room}>
+                            {room}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-red-300" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="icon"
+                rules={{ required: "Icon is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-800 font-medium">Device Icon</FormLabel>
+                    <FormControl>
+                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 p-2 border border-gray-600 rounded-md max-h-[300px] overflow-y-auto bg-gray-800/50">
+                        {deviceIcons.map((iconObj) => {
+                          const IconComponent = iconObj.icon
+                          return (
+                            <div
+                              key={iconObj.name}
+                              onClick={() => field.onChange(iconObj.name)}
+                              className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${
+                                field.value === iconObj.name
+                                  ? "bg-blue-900/70 border border-blue-400 text-white"
+                                  : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
+                              }`}
+                            >
+                              <IconComponent className="w-6 h-6 mb-1 text-white" />
+                              <span className="text-xs text-center truncate w-full font-medium">{iconObj.name}</span>
+                            </div>
+                          )
+                        })}
                       </div>
-                    </FormItem>
-                  )}
-                />
+                    </FormControl>
+                    <FormDescription className="text-gray-600">
+                      Select the icon that best represents your device
+                    </FormDescription>
+                    <FormMessage className="text-red-300" />
+                  </FormItem>
+                )}
+              />
 
-                {form.watch("scheduleEnabled") && (
-                  <div className="space-y-4 p-4 border rounded-md">
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="startTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-800 font-medium">Start Time</FormLabel>
-                            <FormControl>
-                              <Input type="time" className="text-gray-800 bg-white border-gray-300" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+              <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={() => setCurrentStep(0)}>
+                  Back
+                </Button>
+                <Button
+                  onClick={() => {
+                    const nameValid = form.trigger("name")
+                    const typeValid = form.trigger("type")
+                    const roomValid = form.trigger("room")
+                    const iconValid = form.trigger("icon")
+                    if (nameValid && typeValid && roomValid && iconValid) {
+                      setCurrentStep(2)
+                    }
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
 
-                      <FormField
-                        control={form.control}
-                        name="endTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-gray-800 font-medium">End Time</FormLabel>
-                            <FormControl>
-                              <Input type="time" className="text-gray-800 bg-white border-gray-300" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+        {currentStep === 2 && (
+          <Form {...form}>
+            <form className="space-y-4 text-gray-800">
+              <FormField
+                control={form.control}
+                name="consumptionLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-800 font-medium">Energy Consumption Limit (kWh/month)</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <div className="px-1">
+                          <Slider
+                            min={0}
+                            max={500}
+                            step={10}
+                            value={[field.value]}
+                            onValueChange={(values) => field.onChange(values[0])}
+                            className="bg-gray-200"
+                          />
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-xs text-gray-600">0 kWh</span>
+                          <span className="text-sm font-medium bg-gray-700 text-white px-2 py-1 rounded-md">
+                            {field.value} kWh
+                          </span>
+                          <span className="text-xs text-gray-600">500 kWh</span>
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-gray-600">
+                      You'll receive alerts when this device exceeds the limit
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scheduleEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-gray-800 font-medium">Enable Scheduled Operation</FormLabel>
+                      <FormDescription className="text-gray-600">
+                        Automatically turn the device on and off at specific times
+                      </FormDescription>
                     </div>
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("scheduleEnabled") && (
+                <div className="space-y-4 p-4 border rounded-md">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-800 font-medium">Start Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" className="text-gray-800 bg-white border-gray-300" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
-                      name="days"
+                      name="endTime"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="mb-2">
-                            <FormLabel className="text-gray-800 font-medium">Active Days</FormLabel>
-                            <FormDescription className="text-gray-600">
-                              Select days when the schedule should be active
-                            </FormDescription>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-                              (day) => {
-                                const dayLower = day.toLowerCase()
-                                return (
-                                  <div
-                                    key={day}
-                                    className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
-                                      field.value?.includes(dayLower)
-                                        ? "bg-blue-500 text-white"
-                                        : "bg-gray-200/20 text-gray-500"
-                                    }`}
-                                    onClick={() => {
-                                      const updatedDays = field.value?.includes(dayLower)
-                                        ? field.value.filter((d) => d !== dayLower)
-                                        : [...(field.value || []), dayLower]
-                                      field.onChange(updatedDays)
-                                    }}
-                                  >
-                                    {day.substring(0, 3)}
-                                  </div>
-                                )
-                              },
-                            )}
-                          </div>
+                          <FormLabel className="text-gray-800 font-medium">End Time</FormLabel>
+                          <FormControl>
+                            <Input type="time" className="text-gray-800 bg-white border-gray-300" {...field} />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
                   </div>
-                )}
 
-                <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                    Back
-                  </Button>
-                  <Button onClick={() => setCurrentStep(3)}>Next</Button>
+                  <FormField
+                    control={form.control}
+                    name="days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="mb-2">
+                          <FormLabel className="text-gray-800 font-medium">Active Days</FormLabel>
+                          <FormDescription className="text-gray-600">
+                            Select days when the schedule should be active
+                          </FormDescription>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => {
+                            const dayLower = day.toLowerCase()
+                            return (
+                              <div
+                                key={day}
+                                className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
+                                  field.value?.includes(dayLower)
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-200/20 text-gray-500"
+                                }`}
+                                onClick={() => {
+                                  const updatedDays = field.value?.includes(dayLower)
+                                    ? field.value.filter((d) => d !== dayLower)
+                                    : [...(field.value || []), dayLower]
+                                  field.onChange(updatedDays)
+                                }}
+                              >
+                                {day.substring(0, 3)}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              </form>
-            </Form>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-4 text-gray-800">
-              <div className="border rounded-md p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-gray-800">Device Information</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Name</p>
-                    <p className="font-medium text-gray-800">{form.watch("name") || "Not set"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Type</p>
-                    <p className="font-medium text-gray-800">{form.watch("type") || "Not set"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Room</p>
-                    <p className="font-medium text-gray-800">{form.watch("room") || "Not set"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Device ID</p>
-                    <p className="font-medium text-gray-800">{selectedDevice?.id || "Unknown"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border rounded-md p-4 space-y-3">
-                <h3 className="font-medium text-gray-800">Energy Settings</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Consumption Limit</p>
-                    <p className="font-medium text-gray-800">{form.watch("consumptionLimit")} kWh/month</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-gray-500">Scheduled Operation</p>
-                    <p className="font-medium text-gray-800">
-                      {form.watch("scheduleEnabled") ? "Enabled" : "Disabled"}
-                    </p>
-                  </div>
-                  {form.watch("scheduleEnabled") && (
-                    <>
-                      <div className="space-y-1">
-                        <p className="text-gray-500">Schedule Time</p>
-                        <p className="font-medium text-gray-800">
-                          {form.watch("startTime")} - {form.watch("endTime")}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-gray-500">Active Days</p>
-                        <p className="font-medium text-gray-800">
-                          {form.watch("days")?.length
-                            ? form
-                                .watch("days")
-                                .map((d) => d.substring(0, 3))
-                                .join(", ")
-                            : "None selected"}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <Alert className="bg-blue-500/10 border-blue-500 text-blue-700">
-                <AlertTitle>Energy Saving Recommendation</AlertTitle>
-                <AlertDescription>
-                  Based on your device type, we recommend setting a consumption limit of 80 kWh/month and scheduling it
-                  to turn off during peak hours (6 PM - 10 PM) to maximize energy savings.
-                </AlertDescription>
-              </Alert>
+              )}
 
               <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                <Button variant="outline" onClick={() => setCurrentStep(1)}>
                   Back
                 </Button>
-                <Button onClick={() => onSubmit(form.getValues())}>Complete Setup</Button>
+                <Button onClick={() => setCurrentStep(3)}>Next</Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {currentStep === 3 && (
+          <div className="space-y-4 text-gray-800">
+            <div className="border rounded-md p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium text-gray-800">Device Information</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="space-y-1">
+                  <p className="text-gray-500">Name</p>
+                  <p className="font-medium text-gray-800">{form.watch("name") || "Not set"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500">Type</p>
+                  <p className="font-medium text-gray-800">{form.watch("type") || "Not set"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500">Room</p>
+                  <p className="font-medium text-gray-800">{form.watch("room") || "Not set"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500">Device ID</p>
+                  <p className="font-medium text-gray-800">{selectedDevice?.id || "Unknown"}</p>
+                </div>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+
+            <div className="border rounded-md p-4 space-y-3">
+              <h3 className="font-medium text-gray-800">Energy Settings</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="space-y-1">
+                  <p className="text-gray-500">Consumption Limit</p>
+                  <p className="font-medium text-gray-800">{form.watch("consumptionLimit")} kWh/month</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-gray-500">Scheduled Operation</p>
+                  <p className="font-medium text-gray-800">{form.watch("scheduleEnabled") ? "Enabled" : "Disabled"}</p>
+                </div>
+                {form.watch("scheduleEnabled") && (
+                  <>
+                    <div className="space-y-1">
+                      <p className="text-gray-500">Schedule Time</p>
+                      <p className="font-medium text-gray-800">
+                        {form.watch("startTime")} - {form.watch("endTime")}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-gray-500">Active Days</p>
+                      <p className="font-medium text-gray-800">
+                        {form.watch("days")?.length
+                          ? form
+                              .watch("days")
+                              .map((d) => d.substring(0, 3))
+                              .join(", ")
+                          : "None selected"}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <Alert className="bg-blue-500/10 border-blue-500 text-blue-700">
+              <AlertTitle>Energy Saving Recommendation</AlertTitle>
+              <AlertDescription>
+                Based on your device type, we recommend setting a consumption limit of 80 kWh/month and scheduling it to
+                turn off during peak hours (6 PM - 10 PM) to maximize energy savings.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                Back
+              </Button>
+              <Button onClick={() => onSubmit(form.getValues())}>Complete Setup</Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
 
