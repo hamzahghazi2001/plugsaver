@@ -20,7 +20,11 @@ import {
   Legend,
 } from "recharts"
 
-const data = {
+// At the top of the file, add this type definition
+type PeriodType = "day" | "week" | "month" | "year"
+
+// Update the data object type
+const data: Record<PeriodType, { name: string; value: number }[]> = {
   day: [
     { name: "00:00", value: 300 },
     { name: "04:00", value: 200 },
@@ -61,36 +65,21 @@ const data = {
   ],
 }
 
-const energySourceData = [
-  { name: "Solar", value: 400 },
-  { name: "Wind", value: 300 },
-  { name: "Grid", value: 300 },
-]
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
-
-const applianceData = [
-  { name: "HVAC", usage: 450 },
-  { name: "Lighting", usage: 200 },
-  { name: "Kitchen", usage: 300 },
-  { name: "Electronics", usage: 250 },
-  { name: "Other", usage: 150 },
-]
-
-export default function DashboardPage() {
-  const [period, setPeriod] = useState("week")
+// Update the useState call to use the PeriodType
+const DashboardPage = () => {
+  const [period, setPeriod] = useState<PeriodType>("week")
 
   return (
     <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-dashboard)" }}>
       <div className="flex justify-between items-center mb-6">
-      <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h1>
-      <Button size="icon" variant="ghost">
+        <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h1>
+        <Button size="icon" variant="ghost">
           <RefreshCw className="w-5 h-5" />
         </Button>
       </div>
 
       <div className="flex gap-2 mb-6">
-        {["year", "month", "week", "day"].map((p) => (
+        {(["year", "month", "week", "day"] as const).map((p) => (
           <Button
             key={p}
             variant={period === p ? "default" : "secondary"}
@@ -247,4 +236,22 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+const energySourceData = [
+  { name: "Solar", value: 400 },
+  { name: "Wind", value: 300 },
+  { name: "Grid", value: 300 },
+]
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
+
+const applianceData = [
+  { name: "HVAC", usage: 450 },
+  { name: "Lighting", usage: 200 },
+  { name: "Kitchen", usage: 300 },
+  { name: "Electronics", usage: 250 },
+  { name: "Other", usage: 150 },
+]
+
+export default DashboardPage
 
