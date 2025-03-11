@@ -123,7 +123,7 @@ interface DeviceIcon {
 export default function DevicesPage() {
   // Update the useState calls in DevicesPage component
   const [devices, setDevices] = useState<Device[]>([])
-  const [rooms, setRooms] = useState<string[]>(["Office", "Living Room", "Bedroom", "Kitchen"])
+  const [rooms, setRooms] = useState<string[]>([])
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
 
@@ -132,8 +132,6 @@ export default function DevicesPage() {
     const savedRooms = localStorage.getItem("plugSaver_rooms")
     if (savedRooms) {
       setRooms(JSON.parse(savedRooms))
-    } else {
-      localStorage.setItem("plugSaver_rooms", JSON.stringify(rooms))
     }
   }, [])
 
@@ -283,21 +281,36 @@ export default function DevicesPage() {
                   )}
                 </div>
               )}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: devices.length * 0.1 }}
-              >
-                <Card
-                  className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20"
-                  onClick={() => setAddDeviceDialogOpen(true)}
+              {rooms.length > 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: devices.length * 0.1 }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    <span>Add Device</span>
-                  </div>
-                </Card>
-              </motion.div>
+                  <Card
+                    className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20"
+                    onClick={() => setAddDeviceDialogOpen(true)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      <span>Add Device</span>
+                    </div>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  <Card className="gradient-card p-4 border border-dashed border-white/20">
+                    <div className="text-center py-2">
+                      <span className="block text-yellow-300 mb-2">⚠️ You need to create a room first</span>
+                      <span className="text-sm text-gray-300">Create a room before adding devices</span>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -354,6 +367,7 @@ export default function DevicesPage() {
                     className={
                       selectedRoom === null ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
                     }
+                    disabled={rooms.length === 0}
                   >
                     All
                   </Button>
@@ -374,85 +388,135 @@ export default function DevicesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {rooms.map((room, index) => {
-                const deviceCount = devices.filter((device) => device.room === room).length
-                return (
-                  <motion.div
-                    key={room}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <Card
-                      className={`gradient-card p-4 text-center transition-all duration-300 hover:scale-105 ${
-                        selectedRoom === room ? "ring-2 ring-blue-500" : ""
-                      }`}
+            {rooms.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {rooms.map((room, index) => {
+                  const deviceCount = devices.filter((device) => device.room === room).length
+                  return (
+                    <motion.div
+                      key={room}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <div className="flex flex-col items-center">
-                        <p className="font-medium">{room}</p>
-                        <p className="text-xs text-gray-300">
-                          {deviceCount} device{deviceCount !== 1 ? "s" : ""}
-                        </p>
-                        <div className="flex mt-2 space-x-2">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedRoom(room)}>
-                            <Filter className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure you want to delete this room?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {deviceCount > 0 ? (
-                                    <>
-                                      This room has {deviceCount} device{deviceCount !== 1 ? "s" : ""} assigned to it.
-                                      If you delete this room, these devices will need to be manually reassigned.
-                                    </>
-                                  ) : (
-                                    "This action cannot be undone."
-                                  )}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    const newRooms = rooms.filter((r) => r !== room)
-                                    setRooms(newRooms)
-                                    localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
-                                    const updatedDevices = devices.map((device) =>
-                                      device.room === room
-                                        ? { ...device, room: null, needsRoomAssignment: true }
-                                        : device,
-                                    )
-                                    setDevices(updatedDevices)
-                                    if (selectedRoom === room) {
-                                      setSelectedRoom(null)
-                                    }
-                                  }}
-                                  className="bg-red-500 hover:bg-red-600"
+                      <Card
+                        className={`gradient-card p-4 text-center transition-all duration-300 hover:scale-105 ${
+                          selectedRoom === room ? "ring-2 ring-blue-500" : ""
+                        }`}
+                      >
+                        <div className="flex flex-col items-center">
+                          <p className="font-medium">{room}</p>
+                          <p className="text-xs text-gray-300">
+                            {deviceCount} device{deviceCount !== 1 ? "s" : ""}
+                          </p>
+                          <div className="flex mt-2 space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => setSelectedRoom(room)}
+                            >
+                              <Filter className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-900/20"
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure you want to delete this room?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {deviceCount > 0 ? (
+                                      <>
+                                        This room has {deviceCount} device{deviceCount !== 1 ? "s" : ""} assigned to it.
+                                        If you delete this room, these devices will need to be manually reassigned.
+                                      </>
+                                    ) : (
+                                      "This action cannot be undone."
+                                    )}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => {
+                                      const newRooms = rooms.filter((r) => r !== room)
+                                      setRooms(newRooms)
+                                      localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
+                                      const updatedDevices = devices.map((device) =>
+                                        device.room === room
+                                          ? { ...device, room: null, needsRoomAssignment: true }
+                                          : device,
+                                      )
+                                      setDevices(updatedDevices)
+                                      if (selectedRoom === room) {
+                                        setSelectedRoom(null)
+                                      }
+                                    }}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                )
-              })}
-            </div>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            ) : (
+              <Card className="gradient-card p-6 text-center">
+                <div className="py-8">
+                  <p className="text-xl mb-4">No Rooms Created Yet</p>
+                  <p className="text-gray-300 mb-6">You need to create at least one room before adding devices.</p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="mx-auto">
+                        <Plus className="w-4 h-4 mr-2" /> Create Your First Room
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Room</DialogTitle>
+                        <DialogDescription>Enter a name for your new room.</DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault()
+                          const formData = new FormData(e.currentTarget as HTMLFormElement)
+                          const roomName = formData.get("roomName") as string
+                          if (roomName && !rooms.includes(roomName)) {
+                            const newRooms = [...rooms, roomName]
+                            setRooms(newRooms)
+                            localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
+                            ;(e.currentTarget as HTMLFormElement).reset()
+                          }
+                        }}
+                      >
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="roomName">Room Name</Label>
+                            <Input id="roomName" name="roomName" placeholder="e.g. Living Room" required />
+                          </div>
+                          <Button type="submit" className="w-full">
+                            Add Room
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </Card>
+            )}
           </div>
         </section>
       </div>
@@ -490,21 +554,16 @@ function AddDeviceDialog({
     const savedRooms = localStorage.getItem("plugSaver_rooms")
     if (savedRooms) {
       setAvailableRooms(JSON.parse(savedRooms))
-    } else {
-      const defaultRooms = [
-        "Living Room",
-        "Kitchen",
-        "Bedroom",
-        "Office",
-        "Bathroom",
-        "Dining Room",
-        "Garage",
-        "Basement",
-      ]
-      setAvailableRooms(defaultRooms)
-      localStorage.setItem("plugSaver_rooms", JSON.stringify(defaultRooms))
     }
-  }, [open])
+
+    // If there are no rooms, close the dialog and show an alert
+    if (open && (!savedRooms || JSON.parse(savedRooms).length === 0)) {
+      setError("You must create at least one room before adding a device.")
+      setTimeout(() => {
+        setOpen(false)
+      }, 2000)
+    }
+  }, [open, setOpen])
 
   // Update the deviceIcons array type
   const deviceIcons: DeviceIcon[] = [
