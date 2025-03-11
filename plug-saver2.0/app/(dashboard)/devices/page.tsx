@@ -91,11 +91,11 @@ import {
 export default function DevicesPage() {
   // Use original devices as default data (with added id property)
   const [devices, setDevices] = useState([
-    { id: "1", icon: Lamp, name: "Desk Lamp", room: "Office", power: "25W", isOn: false },
-    { id: "2", icon: Speaker, name: "Speakers", room: "Living Room", power: "12W", isOn: true },
-    { id: "3", icon: Tv, name: "Smart TV", room: "Living Room", power: "150W", isOn: false },
-    { id: "4", icon: Computer, name: "Desktop PC", room: "Office", power: "200W", isOn: true },
-    { id: "5", icon: Fan, name: "Ceiling Fan", room: "Bedroom", power: "60W", isOn: false },
+    // { id: "1", icon: Lamp, name: "Desk Lamp", room: "Office", power: "25W", isOn: false },
+    // { id: "2", icon: Speaker, name: "Speakers", room: "Living Room", power: "12W", isOn: true },
+    // { id: "3", icon: Tv, name: "Smart TV", room: "Living Room", power: "150W", isOn: false },
+    // { id: "4", icon: Computer, name: "Desktop PC", room: "Office", power: "200W", isOn: true },
+    // { id: "5", icon: Fan, name: "Ceiling Fan", room: "Bedroom", power: "60W", isOn: false },
   ])
   const [rooms, setRooms] = useState(["Office", "Living Room", "Bedroom", "Kitchen"])
   const [selectedRoom, setSelectedRoom] = useState(null)
@@ -144,7 +144,7 @@ export default function DevicesPage() {
                   <Tv className="w-5 h-5 mr-2 text-blue-400" />
                   <div>
                     <p className="text-xs text-gray-300">This Month</p>
-                    <p className="font-bold">383.1 kWh</p>
+                    <p className="font-bold">0</p>
                   </div>
                 </div>
               </div>

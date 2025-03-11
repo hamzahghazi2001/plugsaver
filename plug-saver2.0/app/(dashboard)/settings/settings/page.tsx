@@ -1,5 +1,6 @@
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link"
+import { Card } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   User,
   Info,
@@ -12,8 +13,7 @@ import {
   Home,
   LayoutDashboard,
   ChevronRight,
-} from "lucide-react";
-import Link from "next/link";
+} from "lucide-react"
 
 export default function SettingsPage() {
   return (
@@ -39,18 +39,18 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium text-purple-300 mb-4">Profile</h2>
           <div className="space-y-2">
             {[
-              { icon: User, label: "Profile Picture" },
-              { icon: Info, label: "Personal Information" },
-              { icon: Share2, label: "Data Sharing Preferences" },
-            ].map(({ icon: Icon, label }) => (
+              { icon: User, label: "Profile Picture", href: "/settings/profile-picture" },
+              { icon: Info, label: "Personal Information", href: "/settings/personal-info" },
+              { icon: Share2, label: "Data Sharing Preferences", href: "/settings/data-sharing" },
+            ].map(({ icon: Icon, label, href }) => (
               <Card key={label} className="gradient-card">
-                <button className="w-full flex items-center justify-between p-2">
+                <Link href={href} className="w-full flex items-center justify-between p-2">
                   <div className="flex items-center gap-4">
                     <Icon className="w-5 h-5" />
                     <span>{label}</span>
                   </div>
                   <ChevronRight className="w-5 h-5" />
-                </button>
+                </Link>
               </Card>
             ))}
           </div>
@@ -60,40 +60,28 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium text-purple-300 mb-4">Account and App</h2>
           <div className="space-y-2">
             {[
-              { icon: Shield, label: "Security and Privacy" },
-              { icon: Bell, label: "Notifications" },
-              { icon: Users, label: "Members" },
-              { icon: Accessibility, label: "Accessibility" },
-              { icon: Home, label: "Household" },
-              { icon: LayoutDashboard, label: "Dashboard" },
-            ].map(({ icon: Icon, label }) => (
+              { icon: Shield, label: "Security and Privacy", href: "/settings/security" },
+              { icon: Bell, label: "Notifications", href: "/settings/notifications" },
+              { icon: Users, label: "Members", href: "/settings/members" },
+              { icon: Accessibility, label: "Accessibility", href: "/settings/accessibility" },
+              { icon: HelpCircle, label: "Support", href: "/settings/support" },
+              { icon: Home, label: "Household", href: "/settings/household" },
+              { icon: LayoutDashboard, label: "Dashboard", href: "/settings/dashboard" },
+            ].map(({ icon: Icon, label, href }) => (
               <Card key={label} className="gradient-card">
-                <button className="w-full flex items-center justify-between p-2">
+                <Link href={href} className="w-full flex items-center justify-between p-2">
                   <div className="flex items-center gap-4">
                     <Icon className="w-5 h-5" />
                     <span>{label}</span>
                   </div>
                   <ChevronRight className="w-5 h-5" />
-                </button>
+                </Link>
               </Card>
             ))}
           </div>
         </section>
-
-        {/* Customer Support Section */}
-        <section>
-          <h2 className="text-lg font-medium text-purple-300 mb-4">Support</h2>
-          <Card className="gradient-card">
-            <Link href="/customer-support" className="w-full flex items-center justify-between p-2">
-              <div className="flex items-center gap-4">
-                <HelpCircle className="w-5 h-5" />
-                <span>Customer Support</span>
-              </div>
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-          </Card>
-        </section>
       </div>
     </div>
-  );
+  )
 }
+
