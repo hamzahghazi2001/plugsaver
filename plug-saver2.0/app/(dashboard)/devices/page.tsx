@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -87,12 +89,43 @@ import {
   Dumbbell,
 } from "lucide-react"
 
+// Add these interfaces at the top of the file, after the imports
+interface Device {
+  id: string
+  name: string
+  room: string | null
+  icon: React.ElementType
+  power: string
+  isOn: boolean
+  type?: string
+  needsRoomAssignment?: boolean
+  consumptionLimit?: number
+  schedule?: {
+    enabled: boolean
+    startTime: string
+    endTime: string
+    days: string[]
+  }
+}
+
+interface FoundDevice {
+  id: string
+  name: string
+  status: "Available" | "Paired"
+}
+
+interface DeviceIcon {
+  icon: React.ElementType
+  name: string
+}
+
 // Update the DevicesPage component
 export default function DevicesPage() {
-  const [devices, setDevices] = useState([])
-  const [rooms, setRooms] = useState(["Office", "Living Room", "Bedroom", "Kitchen"])
-  const [selectedRoom, setSelectedRoom] = useState(null)
-  const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState(false)
+  // Update the useState calls in DevicesPage component
+  const [devices, setDevices] = useState<Device[]>([])
+  const [rooms, setRooms] = useState<string[]>(["Office", "Living Room", "Bedroom", "Kitchen"])
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
+  const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
 
   // Load rooms from localStorage on mount
   useEffect(() => {
@@ -104,19 +137,21 @@ export default function DevicesPage() {
     }
   }, [])
 
-  const addDevice = (newDevice) => {
+  // Update the function signatures
+  const addDevice = (newDevice: Device) => {
     setDevices([...devices, newDevice])
   }
 
-  const removeDevice = (deviceId) => {
+  // Update the function signatures
+  const removeDevice = (deviceId: string) => {
     setDevices(devices.filter((device) => device.id !== deviceId))
   }
 
   // Filter devices by selected room if set
   const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
 
-  // Toggle a device based on its id
-  const toggleDevice = (deviceId) => {
+  // Update the toggleDevice function
+  const toggleDevice = (deviceId: string) => {
     setDevices(devices.map((device) => (device.id === deviceId ? { ...device, isOn: !device.isOn } : device)))
   }
 
@@ -124,11 +159,8 @@ export default function DevicesPage() {
   const totalConsumption = devices.reduce((sum, device) => sum + (device.isOn ? Number.parseInt(device.power) : 0), 0)
 
   return (
-    <div
-      className="min-h-screen p-6 md:p-10"
-      style={{ background: "linear-gradient(180deg, #1e3a8a 0%, #2563eb 100%)" }}
-    >
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-white">Devices</h1>
+    <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">Devices</h1>
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
@@ -159,7 +191,7 @@ export default function DevicesPage() {
         <section className="space-y-6 md:col-span-2 lg:col-span-3">
           {/* Devices Section */}
           <div>
-            <h2 className="text-lg font-medium mb-4 text-white">Your Devices</h2>
+            <h2 className="text-lg font-medium mb-4">Your Devices</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredDevices.length > 0 ? (
                 filteredDevices.map(({ id, icon, name, room, power, isOn, needsRoomAssignment }, index) => {
@@ -243,8 +275,8 @@ export default function DevicesPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-150 mb-4 text-white">You haven't added any devices yet.</p>
-                      <p className="text-200 text-sm text-white">
+                      <p className="text-white-300 mb-4">You haven't added any devices yet.</p>
+                      <p className="text-white-400 text-sm">
                         Add your first device to start monitoring energy consumption.
                       </p>
                     </>
@@ -287,13 +319,13 @@ export default function DevicesPage() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault()
-                      const formData = new FormData(e.target)
-                      const roomName = formData.get("roomName")
+                      const formData = new FormData(e.currentTarget as HTMLFormElement)
+                      const roomName = formData.get("roomName") as string
                       if (roomName && !rooms.includes(roomName)) {
                         const newRooms = [...rooms, roomName]
                         setRooms(newRooms)
                         localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
-                        e.target.reset()
+                        ;(e.currentTarget as HTMLFormElement).reset()
                       }
                     }}
                   >
@@ -434,15 +466,25 @@ export default function DevicesPage() {
   )
 }
 
-// Update the AddDeviceFlow component
-function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [isScanning, setIsScanning] = useState(false)
-  const [foundDevices, setFoundDevices] = useState([])
-  const [selectedDevice, setSelectedDevice] = useState(null)
-  const [error, setError] = useState(null)
-  const [availableRooms, setAvailableRooms] = useState([])
-  const [pairedDevices, setPairedDevices] = useState([])
+// Update the AddDeviceDialog component signature
+function AddDeviceDialog({
+  open,
+  setOpen,
+  onDeviceAdded,
+  onDeviceRemoved,
+}: {
+  open: boolean
+  setOpen: (open: boolean) => void
+  onDeviceAdded: (device: Device) => void
+  onDeviceRemoved: (deviceId: string) => void
+}) {
+  const [currentStep, setCurrentStep] = useState<number>(0)
+  const [isScanning, setIsScanning] = useState<boolean>(false)
+  const [foundDevices, setFoundDevices] = useState<FoundDevice[]>([])
+  const [selectedDevice, setSelectedDevice] = useState<FoundDevice | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [availableRooms, setAvailableRooms] = useState<string[]>([])
+  const [pairedDevices, setPairedDevices] = useState<Device[]>([])
 
   useEffect(() => {
     const savedRooms = localStorage.getItem("plugSaver_rooms")
@@ -464,7 +506,8 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
     }
   }, [open])
 
-  const deviceIcons = [
+  // Update the deviceIcons array type
+  const deviceIcons: DeviceIcon[] = [
     { icon: Lamp, name: "Desk Lamp" },
     { icon: Lightbulb, name: "Light Bulb" },
     { icon: LampFloor, name: "Floor Lamp" },
@@ -534,7 +577,7 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
       scheduleEnabled: false,
       startTime: "08:00",
       endTime: "22:00",
-      days: [],
+      days: [] as string[],
     },
   })
 
@@ -548,7 +591,7 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
 
     const addDevice = () => {
       if (devicesAdded < totalDevices) {
-        const newDevice = {
+        const newDevice: FoundDevice = {
           id: "SP" + Math.floor(Math.random() * 10000),
           name: "Smart Plug " + Math.floor(Math.random() * 100),
           status: "Available",
@@ -564,21 +607,26 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
     setTimeout(addDevice, 1000) // Start adding devices after 1 second
   }
 
-  const selectDevice = (device) => {
+  // Update the selectDevice function
+  const selectDevice = (device: FoundDevice) => {
     setFoundDevices((prevDevices) => prevDevices.map((d) => (d.id === device.id ? { ...d, status: "Paired" } : d)))
     setSelectedDevice(device)
     setCurrentStep(1)
   }
 
-  const removeDevice = (deviceId) => {
+  // Update the removeDevice function
+  const removeDevice = (deviceId: string) => {
     setPairedDevices((prevDevices) => prevDevices.filter((d) => d.id !== deviceId))
     setFoundDevices((prevDevices) => prevDevices.map((d) => (d.id === deviceId ? { ...d, status: "Available" } : d)))
     onDeviceRemoved(deviceId)
   }
 
-  const onSubmit = (data) => {
+  // Update the onSubmit function
+  const onSubmit = (data: any) => {
+    if (!selectedDevice) return
+
     const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0]
-    const newDevice = {
+    const newDevice: Device = {
       id: selectedDevice.id,
       name: data.name,
       room: data.room,
@@ -614,25 +662,12 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
   ]
 
   return (
-<<<<<<< HEAD
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">Add New Device</DialogTitle>
           <DialogDescription className="text-gray-300">{steps[currentStep].description}</DialogDescription>
         </DialogHeader>
-=======
-    <>
-      <Card
-        className="border-2 border-dashed border-gray-300 bg-transparent p-6 flex flex-col items-center justify-center cursor-pointer"
-        onClick={() => setOpen(true)}
-      >
-        <div className="w-12 h-12 rounded-full bg-blue-100/20 flex items-center justify-center mb-2">
-          <Plus className="w-6 h-6 text-blue-500" />
-        </div>
-        <span className="text-gray-400">Add Device</span>
-      </Card>
->>>>>>> 73977a7dfa4f22bd0f6c7036b1e8ea33fb49a90c
 
         {error && (
           <Alert variant="destructive">
@@ -750,7 +785,7 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
                     onClick={() => {
                       setIsScanning(true)
                       setTimeout(() => {
-                        const randomDevice = {
+                        const randomDevice: FoundDevice = {
                           id: "SP" + Math.floor(Math.random() * 10000),
                           name: "Smart Plug " + Math.floor(Math.random() * 100),
                           status: "Available",
@@ -893,11 +928,11 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
                   Back
                 </Button>
                 <Button
-                  onClick={() => {
-                    const nameValid = form.trigger("name")
-                    const typeValid = form.trigger("type")
-                    const roomValid = form.trigger("room")
-                    const iconValid = form.trigger("icon")
+                  onClick={async () => {
+                    const nameValid = await form.trigger("name")
+                    const typeValid = await form.trigger("type")
+                    const roomValid = await form.trigger("room")
+                    const iconValid = await form.trigger("icon")
                     if (nameValid && typeValid && roomValid && iconValid) {
                       setCurrentStep(2)
                     }
@@ -1019,7 +1054,7 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
                                 }`}
                                 onClick={() => {
                                   const updatedDays = field.value?.includes(dayLower)
-                                    ? field.value.filter((d) => d !== dayLower)
+                                    ? field.value.filter((d: string) => d !== dayLower)
                                     : [...(field.value || []), dayLower]
                                   field.onChange(updatedDays)
                                 }}
@@ -1096,7 +1131,7 @@ function AddDeviceDialog({ open, setOpen, onDeviceAdded, onDeviceRemoved }) {
                         {form.watch("days")?.length
                           ? form
                               .watch("days")
-                              .map((d) => d.substring(0, 3))
+                              .map((d: string) => d.substring(0, 3))
                               .join(", ")
                           : "None selected"}
                       </p>
