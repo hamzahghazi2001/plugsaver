@@ -83,7 +83,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-dashboard)" }}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h1>
         <Button size="icon" variant="ghost">
           <RefreshCw className="w-5 h-5" />
         </Button>
