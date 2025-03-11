@@ -253,7 +253,7 @@ export default function DevicesPage() {
               <h2 className="text-lg font-medium">Your Rooms</h2>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-white border-white/20 hover:bg-white/10">
+                  <Button variant="outline" size="sm" className="text-black border-white/20 hover:bg-none/10">
                     <Plus className="w-4 h-4 mr-1" /> Add Room
                   </Button>
                 </DialogTrigger>
