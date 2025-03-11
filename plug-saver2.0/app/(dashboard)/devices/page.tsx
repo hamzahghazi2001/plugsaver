@@ -123,8 +123,11 @@ export default function DevicesPage() {
   const totalConsumption = devices.reduce((sum, device) => sum + (device.isOn ? Number.parseInt(device.power) : 0), 0)
 
   return (
-    <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Devices</h1>
+    <div
+      className="min-h-screen p-6 md:p-10"
+      style={{ background: "linear-gradient(180deg, #1e3a8a 0%, #2563eb 100%)" }}
+    >
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-white">Devices</h1>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
@@ -155,7 +158,7 @@ export default function DevicesPage() {
         <section className="space-y-6 md:col-span-2 lg:col-span-3">
           {/* Devices Section */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Your Devices</h2>
+            <h2 className="text-lg font-medium mb-4 text-white">Your Devices</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredDevices.length > 0 ? (
                 filteredDevices.map(({ id, icon, name, room, power, isOn, needsRoomAssignment }, index) => {
@@ -229,8 +232,8 @@ export default function DevicesPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-white-300 mb-4">You haven't added any devices yet.</p>
-                      <p className="text-white-400 text-sm">
+                      <p className="text-150 mb-4 text-white">You haven't added any devices yet.</p>
+                      <p className="text-200 text-sm text-white">
                         Add your first device to start monitoring energy consumption.
                       </p>
                     </>
@@ -595,13 +598,13 @@ function AddDeviceFlow({ onDeviceAdded }) {
   return (
     <>
       <Card
-        className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300"
+        className="border-2 border-dashed border-gray-300 bg-transparent p-6 flex flex-col items-center justify-center cursor-pointer"
         onClick={() => setOpen(true)}
       >
-        <div className="flex items-center justify-center gap-2 h-full min-h-[100px]">
-          <Plus className="w-5 h-5" />
-          <span>Add Device</span>
+        <div className="w-12 h-12 rounded-full bg-blue-100/20 flex items-center justify-center mb-2">
+          <Plus className="w-6 h-6 text-blue-500" />
         </div>
+        <span className="text-gray-400">Add Device</span>
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
