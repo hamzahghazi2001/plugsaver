@@ -820,7 +820,7 @@ function AddDeviceDialog({
     setCurrentStep(0)
     setSelectedDevice(null)
     form.reset()
-    setIsEditMode(false)
+    setIsEditMode?.(false)
   }
 
   const steps = [
