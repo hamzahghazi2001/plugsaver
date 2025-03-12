@@ -18,77 +18,75 @@ export default function LoginPage() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [twoFACode, setTwoFACode] = useState("")
   const [isCodeValid, setIsCodeValid] = useState(false)
-  const [email,setEmail] = useState("");
+  const [email, setEmail] = useState("")
 
-// page.tsx
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError("")
+    setLoading(true)
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  setError("");
-  setLoading(true);
+    const formData = new FormData(event.currentTarget)
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
-  const formData = new FormData(event.currentTarget);
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+    setEmail(email) // Store the email in state
 
-  setEmail(email); // Store the email in state
+    try {
+      console.log("Sending login request...")
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-  try {
-    console.log("Sending login request...");
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+      console.log("Response received:", response)
 
-    console.log("Response received:", response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await response.json()
+      console.log("Response data:", data)
+
+      if (data.success) {
+        setShow2FAModal(true)
+        startTimer()
+      } else {
+        setError(data.message || "An error occurred")
+      }
+    } catch (err: any) {
+      console.error("Error during login:", err)
+      setError(err.message || "An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
     }
-
-    const data = await response.json();
-    console.log("Response data:", data);
-
-    if (data.success) {
-      setShow2FAModal(true);
-      startTimer();
-    } else {
-      setError(data.message || "An error occurred");
-    }
-  } catch (err : any) {
-    console.error("Error during login:", err);
-    setError(err.message || "An error occurred. Please try again.");
-  } finally {
-    setLoading(false);
   }
-}
 
-const handleVerifyClick = async () => {
-  try {
+  const handleVerifyClick = async () => {
+    try {
       const response = await fetch("/api/auth/verify_login", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, userverifycode: twoFACode }),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, userverifycode: twoFACode }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-          const nextUrl = searchParams.get("next") || "/home"
-          router.push(nextUrl)
-          router.refresh()
+        const nextUrl = searchParams.get("next") || "/home"
+        router.push(nextUrl)
+        router.refresh()
       } else {
-          setError(data.message || "Verification failed.")
+        setError(data.message || "Verification failed.")
       }
-  } catch (err) {
+    } catch (err) {
       setError("An error occurred. Please try again.")
+    }
   }
-}
 
   const startTimer = () => {
     const interval = setInterval(() => {
@@ -113,7 +111,6 @@ const handleVerifyClick = async () => {
     setTwoFACode("")
     setIsCodeValid(false)
   }
-
 
   const handleTwoFACodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -186,10 +183,11 @@ const handleVerifyClick = async () => {
       {/* 2FA Modal */}
       {show2FAModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center relative">
+            {/* Close Button */}
             <button
               onClick={handleCloseModal}
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-2xl font-bold"
             >
               ×
             </button>
@@ -233,4 +231,4 @@ const handleVerifyClick = async () => {
       )}
     </div>
   )
-}
+} 
