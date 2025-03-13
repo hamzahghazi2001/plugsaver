@@ -1,8 +1,8 @@
 # main.py
 from app.auth import create_account, registration_verify, email_code_gen,login,login_verify
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from app.household import create_household, join_household
-from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room
+from app.devicecreation import add_device,get_device_categories,insert_default_categories,add_room,give_permission,delete_device,delete_room,update_device
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from fastapi import FastAPI
@@ -162,6 +162,119 @@ async def get_user_email(token: str = Depends(security)):
         return {"success": True, "email": user.email}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+insert_default_categories()
+
+class AddDeviceRequest(BaseModel):
+    email: str  # User's email
+    room_id: int
+    device_name: str
+    device_category: str
+    active_days: list
+    active_time_start: str
+    active_time_end: str
+    icon: dict
+    power: str
+    isOn: bool
+    consumptionLimit: int
+    schedule: dict
+
+class DeleteDeviceRequest(BaseModel):
+    household_code: str
+    user_id: int
+    device_id: int
+
+@app.post("/add-device")
+async def add_device_endpoint(request: AddDeviceRequest):
+    result = add_device(
+        request.email,
+        request.room_id,
+        request.device_name,
+        request.device_category,
+        request.active_days,
+        request.active_time_start,
+        request.active_time_end,
+        request.icon,
+        request.power,
+        request.isOn,
+        request.consumptionLimit,
+        request.schedule
+    )
+
+    print("Result from add_device function:", result)
+
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "message": "Device added successfully."}
+
+@app.delete("/delete-device")
+async def delete_device_endpoint(request: DeleteDeviceRequest):
+    result = delete_device(request.household_code, request.user_id, request.device_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "message": "Device deleted successfully."}
+
+@app.get("/device-categories")
+async def get_device_categories_endpoint():
+    result = get_device_categories()
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "categories": result["categories"]}
+
+@app.put("/update-device/{device_id}")
+async def update_device_endpoint(device_id: str, device: dict):
+    result = update_device(device_id, device)
+    return {"success": result["success"], "device": result.get("device"), "message": result.get("message")}
+
+class AddRoomRequest(BaseModel):
+    household_code: str
+    room_name: str
+
+@app.post("/add-room")
+async def add_room_endpoint(request: AddRoomRequest):
+    print("Received payload:", request.dict())  # Log the incoming payload
+
+    try:
+        # Call the add_room function
+        result = add_room(request.household_code, request.room_name)
+        print("Result from add_room function:", result)  # Log the result
+
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result["message"])
+        return {"success": True, "message": "Room added successfully."}
+
+    except Exception as e:
+        print("Error adding room:", str(e))  # Log the error
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/auth/rooms")
+async def get_rooms(household_code: str = Query(None)):
+    try:
+        if household_code:
+            # Fetch rooms for the specified household
+            result = supabase.table("rooms").select("*").eq("household_code", household_code).execute()
+        else:
+            # Fetch all rooms if no household_code is provided
+            result = supabase.table("rooms").select("*").execute()
+
+        if result.data:
+            return {"success": True, "rooms": result.data}
+        else:
+            return {"success": False, "message": "No rooms found."}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    
+# Fetch devices for a specific household
+@app.get("/api/auth/devices")
+async def get_devices(household_code: str):
+    try:
+        # Fetch devices from the database
+        result = supabase.table("devices").select("*").eq("household_code", household_code).execute()
+        if result.data:
+            return {"success": True, "devices": result.data}
+        else:
+            return {"success": False, "message": "No devices found."}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 @app.get("/")
 async def read_root():

@@ -9,11 +9,14 @@ supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 router = APIRouter()
 
 DEFAULT_CATEGORIES = [
-    {"category_name": "light", "description": "Lighting devices"},
-    {"category_name": "pc", "description": "Personal computers"},
-    {"category_name": "tv", "description": "Televisions"},
-    {"category_name": "router", "description": "Network routers"},
+    {"category_name": "Lighting", "description": "Lighting devices"},
+    {"category_name": "Entertainment", "description": "Entertainment devices"},
+    {"category_name": "Kitchen Appliance", "description": "Kitchen appliances"},
+    {"category_name": "Office Equipment", "description": "Office equipment"},
+    {"category_name": "Climate Control", "description": "Climate control devices"},
+    {"category_name": "Other", "description": "Other devices"},
 ]
+
 
 def insert_default_categories():
     """Insert default categories if they do not exist."""
@@ -62,59 +65,49 @@ def add_room(household_code: str,room_name: str):
 
 
 
-@router.post("/add-device-category")
-def add_device(
-    household_code: str, user_id: int, room_id: int, 
-    device_name: str, device_category: str, active_days: list,
-    active_time_start: str, active_time_end: str):
+def add_device(email, room_id, device_name, device_category, active_days, active_time_start, active_time_end, icon, power, isOn, consumptionLimit, schedule):
+    print("Adding device to database with the following data:")
+    print(f"Email: {email}")
+    print(f"Room ID: {room_id}")
+    print(f"Device Name: {device_name}")
+    print(f"Device Category: {device_category}")
+    print(f"Active Days: {active_days}")
+    print(f"Active Time Start: {active_time_start}")
+    print(f"Active Time End: {active_time_end}")
+    print(f"Icon: {icon}")
+    print(f"Power: {power}")
+    print(f"Is On: {isOn}")
+    print(f"Consumption Limit: {consumptionLimit}")
+    print(f"Schedule: {schedule}")
 
-    # Check if household exists
-    household = supabase.table("households").select("household_code","manager_id").eq("household_code", household_code).execute()
-    if not household.data:
-        return {"success": False, "message": "Invalid household code"}
-
-    # Insert new device
-    response = supabase.table("devices").insert({
-        "household_code": household_code,
-        "room_id": room_id,
-        "user_id": user_id,  # Owner of device
-        "device_name": device_name,
-        "device_category": device_category,
-        "active_days": active_days,
-        "active_time_start": active_time_start, 
-        "active_time_end": active_time_end
-    }).execute()
-
-    if not response.data:
-        return {"success": False, "message": "Failed to insert device"}
-
-    device_id = response.data[0]["device_id"]
-    manager_id = household.data[0]["manager_id"]
-
-    # Get all household members
-    household_members = supabase.table("householdmembers").select("user_id").eq("household_code", household_code).execute()
-
-    # Grant device access to all members
-    for member in household_members.data:
-        supabase.table("householdpermissions").insert({
-            "manager_id" : manager_id,
-            "user_id": member["user_id"],
-            "household_code": household_code,
+    try:
+        # Example: Insert into Supabase
+        response = supabase.table("devices").insert({
             "room_id": room_id,
-            "device_id": device_id,
-            "can_control": True,
-            "can_configure": True  # Change to False if needed
+            "device_name": device_name,
+            "device_category": device_category,
+            "active_days": active_days,
+            "active_time_start": active_time_start,
+            "active_time_end": active_time_end,
+            "icon": icon,
+            "power": power,
+            "isOn": isOn,
+            "consumptionLimit": consumptionLimit,
+            "schedule": schedule,
         }).execute()
 
-    return {"success": True, "message": "Device added successfully with permissions granted to all household members!"}
+        print("Supabase response:", response)  # Log the Supabase response
 
+        if response.data:
+            return {"success": True, "message": "Device added successfully."}
+        else:
+            return {"success": False, "message": "Failed to add device to the database."}
+
+    except Exception as e:
+        print("Error adding device to database:", str(e))  # Log the error
+        return {"success": False, "message": str(e)}   
 
 def give_permission(manager_id: int, user_id: int, household_code: str, room_id: int = None, device_id: int = None, can_control: bool = False, can_configure: bool = False):
-    """
-    Grants or updates a member's access to a room or device in the household.
-    - Only the manager can assign permissions.
-    - If a permission exists, update it instead of inserting a new row.
-    """
 
     # Check if the user is a manager
     manager_check = supabase.table("users").select("role").eq("user_id", manager_id).execute()
@@ -218,3 +211,23 @@ def delete_room(household_code: str, user_id: int, room_id: int):
         return {"success": False, "message": "Failed to delete room. The room might not exist."}
 
     return {"success": True, "message": "Room, devices, and permissions successfully deleted"}
+
+def update_device(device_id: str, updated_device_data: dict):
+
+    try:
+        # Fetch the existing device to ensure it exists
+        existing_device = supabase.table("devices").select("*").eq("device_id", device_id).execute()
+
+        if not existing_device.data:
+            return {"success": False, "message": "Device not found."}
+
+        # Update the device in the database
+        response = supabase.table("devices").update(updated_device_data).eq("device_id", device_id).execute()
+
+        if response.data:
+            return {"success": True, "device": response.data[0]}
+        else:
+            return {"success": False, "message": "Failed to update device."}
+    except Exception as e:
+        print(f"Error updating device: {e}")
+        return {"success": False, "message": "An error occurred while updating the device."}

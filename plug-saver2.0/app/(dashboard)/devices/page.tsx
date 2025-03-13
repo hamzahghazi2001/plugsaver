@@ -129,6 +129,9 @@ export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([])
   const [rooms, setRooms] = useState<string[]>([])
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
+  const [householdCode, setHouseholdCode] = useState<string>("");
+  const [roomName, setRoomName] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
   const deviceIcons: DeviceIcon[] = [
@@ -195,23 +198,100 @@ export default function DevicesPage() {
     },
   })
 
+
   // Load rooms from localStorage on mount
-  useEffect(() => {
-    const savedRooms = localStorage.getItem("plugSaver_rooms")
-    if (savedRooms) {
-      setRooms(JSON.parse(savedRooms))
+   // Fetch rooms from the backend on component mount
+   useEffect(() => {
+    if (!householdCode) {
+      console.log("Household code is not set. Skipping room fetch.");
+      return;
     }
-  }, [])
+  
+    const fetchRooms = async () => {
+      try {
+        const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success) {
+          // Extract room names from the response
+          const roomNames = data.rooms.map((room: any) => room.room_name);
+          setRooms(roomNames); // Set the room names in state
+          localStorage.setItem("plugSaver_rooms", JSON.stringify(roomNames));
+        } else {
+          console.error("Failed to fetch rooms:", data.message);
+          alert(data.message); // Show error message to the user
+        }
+      } catch (error) {
+        console.error("Failed to fetch rooms:", error);
+        alert("An error occurred while fetching rooms. Please try again."); // Show generic error message
+      }
+    };
+  
+    fetchRooms();
+  }, [householdCode]);
+
+  // Fetch devices from the backend on component mount
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await fetch(`/api/devices?household_code=${householdCode}`);
+        const data = await response.json();
+        if (data.success) {
+          setDevices(data.devices);
+        } else {
+          console.error("Failed to fetch devices:", data.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch devices:", error);
+      }
+    };
+
+    fetchDevices();
+  }, []);
 
   // Update the function signatures
-  const addDevice = (newDevice: Device) => {
-    setDevices([...devices, newDevice])
-  }
+  const addDevice = async (newDevice: Device) => {
+    try {
+      const response = await fetch("/api/devices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newDevice),
+      });
+  
+      const data = await response.json();
+    console.log("API Response:", data); // Log the API response
 
-  // Update the function signatures
-  const removeDevice = (deviceId: string) => {
-    setDevices(devices.filter((device) => device.id !== deviceId))
+    if (data.success) {
+      setDevices((prevDevices) => [...prevDevices, data.device]);
+      console.log("Updated Devices:", [...devices, data.device]); // Log the updated devices
+    } else {
+      console.error("Failed to add device:", data.message);
+    }
+  } catch (error) {
+    console.error("Error adding device:", error);
   }
+};
+  
+  const removeDevice = async (deviceId: string) => {
+    try {
+      const response = await fetch(`/api/auth/devices/${deviceId}`, {
+        method: "DELETE",
+      });
+  
+      const data = await response.json();
+      if (data.success) {
+        setDevices(devices.filter((device) => device.id !== deviceId));
+      } else {
+        console.error("Failed to remove device:", data.message);
+      }
+    } catch (error) {
+      console.error("Error removing device:", error);
+    }
+  };
 
   // Filter devices by selected room if set
   const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
@@ -223,6 +303,44 @@ export default function DevicesPage() {
 
   // Calculate total energy consumption (for devices that are on)
   const totalConsumption = devices.reduce((sum, device) => sum + (device.isOn ? Number.parseInt(device.power) : 0), 0)
+
+  const handleAddRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!roomName) {
+      alert("Please enter a room name");
+      return;
+    }
+
+    const householdCode = "288LTIO"; // Hardcoded household code
+
+    try {
+      const response = await fetch("/api/auth/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          household_code: householdCode,
+          room_name: roomName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setRooms([...rooms, roomName]);
+        setRoomName(""); // Reset the input field
+        localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, roomName]));
+        setRoomName(""); // Reset the input field
+        setIsDialogOpen(false);
+      } else {
+        console.error("Failed to add room:", data.message);
+      }
+    } catch (error) {
+      console.error("Error adding room:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
@@ -413,9 +531,9 @@ export default function DevicesPage() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">Your Rooms</h2>
-              <Dialog>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-black border-white/20 hover:bg-none/10">
+                  <Button variant="outline" size="sm" className="text-black border-white/20 hover:bg-none/10" onClick={() => setIsDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-1" /> Add Room
                   </Button>
                 </DialogTrigger>
@@ -425,22 +543,18 @@ export default function DevicesPage() {
                     <DialogDescription>Enter a name for your new room.</DialogDescription>
                   </DialogHeader>
                   <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      const formData = new FormData(e.currentTarget as HTMLFormElement)
-                      const roomName = formData.get("roomName") as string
-                      if (roomName && !rooms.includes(roomName)) {
-                        const newRooms = [...rooms, roomName]
-                        setRooms(newRooms)
-                        localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
-                        ;(e.currentTarget as HTMLFormElement).reset()
-                      }
-                    }}
+                    onSubmit={handleAddRoom}
                   >
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="roomName">Room Name</Label>
-                        <Input id="roomName" name="roomName" placeholder="e.g. Living Room" required />
+                      <Label htmlFor="roomName">Room Name</Label>
+                <Input
+                  id="roomName"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)} // Update state on input change
+                  placeholder="e.g. Living Room"
+                  required
+                />
                       </div>
                       <Button type="submit" className="w-full">
                         Add Room
@@ -790,18 +904,21 @@ function AddDeviceDialog({
   }
 
   // Update the onSubmit function
-  const onSubmit = (data: any) => {
-    if (!selectedDevice) return
-
-    const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0]
-    const newDevice: Device = {
-      id: selectedDevice.id,
-      name: data.name,
-      room: data.room,
+  const onSubmit = async (data: any) => {
+    if (!selectedDevice) return;
+  
+    const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0];
+    const newDevice = {
+      email: "asmasathar7@gmail.com",  // Replace with the authenticated user's email
+      room_id: 3,  // Replace with the actual room ID
+      device_name: data.name,
+      device_category: data.type,
+      active_days: data.days,
+      active_time_start: data.startTime,
+      active_time_end: data.endTime,
       icon: selectedIconObj.icon,
       power: Math.floor(Math.random() * 200) + "W",
       isOn: false,
-      type: data.type,
       consumptionLimit: data.consumptionLimit,
       schedule: {
         enabled: data.scheduleEnabled,
@@ -809,19 +926,41 @@ function AddDeviceDialog({
         endTime: data.endTime,
         days: data.days,
       },
+    };
+  
+    console.log("Sending payload:", newDevice); // Log the payload
+  
+    try {
+      const response = await fetch("/api/auth/devices/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newDevice),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const result = await response.json();
+      console.log("API Response:", result); // Log the API response
+  
+      if (result.success) {
+        onDeviceAdded(result.device);
+        setOpen(false);
+        setCurrentStep(0);
+        setSelectedDevice(null);
+        form.reset();
+        setIsEditMode?.(false);
+      } else {
+        setError(result.message || "Device registration failed. Please check your connection and try again.");
+      }
+    } catch (error) {
+      console.error("Error adding device:", error);
+      setError("An error occurred. Please try again.");
     }
-    if (Math.random() < 0.1) {
-      setError("Device registration failed. Please check your connection and try again.")
-      return
-    }
-    setPairedDevices((prev) => [...prev, newDevice])
-    onDeviceAdded(newDevice)
-    setOpen(false)
-    setCurrentStep(0)
-    setSelectedDevice(null)
-    form.reset()
-    setIsEditMode?.(false)
-  }
+  };
 
   const steps = [
     { title: "Discover Device", description: "Scan for nearby smart plugs or scan a QR code" },
@@ -1370,9 +1509,9 @@ function EditDeviceDialog({
     }
   }, [device, form])
 
-  const onSubmit = (data: any) => {
-    if (!device) return
-
+  const onSubmit = async (data: any) => {
+    if (!device) return;
+  
     const updatedDevice: Device = {
       ...device,
       consumptionLimit: data.consumptionLimit,
@@ -1382,11 +1521,33 @@ function EditDeviceDialog({
         endTime: data.endTime,
         days: data.days,
       },
+    };
+  
+    try {
+      const response = await fetch(`/api/auth/devices/${device.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedDevice),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const result = await response.json();
+      if (result.success) {
+        onDeviceUpdated(result.device);
+        setOpen(false);
+      } else {
+        setError(result.message || "Failed to update device. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating device:", error);
+      setError("An error occurred. Please try again.");
     }
-
-    onDeviceUpdated(updatedDevice)
-    setOpen(false)
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
