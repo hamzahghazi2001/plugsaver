@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [show2FAModal, setShow2FAModal] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(60)
+  const [timeLeft, setTimeLeft] = useState(30)
   const [twoFACode, setTwoFACode] = useState("")
   const [isCodeValid, setIsCodeValid] = useState(false)
   const [email, setEmail] = useState("")
@@ -44,7 +44,8 @@ export default function LoginPage() {
       console.log("Response received:", response)
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Invalid email or password")
       }
 
       const data = await response.json()
@@ -54,7 +55,7 @@ export default function LoginPage() {
         setShow2FAModal(true)
         startTimer()
       } else {
-        setError(data.message || "An error occurred")
+        setError(data.message || "Invalid Login Credentials")
       }
     } catch (err: any) {
       console.error("Error during login:", err)
@@ -231,4 +232,4 @@ export default function LoginPage() {
       )}
     </div>
   )
-} 
+}

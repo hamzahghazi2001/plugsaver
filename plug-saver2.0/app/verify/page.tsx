@@ -39,7 +39,7 @@ export default function VerifyPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [email, name, password, router])
+  }, [email, name, password, router, canResend])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -66,7 +66,8 @@ export default function VerifyPage() {
         const safeEmail = email || "";
         router.push(`/roleselect?email=${encodeURIComponent(safeEmail)}`) 
       } else {
-        setError(data.error || "Invalid verification code")
+        setError(data.error || "Code Invalid")
+        setCanResend(true) // Enable the resend option on failed verification
       }
     } catch (err) {
       setError("An error occurred. Please try again.")
@@ -113,7 +114,18 @@ export default function VerifyPage() {
       }}
     >
       {/* Main Card */}
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center relative">
+        {/* Return Button */}
+        <Link href="/register">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 left-4 text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Verify your email</h1>
         <p className="text-sm text-gray-600 mb-6">We've sent a verification code to {email}</p>
 
@@ -133,7 +145,7 @@ export default function VerifyPage() {
               placeholder="Enter verification code"
               required
               maxLength={6}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 text-center text-2xl tracking-widest"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 text-center text-lg tracking-widest"
               value={twoFACode}
               onChange={(e) => setTwoFACode(e.target.value)}
             />
