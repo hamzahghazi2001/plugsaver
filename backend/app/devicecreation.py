@@ -65,12 +65,13 @@ def add_room(household_code: str,room_name: str):
 
 
 
-def add_device(email, room_id, device_name, device_category, active_days, active_time_start, active_time_end, icon, power, isOn, consumptionLimit, schedule):
+def add_device(user_id, room_id, device_name, device_category, household_code, active_days, active_time_start, active_time_end, icon, power, isOn, consumptionLimit, schedule):
     print("Adding device to database with the following data:")
-    print(f"Email: {email}")
+    print(f"User ID: {user_id}")  # Log user_id
     print(f"Room ID: {room_id}")
     print(f"Device Name: {device_name}")
     print(f"Device Category: {device_category}")
+    print(f"Household Code: {household_code}")  # Log household_code
     print(f"Active Days: {active_days}")
     print(f"Active Time Start: {active_time_start}")
     print(f"Active Time End: {active_time_end}")
@@ -83,9 +84,11 @@ def add_device(email, room_id, device_name, device_category, active_days, active
     try:
         # Example: Insert into Supabase
         response = supabase.table("devices").insert({
+            "user_id": user_id,  # Include user_id
             "room_id": room_id,
             "device_name": device_name,
             "device_category": device_category,
+            "household_code": household_code,  # Include household_code
             "active_days": active_days,
             "active_time_start": active_time_start,
             "active_time_end": active_time_end,
@@ -105,8 +108,8 @@ def add_device(email, room_id, device_name, device_category, active_days, active
 
     except Exception as e:
         print("Error adding device to database:", str(e))  # Log the error
-        return {"success": False, "message": str(e)}   
-
+        return {"success": False, "message": str(e)}
+    
 def give_permission(manager_id: int, user_id: int, household_code: str, room_id: int = None, device_id: int = None, can_control: bool = False, can_configure: bool = False):
 
     # Check if the user is a manager

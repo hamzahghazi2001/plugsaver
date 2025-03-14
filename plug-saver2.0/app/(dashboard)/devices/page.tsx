@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings } from "lucide-react"
+import { Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
 import { motion } from "framer-motion"
 
 // New imports for dialogs, forms, tabs and alerts
@@ -91,32 +91,90 @@ import {
 
 // Add these interfaces at the top of the file, after the imports
 interface Device {
-  id: string
-  name: string
-  room: string | null
-  icon: React.ElementType
-  power: string
-  isOn: boolean
-  type?: string
-  needsRoomAssignment?: boolean
-  consumptionLimit?: number
+  id: number;
+  name: string;
+  room: string | null;
+  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
+  power: string;
+  isOn: boolean;
+  type?: string;
+  needsRoomAssignment?: boolean;
+  consumptionLimit?: number;
   schedule?: {
-    enabled: boolean
-    startTime: string
-    endTime: string
-    days: string[]
-  }
+    enabled: boolean;
+    startTime: string;
+    endTime: string;
+    days: string[];
+  };
+}
+
+interface Room {
+  room_id: number
+  room_name: string
+  household_code: string
 }
 
 interface FoundDevice {
-  id: string
+  id: number,
   name: string
   status: "Available" | "Paired"
 }
 
 interface DeviceIcon {
-  icon: React.ElementType
-  name: string
+  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
+  name: string;
+}
+
+// Map icon names to components
+const iconMap: Record<string, React.ElementType> = {
+  "Desk Lamp": Lamp,
+  "Light Bulb": Lightbulb,
+  "Floor Lamp": LampFloor,
+  "Table Lamp": LampDesk,
+  TV: Tv,
+  Radio: Radio,
+  Speaker: Speaker,
+  Headphones: Headphones,
+  "Game Console": Gamepad2,
+  Monitor: MonitorSmartphone,
+  "Sound System": Music2,
+  Projector: Projector,
+  Refrigerator: RefrigeratorIcon,
+  Microwave: Microwave,
+  "Coffee Maker": Coffee,
+  Toaster: Utensils,
+  "Slow Cooker": Soup,
+  Oven: Oven,
+  Stove: Stove,
+  Blender: Blender,
+  "Sandwich Maker": Sandwich,
+  "Air Fryer": Beef,
+  "Food Processor": Salad,
+  Computer: Computer,
+  Laptop: Laptop,
+  Printer: Printer,
+  Scanner: Scan,
+  Router: Router,
+  "WiFi Extender": WifiIcon,
+  "CPU/Server": Cpu,
+  "External Drive": HardDrive,
+  Fan: Fan,
+  "Air Purifier": Wind,
+  Thermostat: Thermometer,
+  "Air Conditioner": Snowflake,
+  Heater: Flame,
+  Humidifier: Droplets,
+  "Water Heater": Shower,
+  "Hair Dryer": Scissors,
+  "Electric Toothbrush": Toothbrush,
+  "Smart Plug": Plug,
+  "Smart Lock": Lock,
+  Doorbell: BellRing,
+  "Security Camera": Camera,
+  "Alarm System": Siren,
+  "Battery Charger": BatteryCharging,
+  "Power Tool": Wrench,
+  "Exercise Equipment": Dumbbell,
 }
 
 // Update the DevicesPage component
@@ -127,13 +185,16 @@ export default function DevicesPage() {
   const [currentEditingDevice, setCurrentEditingDevice] = useState<Device | null>(null)
   // Update the useState calls in DevicesPage component
   const [devices, setDevices] = useState<Device[]>([])
-  const [rooms, setRooms] = useState<string[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
-  const [householdCode, setHouseholdCode] = useState<string>("");
-  const [roomName, setRoomName] = useState<string>("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [householdCode, setHouseholdCode] = useState<string>("288LTIO") // Hardcoded for now
+  const [roomName, setRoomName] = useState<string>("")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
   const deviceIcons: DeviceIcon[] = [
     { icon: Lamp, name: "Desk Lamp" },
     { icon: Lightbulb, name: "Light Bulb" },
@@ -184,12 +245,15 @@ export default function DevicesPage() {
     { icon: Wrench, name: "Power Tool" },
     { icon: Dumbbell, name: "Exercise Equipment" },
   ]
+
+  
+
   const form = useForm({
     defaultValues: {
       name: "",
       type: "",
       room: "",
-      icon: "Lamp",
+      icon: "Desk Lamp",
       consumptionLimit: 100,
       scheduleEnabled: false,
       startTime: "08:00",
@@ -198,123 +262,256 @@ export default function DevicesPage() {
     },
   })
 
-
   // Load rooms from localStorage on mount
-   // Fetch rooms from the backend on component mount
-   useEffect(() => {
-    if (!householdCode) {
-      console.log("Household code is not set. Skipping room fetch.");
-      return;
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchRooms(); // Fetch rooms first
+      await fetchDevices(); // Then fetch devices
+    };
+    fetchData();
+  }, []);
   
+    // Fetch rooms from the backend
     const fetchRooms = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`);
+  
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+  
         const data = await response.json();
-        if (data.success) {
-          // Extract room names from the response
-          const roomNames = data.rooms.map((room: any) => room.room_name);
-          setRooms(roomNames); // Set the room names in state
-          localStorage.setItem("plugSaver_rooms", JSON.stringify(roomNames));
+  
+        if (data.success && data.rooms) {
+          setRooms(data.rooms);
+          localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)));
         } else {
           console.error("Failed to fetch rooms:", data.message);
-          alert(data.message); // Show error message to the user
         }
       } catch (error) {
-        console.error("Failed to fetch rooms:", error);
-        alert("An error occurred while fetching rooms. Please try again."); // Show generic error message
+        console.error("Error fetching rooms:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
   
-    fetchRooms();
-  }, [householdCode]);
-
-  // Fetch devices from the backend on component mount
-  useEffect(() => {
+    // Fetch devices from the backend
     const fetchDevices = async () => {
       try {
-        const response = await fetch(`/api/devices?household_code=${householdCode}`);
+        setIsLoading(true);
+        const householdCode = "288LTIO"; // Ensure this is correctly set
+        const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    
         const data = await response.json();
-        if (data.success) {
-          setDevices(data.devices);
+    
+        if (data.success && data.devices) {
+          // Transform backend device data to match our frontend Device interface
+          const transformedDevices = data.devices.map((device: any) => {
+            // Find the room name from our rooms array
+            const room = rooms.find((r) => r.room_id === device.room_id);
+    
+            // Get the icon component based on the icon name or use a default
+            let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
+            if (typeof device.icon === "string") {
+              try {
+                // Parse the JSON string to get the icon name
+                const iconData = JSON.parse(device.icon);
+                const iconName = iconData.name; // Extract the icon name
+    
+                // Find the corresponding icon component from the deviceIcons array
+                const iconObj = deviceIcons.find((di) => di.name === iconName);
+                if (iconObj) {
+                  iconComponent = iconObj.icon; // Use the found icon
+                }
+              } catch (error) {
+                console.error("Error parsing icon JSON:", error);
+              }
+            }
+    
+            return {
+              id: device.device_id,
+              name: device.device_name,
+              room: room ? room.room_name : null, // Set the room name correctly
+              icon: iconComponent,
+              power: device.power || "0W",
+              isOn: device.isOn === "TRUE" || device.isOn === true,
+              type: device.device_category,
+              consumptionLimit: Number.parseInt(device.consumptionLimit) || 100,
+              schedule: {
+                enabled: device.schedule?.enabled || false,
+                startTime: device.active_time_start || "08:00",
+                endTime: device.active_time_end || "22:00",
+                days: device.active_days ? JSON.parse(device.active_days) : [],
+              },
+            };
+          });
+    
+          setDevices(transformedDevices);
         } else {
           console.error("Failed to fetch devices:", data.message);
         }
       } catch (error) {
-        console.error("Failed to fetch devices:", error);
+        console.error("Error fetching devices:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchDevices();
-  }, []);
-
-  // Update the function signatures
+  // Add a new device
   const addDevice = async (newDevice: Device) => {
     try {
-      const response = await fetch("/api/devices", {
+      setIsLoading(true);
+  
+      // Find the room_id based on the room name
+      const room = rooms.find((r) => r.room_name === newDevice.room);
+      if (!room) {
+        console.error("Room not found:", newDevice.room);
+        return;
+      }
+  
+      // Prepare the device data for the API
+      const deviceData = {
+        room_id: room.room_id,
+        device_name: newDevice.name,
+        device_category: newDevice.type,
+        household_code: householdCode,
+        active_time_start: newDevice.schedule?.startTime || "08:00",
+        active_time_end: newDevice.schedule?.endTime || "22:00",
+        active_days: JSON.stringify(newDevice.schedule?.days || []),
+        icon:
+          typeof newDevice.icon === "function"
+            ? deviceIcons.find((di) => di.icon === newDevice.icon)?.name || "Smart Plug"
+            : newDevice.icon,
+        power: newDevice.power,
+        isOn: newDevice.isOn,
+        consumptionLimit: newDevice.consumptionLimit,
+        schedule: JSON.stringify(newDevice.schedule),
+      };
+  
+      const response = await fetch("/api/auth/devices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newDevice),
+        body: JSON.stringify(deviceData),
       });
   
-      const data = await response.json();
-    console.log("API Response:", data); // Log the API response
-
-    if (data.success) {
-      setDevices((prevDevices) => [...prevDevices, data.device]);
-      console.log("Updated Devices:", [...devices, data.device]); // Log the updated devices
-    } else {
-      console.error("Failed to add device:", data.message);
-    }
-  } catch (error) {
-    console.error("Error adding device:", error);
-  }
-};
-  
-  const removeDevice = async (deviceId: string) => {
-    try {
-      const response = await fetch(`/api/auth/devices/${deviceId}`, {
-        method: "DELETE",
-      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
   
       const data = await response.json();
+  
       if (data.success) {
-        setDevices(devices.filter((device) => device.id !== deviceId));
+        // Add the new device to our devices state
+        setDevices((prevDevices) => [
+          ...prevDevices,
+          {
+            ...newDevice,
+            id: data.device.device_id.toString(),
+          },
+        ]);
+  
+        // Refresh devices from the server
+        fetchDevices();
       } else {
-        console.error("Failed to remove device:", data.message);
+        console.error("Failed to add device:", data.message);
+        setError(data.message);
       }
     } catch (error) {
-      console.error("Error removing device:", error);
+      console.error("Error adding device:", error);
+      setError("An error occurred while adding the device");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Filter devices by selected room if set
-  const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
+  // Remove a device
+  const removeDevice = async (deviceId: number) => {
+    try {
+      setIsLoading(true)
 
-  // Update the toggleDevice function
-  const toggleDevice = (deviceId: string) => {
-    setDevices(devices.map((device) => (device.id === deviceId ? { ...device, isOn: !device.isOn } : device)))
+      const response = await fetch(`/api/auth/devices/${deviceId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Remove the device from our devices state
+        setDevices(devices.filter((device) => device.id !== deviceId))
+      } else {
+        console.error("Failed to remove device:", data.message)
+        setError(data.message)
+      }
+    } catch (error) {
+      console.error("Error removing device:", error)
+      setError("An error occurred while removing the device")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Calculate total energy consumption (for devices that are on)
-  const totalConsumption = devices.reduce((sum, device) => sum + (device.isOn ? Number.parseInt(device.power) : 0), 0)
+  // Toggle device on/off state
+  const toggleDevice = async (deviceId: number) => {
+    const device = devices.find((d) => d.id === deviceId)
+    if (!device) return
 
-  const handleAddRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const newIsOn = !device.isOn
 
-    if (!roomName) {
-      alert("Please enter a room name");
-      return;
-    }
-
-    const householdCode = "288LTIO"; // Hardcoded household code
+    // Optimistically update the UI
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn } : d)))
 
     try {
+      const response = await fetch(`/api/auth/devices/${deviceId}/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isOn: newIsOn }),
+      })
+
+      if (!response.ok) {
+        // Revert the optimistic update if the request fails
+        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)))
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success) {
+        // Revert the optimistic update if the request fails
+        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)))
+        console.error("Failed to toggle device:", data.message)
+        setError(data.message)
+      }
+    } catch (error) {
+      console.error("Error toggling device:", error)
+      setError("An error occurred while toggling the device")
+    }
+  }
+
+  // Add a new room
+  const handleAddRoom = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!roomName) {
+      setError("Please enter a room name")
+      return
+    }
+
+    try {
+      setIsLoading(true)
+
       const response = await fetch("/api/auth/rooms", {
         method: "POST",
         headers: {
@@ -324,27 +521,175 @@ export default function DevicesPage() {
           household_code: householdCode,
           room_name: roomName,
         }),
-      });
+      })
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
 
       if (data.success) {
-        setRooms([...rooms, roomName]);
-        setRoomName(""); // Reset the input field
-        localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, roomName]));
-        setRoomName(""); // Reset the input field
-        setIsDialogOpen(false);
+        // Add the new room to our rooms state
+        const newRoom = {
+          room_id: data.room.room_id,
+          room_name: roomName,
+          household_code: householdCode,
+        }
+
+        setRooms([...rooms, newRoom])
+
+        // Update localStorage
+        localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, newRoom].map((r) => r.room_name)))
+
+        // Reset the input field and close the dialog
+        setRoomName("")
+        setIsDialogOpen(false)
       } else {
-        console.error("Failed to add room:", data.message);
+        console.error("Failed to add room:", data.message)
+        setError(data.message)
       }
     } catch (error) {
-      console.error("Error adding room:", error);
+      console.error("Error adding room:", error)
+      setError("An error occurred while adding the room")
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
+
+  // Delete a room
+  const handleDeleteRoom = async (roomId: number, roomName: string) => {
+    try {
+      setIsLoading(true)
+
+      const response = await fetch(`/api/auth/rooms/${roomId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Remove the room from our rooms state
+        setRooms(rooms.filter((r) => r.room_id !== roomId))
+
+        // Update localStorage
+        localStorage.setItem(
+          "plugSaver_rooms",
+          JSON.stringify(rooms.filter((r) => r.room_id !== roomId).map((r) => r.room_name)),
+        )
+
+        // Mark devices in this room as needing reassignment
+        setDevices(
+          devices.map((device) =>
+            device.room === roomName ? { ...device, room: null, needsRoomAssignment: true } : device,
+          ),
+        )
+
+        // Reset selected room if it was the deleted one
+        if (selectedRoom === roomName) {
+          setSelectedRoom(null)
+        }
+      } else {
+        console.error("Failed to delete room:", data.message)
+        setError(data.message)
+      }
+    } catch (error) {
+      console.error("Error deleting room:", error)
+      setError("An error occurred while deleting the room")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Assign a device to a room
+  const assignDeviceToRoom = async (deviceId: number, roomName: string) => {
+    const device = devices.find((d) => d.id === deviceId)
+    if (!device) return
+
+    const room = rooms.find((r) => r.room_name === roomName)
+    if (!room) return
+
+    // Optimistically update the UI
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)))
+
+    try {
+      const response = await fetch(`/api/auth/devices/${deviceId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          room_id: room.room_id,
+        }),
+      })
+
+      if (!response.ok) {
+        // Revert the optimistic update if the request fails
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
+          ),
+        )
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success) {
+        // Revert the optimistic update if the request fails
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
+          ),
+        )
+        console.error("Failed to assign device to room:", data.message)
+        setError(data.message)
+      }
+    } catch (error) {
+      console.error("Error assigning device to room:", error)
+      setError("An error occurred while assigning the device to a room")
+    }
+  }
+
+  // Filter devices by selected room
+  const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices;
+
+  // Calculate total energy consumption (for devices that are on)
+  const totalConsumption = devices.reduce((sum, device) => {
+    if (!device.isOn) return sum
+    const powerValue = device.power ? Number.parseInt(device.power) : 0
+    return sum + (isNaN(powerValue) ? 0 : powerValue)
+  }, 0)
+
+  // Loading state
+  if (isLoading && devices.length === 0 && rooms.length === 0) {
+    return (
+      <div
+        className="min-h-screen p-6 md:p-10 flex items-center justify-center"
+        style={{ background: "var(--gradient-devices)" }}
+      >
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+          <p className="text-xl font-medium">Loading your devices...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Devices</h1>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
@@ -451,21 +796,14 @@ export default function DevicesPage() {
                           </div>
                           {needsRoomAssignment && (
                             <div className="mt-2 pt-2 border-t border-gray-700">
-                              <Select
-                                onValueChange={(value) => {
-                                  const updatedDevices = devices.map((d) =>
-                                    d.id === id ? { ...d, room: value, needsRoomAssignment: false } : d,
-                                  )
-                                  setDevices(updatedDevices)
-                                }}
-                              >
+                              <Select onValueChange={(value) => assignDeviceToRoom(id, value)}>
                                 <SelectTrigger className="w-full bg-yellow-500/10 border-yellow-500/30">
                                   <SelectValue placeholder="Assign to a room" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {rooms.map((room) => (
-                                    <SelectItem key={room} value={room}>
-                                      {room}
+                                    <SelectItem key={room.room_id} value={room.room_name}>
+                                      {room.room_name}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -533,7 +871,12 @@ export default function DevicesPage() {
               <h2 className="text-lg font-medium">Your Rooms</h2>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-black border-white/20 hover:bg-none/10" onClick={() => setIsDialogOpen(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-black border-white/20 hover:bg-none/10"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
                     <Plus className="w-4 h-4 mr-1" /> Add Room
                   </Button>
                 </DialogTrigger>
@@ -542,19 +885,17 @@ export default function DevicesPage() {
                     <DialogTitle>Add New Room</DialogTitle>
                     <DialogDescription>Enter a name for your new room.</DialogDescription>
                   </DialogHeader>
-                  <form
-                    onSubmit={handleAddRoom}
-                  >
+                  <form onSubmit={handleAddRoom}>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                      <Label htmlFor="roomName">Room Name</Label>
-                <Input
-                  id="roomName"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)} // Update state on input change
-                  placeholder="e.g. Living Room"
-                  required
-                />
+                        <Label htmlFor="roomName">Room Name</Label>
+                        <Input
+                          id="roomName"
+                          value={roomName}
+                          onChange={(e) => setRoomName(e.target.value)} // Update state on input change
+                          placeholder="e.g. Living Room"
+                          required
+                        />
                       </div>
                       <Button type="submit" className="w-full">
                         Add Room
@@ -582,15 +923,17 @@ export default function DevicesPage() {
                   </Button>
                   {rooms.map((room) => (
                     <Button
-                      key={room}
-                      variant={selectedRoom === room ? "default" : "outline"}
+                      key={room.room_id}
+                      variant={selectedRoom === room.room_name ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setSelectedRoom(room)}
+                      onClick={() => setSelectedRoom(room.room_name)}
                       className={
-                        selectedRoom === room ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                        selectedRoom === room.room_name
+                          ? ""
+                          : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
                       }
                     >
-                      {room}
+                      {room.room_name}
                     </Button>
                   ))}
                 </div>
@@ -600,21 +943,21 @@ export default function DevicesPage() {
             {rooms.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {rooms.map((room, index) => {
-                  const deviceCount = devices.filter((device) => device.room === room).length
+                  const deviceCount = devices.filter((device) => device.room === room.room_name).length
                   return (
                     <motion.div
-                      key={room}
+                      key={room.room_id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
                       <Card
                         className={`gradient-card p-4 text-center transition-all duration-300 hover:scale-105 ${
-                          selectedRoom === room ? "ring-2 ring-blue-500" : ""
+                          selectedRoom === room.room_name ? "ring-2 ring-blue-500" : ""
                         }`}
                       >
                         <div className="flex flex-col items-center">
-                          <p className="font-medium">{room}</p>
+                          <p className="font-medium">{room.room_name}</p>
                           <p className="text-xs text-gray-300">
                             {deviceCount} device{deviceCount !== 1 ? "s" : ""}
                           </p>
@@ -623,7 +966,7 @@ export default function DevicesPage() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => setSelectedRoom(room)}
+                              onClick={() => setSelectedRoom(room.room_name)}
                             >
                               <Filter className="h-4 w-4" />
                             </Button>
@@ -654,20 +997,7 @@ export default function DevicesPage() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => {
-                                      const newRooms = rooms.filter((r) => r !== room)
-                                      setRooms(newRooms)
-                                      localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
-                                      const updatedDevices = devices.map((device) =>
-                                        device.room === room
-                                          ? { ...device, room: null, needsRoomAssignment: true }
-                                          : device,
-                                      )
-                                      setDevices(updatedDevices)
-                                      if (selectedRoom === room) {
-                                        setSelectedRoom(null)
-                                      }
-                                    }}
+                                    onClick={() => handleDeleteRoom(room.room_id, room.room_name)}
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Delete
@@ -687,42 +1017,9 @@ export default function DevicesPage() {
                 <div className="py-8">
                   <p className="text-xl mb-4">No Rooms Created Yet</p>
                   <p className="text-gray-300 mb-6">You need to create at least one room before adding devices.</p>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="mx-auto">
-                        <Plus className="w-4 h-4 mr-2" /> Create Your First Room
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Room</DialogTitle>
-                        <DialogDescription>Enter a name for your new room.</DialogDescription>
-                      </DialogHeader>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault()
-                          const formData = new FormData(e.currentTarget as HTMLFormElement)
-                          const roomName = formData.get("roomName") as string
-                          if (roomName && !rooms.includes(roomName)) {
-                            const newRooms = [...rooms, roomName]
-                            setRooms(newRooms)
-                            localStorage.setItem("plugSaver_rooms", JSON.stringify(newRooms))
-                            ;(e.currentTarget as HTMLFormElement).reset()
-                          }
-                        }}
-                      >
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="roomName">Room Name</Label>
-                            <Input id="roomName" name="roomName" placeholder="e.g. Living Room" required />
-                          </div>
-                          <Button type="submit" className="w-full">
-                            Add Room
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                  <Button className="mx-auto" onClick={() => setIsDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" /> Create Your First Room
+                  </Button>
                 </div>
               </Card>
             )}
@@ -736,6 +1033,7 @@ export default function DevicesPage() {
         onDeviceRemoved={removeDevice}
         isEditMode={isEditMode}
         setIsEditMode={setIsEditMode}
+        rooms={rooms}
       />
       <EditDeviceDialog
         open={editDeviceDialogOpen}
@@ -757,36 +1055,43 @@ function AddDeviceDialog({
   onDeviceRemoved,
   isEditMode,
   setIsEditMode,
+  rooms,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   onDeviceAdded: (device: Device) => void
-  onDeviceRemoved: (deviceId: string) => void
+  onDeviceRemoved: (deviceId: number) => void
   isEditMode?: boolean
   setIsEditMode?: (isEdit: boolean) => void
+  rooms: Room[]
 }) {
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [isScanning, setIsScanning] = useState<boolean>(false)
   const [foundDevices, setFoundDevices] = useState<FoundDevice[]>([])
   const [selectedDevice, setSelectedDevice] = useState<FoundDevice | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [availableRooms, setAvailableRooms] = useState<string[]>([])
   const [pairedDevices, setPairedDevices] = useState<Device[]>([])
 
+  // Reset state when dialog closes
   useEffect(() => {
-    const savedRooms = localStorage.getItem("plugSaver_rooms")
-    if (savedRooms) {
-      setAvailableRooms(JSON.parse(savedRooms))
+    if (!open) {
+      // Use a timeout to avoid UI flicker
+      const timer = setTimeout(() => {
+        if (!open) {
+          setError(null)
+        }
+      }, 300)
+      return () => clearTimeout(timer)
     }
+  }, [open])
 
-    // If there are no rooms, close the dialog and show an alert
-    if (open && (!savedRooms || JSON.parse(savedRooms).length === 0)) {
+  // Check if rooms are available
+  useEffect(() => {
+    if (open && rooms.length === 0) {
       setError("You must create at least one room before adding a device.")
-      setTimeout(() => {
-        setOpen(false)
-      }, 2000)
+      // Don't close the dialog immediately to allow the error to be seen
     }
-  }, [open, setOpen])
+  }, [open, rooms])
 
   // Update the deviceIcons array type
   const deviceIcons: DeviceIcon[] = [
@@ -854,7 +1159,7 @@ function AddDeviceDialog({
       name: "",
       type: "",
       room: "",
-      icon: "Lamp",
+      icon: "Desk Lamp",
       consumptionLimit: 100,
       scheduleEnabled: false,
       startTime: "08:00",
@@ -874,7 +1179,7 @@ function AddDeviceDialog({
     const addDevice = () => {
       if (devicesAdded < totalDevices) {
         const newDevice: FoundDevice = {
-          id: "SP" + Math.floor(Math.random() * 10000),
+          id:  Math.floor(Math.random() * 10000),
           name: "Smart Plug " + Math.floor(Math.random() * 100),
           status: "Available",
         }
@@ -897,7 +1202,7 @@ function AddDeviceDialog({
   }
 
   // Update the removeDevice function
-  const removeDevice = (deviceId: string) => {
+  const removeDevice = (deviceId: number) => {
     setPairedDevices((prevDevices) => prevDevices.filter((d) => d.id !== deviceId))
     setFoundDevices((prevDevices) => prevDevices.map((d) => (d.id === deviceId ? { ...d, status: "Available" } : d)))
     onDeviceRemoved(deviceId)
@@ -905,18 +1210,33 @@ function AddDeviceDialog({
 
   // Update the onSubmit function
   const onSubmit = async (data: any) => {
-    if (!selectedDevice) return;
+    if (!selectedDevice) {
+      setError("No device selected");
+      return;
+    }
   
+    // Find the selected icon object
     const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0];
-    const newDevice = {
-      email: "asmasathar7@gmail.com",  // Replace with the authenticated user's email
-      room_id: 3,  // Replace with the actual room ID
+  
+    // Find the room object based on the room name
+    const selectedRoom = rooms.find((r) => r.room_name === data.room);
+    if (!selectedRoom) {
+      setError("Selected room not found");
+      return;
+    }
+  
+    // Prepare the device data for the API
+    const deviceData = {
+      id : selectedDevice.id,
+      user_id: 19, // Replace with the actual user ID
+      room_id: selectedRoom.room_id,
       device_name: data.name,
       device_category: data.type,
-      active_days: data.days,
+      household_code: "288LTIO", // Include household_code
+      active_days: data.days, // Send as an array, not a string
       active_time_start: data.startTime,
       active_time_end: data.endTime,
-      icon: selectedIconObj.icon,
+      icon: { name: selectedIconObj.name }, // Send as a JSON object
       power: Math.floor(Math.random() * 200) + "W",
       isOn: false,
       consumptionLimit: data.consumptionLimit,
@@ -928,15 +1248,13 @@ function AddDeviceDialog({
       },
     };
   
-    console.log("Sending payload:", newDevice); // Log the payload
-  
     try {
-      const response = await fetch("/api/auth/devices/", {
+      const response = await fetch("/api/auth/devices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newDevice),
+        body: JSON.stringify(deviceData),
       });
   
       if (!response.ok) {
@@ -944,21 +1262,40 @@ function AddDeviceDialog({
       }
   
       const result = await response.json();
-      console.log("API Response:", result); // Log the API response
   
       if (result.success) {
-        onDeviceAdded(result.device);
+        // Add the new device to our devices state
+        const newDevice: Device = {
+          id: selectedDevice.id,
+          name: data.name,
+          room: data.room,
+          icon: selectedIconObj.icon,
+          power: deviceData.power,
+          isOn: false,
+          type: data.type,
+          consumptionLimit: data.consumptionLimit,
+          schedule: {
+            enabled: data.scheduleEnabled,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            days: data.days,
+          },
+        };
+  
+        onDeviceAdded(newDevice);
+  
+        // Reset form and close dialog
         setOpen(false);
         setCurrentStep(0);
         setSelectedDevice(null);
         form.reset();
-        setIsEditMode?.(false);
+        if (setIsEditMode) setIsEditMode(false);
       } else {
-        setError(result.message || "Device registration failed. Please check your connection and try again.");
+        setError(result.message || "Failed to add device");
       }
     } catch (error) {
       console.error("Error adding device:", error);
-      setError("An error occurred. Please try again.");
+      setError("An error occurred while adding the device");
     }
   };
 
@@ -1032,7 +1369,7 @@ function AddDeviceDialog({
                     </div>
                   ) : (
                     <div className="w-full space-y-2">
-                      <p className="text-sm text-black mb-2">
+                      <p className="text-sm text-white mb-2">
                         {isScanning
                           ? `Scanning... (${foundDevices.length} device${foundDevices.length !== 1 ? "s" : ""} found)`
                           : `Select a device to pair (${foundDevices.filter((d) => d.status === "Available").length} available):`}
@@ -1053,7 +1390,7 @@ function AddDeviceDialog({
                           <div className="flex items-center gap-3">
                             <Plug className={device.status === "Paired" ? "text-green-500" : "text-blue-500"} />
                             <div>
-                              <p className="font-medium text-black">{device.name}</p>
+                              <p className="font-medium text-white">{device.name}</p>
                               <p className="text-xs text-gray-300">ID: {device.id}</p>
                             </div>
                           </div>
@@ -1086,7 +1423,7 @@ function AddDeviceDialog({
               <TabsContent value="qr">
                 <div className="flex flex-col items-center justify-center py-8">
                   <Scan className="w-16 h-16 text-gray-400 mb-4" />
-                  <p className="text-center text-black mb-4">
+                  <p className="text-center text-white mb-4">
                     Position the QR code on your smart plug within the camera view
                   </p>
                   <Button
@@ -1094,7 +1431,7 @@ function AddDeviceDialog({
                       setIsScanning(true)
                       setTimeout(() => {
                         const randomDevice: FoundDevice = {
-                          id: "SP" + Math.floor(Math.random() * 10000),
+                          id:  Math.floor(Math.random() * 10000),
                           name: "Smart Plug " + Math.floor(Math.random() * 100),
                           status: "Available",
                         }
@@ -1183,9 +1520,9 @@ function AddDeviceDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableRooms.map((room) => (
-                          <SelectItem key={room} value={room}>
-                            {room}
+                        {rooms.map((room) => (
+                          <SelectItem key={room.room_id} value={room.room_name}>
+                            {room.room_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1510,44 +1847,59 @@ function EditDeviceDialog({
   }, [device, form])
 
   const onSubmit = async (data: any) => {
-    if (!device) return;
-  
-    const updatedDevice: Device = {
-      ...device,
-      consumptionLimit: data.consumptionLimit,
-      schedule: {
-        enabled: data.scheduleEnabled,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        days: data.days,
-      },
-    };
-  
+    if (!device) return
+
     try {
+      // Prepare the updated device data
+      const updatedDevice: Device = {
+        ...device,
+        consumptionLimit: data.consumptionLimit,
+        schedule: {
+          enabled: data.scheduleEnabled,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          days: data.days,
+        },
+      }
+
+      // Update the device in the backend
       const response = await fetch(`/api/auth/devices/${device.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedDevice),
-      });
-  
+        body: JSON.stringify({
+          consumptionLimit: data.consumptionLimit,
+          active_time_start: data.startTime,
+          active_time_end: data.endTime,
+          active_days: JSON.stringify(data.days),
+          schedule: JSON.stringify({
+            enabled: data.scheduleEnabled,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            days: data.days,
+          }),
+        }),
+      })
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-  
-      const result = await response.json();
+
+      const result = await response.json()
+
       if (result.success) {
-        onDeviceUpdated(result.device);
-        setOpen(false);
+        // Update the device in the UI
+        onDeviceUpdated(updatedDevice)
+        setOpen(false)
       } else {
-        setError(result.message || "Failed to update device. Please try again.");
+        setError(result.message || "Failed to update device")
       }
     } catch (error) {
-      console.error("Error updating device:", error);
-      setError("An error occurred. Please try again.");
+      console.error("Error updating device:", error)
+      setError("An error occurred while updating the device")
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -1710,3 +2062,4 @@ function EditDeviceDialog({
     </Dialog>
   )
 }
+

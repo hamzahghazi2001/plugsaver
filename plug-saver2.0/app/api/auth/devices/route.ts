@@ -60,25 +60,52 @@ export async function DELETE(req: NextRequest) {
 }
 
 // GET method to fetch device categories
-export async function GET(req: NextRequest) {
+
+export async function GET() {
   try {
-    console.log("GET request received"); // Log the request
+    console.log("GET request received for fetching devices"); // Log the request
 
-    // Call your backend API to fetch device categories
-    const response = await fetch("http://localhost:8000/device-categories", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    // Call your backend API to fetch devices
+    const backendUrl = "http://localhost:8000/api/auth/devices";
+    console.log("Calling backend API at:", backendUrl);
 
+    const response = await fetch(backendUrl);
+
+    console.log("Backend response status:", response.status); // Log the response status
+
+    // Check if the response is successful
+    if (!response.ok) {
+      const errorText = await response.text(); // Log the error response body
+      console.error("Failed to fetch devices. Response body:", errorText);
+
+      // Return a more descriptive error message
+      return NextResponse.json(
+        { 
+          error: "Failed to fetch devices from the backend", 
+          status: response.status, 
+          message: response.statusText,
+          backendError: errorText 
+        },
+        { status: response.status } // Pass the same status code from the backend
+      );
+    }
+
+    // Parse the JSON data
     const data = await response.json();
-    console.log("Backend response:", data); // Log the backend response
+    console.log("Fetched devices data:", JSON.stringify(data, null, 2)); // Log the fetched data in a readable format
+
+    // Return the data as a JSON response
     return NextResponse.json(data);
-  } catch (err) {
-    console.error("Error fetching device categories:", err);
+  } catch (error: any) {
+    console.error("Error fetching devices:", error);
+
+    // Return a detailed error response
     return NextResponse.json(
-      { success: false, message: "An error occurred while fetching device categories." },
+      { 
+        error: "Internal Server Error", 
+        message: error.message || "An unexpected error occurred",
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined 
+      },
       { status: 500 }
     );
   }

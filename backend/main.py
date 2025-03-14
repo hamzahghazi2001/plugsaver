@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from supabase import create_client
 import app.config as config
+from typing import List, Dict, Any
 
 supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
@@ -165,18 +166,19 @@ async def get_user_email(token: str = Depends(security)):
 insert_default_categories()
 
 class AddDeviceRequest(BaseModel):
-    email: str  # User's email
+    user_id: int  # Add user_id
     room_id: int
     device_name: str
     device_category: str
-    active_days: list
+    household_code: str  # Add household_code
+    active_days: List[str]  # Expects a list, not a string
     active_time_start: str
     active_time_end: str
-    icon: dict
+    icon: Dict[str, str]  # Expects a dictionary, not a string
     power: str
     isOn: bool
     consumptionLimit: int
-    schedule: dict
+    schedule: Dict[str, Any] 
 
 class DeleteDeviceRequest(BaseModel):
     household_code: str
@@ -186,10 +188,11 @@ class DeleteDeviceRequest(BaseModel):
 @app.post("/add-device")
 async def add_device_endpoint(request: AddDeviceRequest):
     result = add_device(
-        request.email,
+        request.user_id,  # Pass user_id
         request.room_id,
         request.device_name,
         request.device_category,
+        request.household_code,  # Pass household_code
         request.active_days,
         request.active_time_start,
         request.active_time_end,
@@ -213,14 +216,9 @@ async def delete_device_endpoint(request: DeleteDeviceRequest):
         raise HTTPException(status_code=400, detail=result["message"])
     return {"success": True, "message": "Device deleted successfully."}
 
-@app.get("/device-categories")
-async def get_device_categories_endpoint():
-    result = get_device_categories()
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return {"success": True, "categories": result["categories"]}
 
 @app.put("/update-device/{device_id}")
+
 async def update_device_endpoint(device_id: str, device: dict):
     result = update_device(device_id, device)
     return {"success": result["success"], "device": result.get("device"), "message": result.get("message")}
@@ -265,17 +263,22 @@ async def get_rooms(household_code: str = Query(None)):
     
 # Fetch devices for a specific household
 @app.get("/api/auth/devices")
-async def get_devices(household_code: str):
+async def get_devices(household_code: str = Query(None)):  # Make household_code required
     try:
-        # Fetch devices from the database
-        result = supabase.table("devices").select("*").eq("household_code", household_code).execute()
+        if household_code:
+            # Fetch rooms for the specified household
+            result = supabase.table("devices").select("*").eq("household_code", household_code).execute()
+        else:
+            # Fetch all rooms if no household_code is provided
+            result = supabase.table("devices").select("*").execute()
+
         if result.data:
             return {"success": True, "devices": result.data}
         else:
             return {"success": False, "message": "No devices found."}
     except Exception as e:
         return {"success": False, "message": str(e)}
-
+        
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the backend!"}
