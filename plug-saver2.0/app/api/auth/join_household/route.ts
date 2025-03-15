@@ -21,3 +21,27 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const email = searchParams.get("email");
+
+  if (!email) {
+    return NextResponse.json(
+      { success: false, message: "Email is required." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const response = await fetch(`http://localhost:8000/get_household_code?email=${encodeURIComponent(email)}`);
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { success: false, message: "An error occurred." },
+      { status: 500 }
+    );
+  }
+}

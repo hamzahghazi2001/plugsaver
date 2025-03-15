@@ -53,6 +53,29 @@ export default function RoleSelectionPage() {
     }
   }, [email, router]);
 
+  useEffect(() => {
+    const fetchHouseholdCode = async () => {
+      try {
+        const storedHouseholdCode = localStorage.getItem("household_code");
+        if (!storedHouseholdCode && email) {
+          const response = await fetch(`/api/auth/get_household_code?email=${encodeURIComponent(email)}`);
+          const data = await response.json();
+  
+          if (data.success) {
+            localStorage.setItem("household_code", data.household_code);
+            setHouseholdCode(data.household_code); // Update state
+          } else {
+            console.error("Failed to fetch household code:", data.message);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching household code:", error);
+      }
+    };
+  
+    fetchHouseholdCode();
+  }, [email]);
+
   const generateHouseholdCode = () => {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
@@ -99,6 +122,7 @@ export default function RoleSelectionPage() {
         const data = await response.json();
 
         if (data.success) {
+          localStorage.setItem("household_code", householdCode); 
           setIsProfileSetup(true); // Move to profile setup
         } else {
           alert(data.message || "Failed to create household.");
@@ -119,6 +143,7 @@ export default function RoleSelectionPage() {
         const data = await response.json();
 
         if (data.success) {
+          localStorage.setItem("household_code", householdCode);
           setIsProfileSetup(true); // Move to profile setup
         } else {
           alert(data.message || "Failed to join household.");

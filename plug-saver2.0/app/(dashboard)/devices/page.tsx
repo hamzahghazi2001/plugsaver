@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -181,6 +181,10 @@ const iconMap: Record<string, React.ElementType> = {
 export default function DevicesPage() {
   // Add these state variables to the DevicesPage component:
   const [editDeviceDialogOpen, setEditDeviceDialogOpen] = useState<boolean>(false)
+  const [userId, setUserId] = useState<number | null>(null);
+  const [roomId, setRoomId] = useState<number | null>(null);
+  const [deviceId, setDeviceId] = useState<number | null>(null);
+  const [email, setEmail] = useState<string | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<FoundDevice | null>(null)
   const [currentEditingDevice, setCurrentEditingDevice] = useState<Device | null>(null)
   // Update the useState calls in DevicesPage component
@@ -194,6 +198,7 @@ export default function DevicesPage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
 
   const deviceIcons: DeviceIcon[] = [
     { icon: Lamp, name: "Desk Lamp" },
@@ -262,14 +267,60 @@ export default function DevicesPage() {
     },
   })
 
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id");
+    const storedEmail = localStorage.getItem("email");
+    const storedHouseholdCode = localStorage.getItem("household_code");
+
+    if (storedUserId) {
+      setUserId(Number(storedUserId));
+    } else {
+      router.push("/login");
+    }
+
+    if (storedHouseholdCode) {
+      setHouseholdCode(storedHouseholdCode);
+    } else if (storedEmail) {
+      fetchHouseholdCode(storedEmail);
+    }
+    
+  }, [router]);
+  
+
+
+
+
+
+
+
+  const fetchHouseholdCode = async (email: string) => {
+    try {
+      const response = await fetch(`/api/auth/get_household_code?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("household_code", data.household_code);
+        setHouseholdCode(data.household_code);
+      } else {
+        console.error("Failed to fetch household code:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching household code:", error);
+    }
+  };
+
+
+
   // Load rooms from localStorage on mount
   useEffect(() => {
     const fetchData = async () => {
-      await fetchRooms(); // Fetch rooms first
-      await fetchDevices(); // Then fetch devices
+      await fetchRooms();
+      await fetchDevices();
     };
-    fetchData();
-  }, []);
+    if (userId && householdCode) {
+      fetchData();
+    }
+  }, [userId, householdCode]);
   
     // Fetch rooms from the backend
     const fetchRooms = async () => {
@@ -284,7 +335,15 @@ export default function DevicesPage() {
         const data = await response.json();
   
         if (data.success && data.rooms) {
-          setRooms(data.rooms);
+          // Ensure that each room has a room_id property
+          const roomsWithId = data.rooms.map((room: any) => {
+            if (!room.room_id) {
+              console.error("Room is missing room_id:", room);
+            }
+            return room;
+          });
+
+          setRooms(roomsWithId);
           localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)));
         } else {
           console.error("Failed to fetch rooms:", data.message);
@@ -297,116 +356,159 @@ export default function DevicesPage() {
     };
   
     // Fetch devices from the backend
- const fetchDevices = async () => {
-  console.log("Fetching devices...");
-  try {
-    setIsLoading(true);
-    const householdCode = "288LTIO"; // Ensure this is correctly set
-    const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
+    const fetchDevices = async () => {
+      console.log("Fetching devices...");
+      try {
+        setIsLoading(true); // Ensure this is correctly set
+        const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data.success && data.devices) {
-      // Transform backend device data to match our frontend Device interface
-      const transformedDevices = data.devices.map((device: any) => {
-        // Find the room name from our rooms array
-        const room = rooms.find((r) => r.room_id === device.room_id);
-
-        // Get the icon component based on the icon name or use a default
-        let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
-        if (typeof device.icon === "string") {
-          try {
-            // Parse the JSON string to get the icon name
-            const iconData = JSON.parse(device.icon);
-            const iconName = iconData.name; // Extract the icon name
-
-            // Find the corresponding icon component from the deviceIcons array
-            const iconObj = deviceIcons.find((di) => di.name === iconName);
-            if (iconObj) {
-              iconComponent = iconObj.icon; // Use the found icon
-            }
-          } catch (error) {
-            console.error("Error parsing icon JSON:", error);
-          }
-        }
-
-        let activeDays = [];
-        if (typeof device.active_days === "string") {
-          activeDays = device.active_days.split(",");
-        } else if (Array.isArray(device.active_days)) {
-          activeDays = device.active_days;
+        const data = await response.json();
+    
+        if (data.success && data.devices) {
+          // Transform backend device data to match our frontend Device interface
+          const transformedDevices = await Promise.all(
+            data.devices.map(async (device: any) => {
+              let roomName = "Unknown Room"; // Default room name
+    
+              // Fetch the room name if room_id is available
+              console.log(" Room ID:", device.room_id); // Log the room ID
+              if (device.room_id) {
+                try {
+                  const roomResponse = await fetch(
+                    `/api/auth/getroomname?room_id=${encodeURIComponent(device.room_id)}`
+                  );
+                  const roomData = await roomResponse.json();
+                  if (roomData.success) {
+                    roomName = roomData.room_name;
+                  }
+                } catch (err) {
+                  console.error("Error fetching room name:", err);
+                }
+              }
+    
+              // Get the icon component based on the icon name or use a default
+              let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
+              if (typeof device.icon === "string") {
+                try {
+                  // Parse the JSON string to get the icon name
+                  const iconData = JSON.parse(device.icon);
+                  const iconName = iconData.name; // Extract the icon name
+    
+                  // Find the corresponding icon component from the deviceIcons array
+                  const iconObj = deviceIcons.find((di) => di.name === iconName);
+                  if (iconObj) {
+                    iconComponent = iconObj.icon; // Use the found icon
+                  }
+                } catch (error) {
+                  console.error("Error parsing icon JSON:", error);
+                }
+              }
+    
+              let activeDays = [];
+              if (typeof device.active_days === "string") {
+                activeDays = device.active_days.split(",");
+              } else if (Array.isArray(device.active_days)) {
+                activeDays = device.active_days;
+              } else {
+                activeDays = [];
+              }
+    
+              localStorage.setItem("device_id", device.device_id);
+              console.log("Room Name:", roomName); // Log the room name
+    
+              return {
+                id: device.device_id,
+                name: device.device_name,
+                room: roomName, // Use the fetched room name
+                icon: iconComponent,
+                power: device.power || "0W",
+                isOn: device.isOn === "TRUE" || device.isOn === true,
+                type: device.device_category,
+                needsRoomAssignment: device.room_id === null || device.room_id === undefined,
+                consumptionLimit: Number.parseInt(device.consumptionLimit) || 100,
+                schedule: {
+                  enabled: device.schedule?.enabled || false,
+                  startTime: device.active_time_start || "08:00",
+                  endTime: device.active_time_end || "22:00",
+                  days: activeDays,
+                },
+              };
+            })
+          );
+    
+          console.log("Transformed Devices:", transformedDevices); // Log transformed devices
+          setDevices(transformedDevices);
         } else {
-          activeDays = [];
+          console.error("Failed to fetch devices:", data.message);
         }
-
-        return {
-          id: device.device_id,
-          name: device.device_name,
-          room: room ? room.room_name : null, // Set the room name correctly
-          icon: iconComponent,
-          power: device.power || "0W",
-          isOn: device.isOn === "TRUE" || device.isOn === true,
-          type: device.device_category,
-          needsRoomAssignment: device.room_id === null || device.room_id === undefined,
-          consumptionLimit: Number.parseInt(device.consumptionLimit) || 100,
-          schedule: {
-            enabled: device.schedule?.enabled || false,
-            startTime: device.active_time_start || "08:00",
-            endTime: device.active_time_end || "22:00",
-            days: activeDays,
-          },
-        };
-      });
-      console.log("Transformed Devices:", transformedDevices); // Log transformed devices
-      setDevices(transformedDevices);
-    } else {
-      console.error("Failed to fetch devices:", data.message);
-    }
-  } catch (error) {
-    console.error("Error fetching devices:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      } catch (error) {
+        console.error("Error fetching devices:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   // Add a new device
   const addDevice = (newDevice: Device) => {
     setDevices([...devices, newDevice])
   }
+  useEffect(() => {
+    const storedDeviceId = localStorage.getItem("device_id");
+    if (storedDeviceId) {
+      setDeviceId(Number(storedDeviceId)); 
+    }
+  }, []);
 
   // Remove a device
   const removeDevice = async (deviceId: number) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
 
-      const response = await fetch(`/api/auth/devices/${deviceId}`, {
-        method: "DELETE",
-      })
+      console.log("Sending DELETE request with the following data:");
+      console.log("Device ID:", deviceId);
+      console.log("Household Code:", householdCode);
+      console.log("User ID:", userId);
+  
 
+      const response = await fetch(
+        `/api/auth/devices`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            device_id: deviceId,
+            household_code: householdCode,
+            user_id: userId,
+          }),
+        });
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json()
-
+  
+      const data = await response.json();
+      console.log("Backend response:", data);
+  
       if (data.success) {
         // Remove the device from our devices state
-        setDevices(devices.filter((device) => device.id !== deviceId))
+        setDevices(devices.filter((device) => device.id !== deviceId));
       } else {
-        console.error("Failed to remove device:", data.message)
-        setError(data.message)
+        console.error("Failed to remove device:", data.message);
+        setError(data.message);
       }
     } catch (error) {
-      console.error("Error removing device:", error)
-      setError("An error occurred while removing the device")
+      console.error("Error removing device:", error);
+      setError("An error occurred while removing the device");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Toggle device on/off state
   const toggleDevice = async (deviceId: number) => {
@@ -459,27 +561,19 @@ export default function DevicesPage() {
     try {
       setIsLoading(true)
 
-      const response = await fetch("/api/auth/rooms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          household_code: householdCode,
-          room_name: roomName,
-        }),
-      })
+      const response = await fetch("/api/auth/rooms")
+
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
-
+      
       if (data.success) {
         // Add the new room to our rooms state
         const newRoom = {
-          room_id: data.room.room_id,
+          room_id: data.room_id,
           room_name: roomName,
           household_code: householdCode,
         }
@@ -488,7 +582,7 @@ export default function DevicesPage() {
 
         // Update localStorage
         localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, newRoom].map((r) => r.room_name)))
-
+        localStorage.setItem("room_id", data.room_id)
         // Reset the input field and close the dialog
         setRoomName("")
         setIsDialogOpen(false)
@@ -504,103 +598,136 @@ export default function DevicesPage() {
     }
   }
 
+  useEffect(() => {
+    const storedRoomId = localStorage.getItem("room_id");
+    if (storedRoomId) {
+      setRoomId(Number(storedRoomId)); 
+    }
+  }, []);
+
   // Delete a room
   const handleDeleteRoom = async (roomId: number, roomName: string) => {
     try {
-      setIsLoading(true)
-
-      const response = await fetch(`/api/auth/rooms/${roomId}`, {
-        method: "DELETE",
-      })
-
+      setIsLoading(true);
+  
+      const response = await fetch(`/api/auth/rooms`,{
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            room_id: roomId,
+            household_code: householdCode,
+            user_id: userId,
+          }),
+        });
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json()
-
+  
+      const data = await response.json();
+  
       if (data.success) {
         // Remove the room from our rooms state
-        setRooms(rooms.filter((r) => r.room_id !== roomId))
-
+        setRooms(rooms.filter((r) => r.room_id !== roomId));
+  
         // Update localStorage
         localStorage.setItem(
           "plugSaver_rooms",
           JSON.stringify(rooms.filter((r) => r.room_id !== roomId).map((r) => r.room_name)),
-        )
-
+        );
+  
         // Mark devices in this room as needing reassignment
         setDevices(
           devices.map((device) =>
             device.room === roomName ? { ...device, room: null, needsRoomAssignment: true } : device,
           ),
-        )
-
+        );
+  
         // Reset selected room if it was the deleted one
         if (selectedRoom === roomName) {
-          setSelectedRoom(null)
+          setSelectedRoom(null);
         }
       } else {
-        console.error("Failed to delete room:", data.message)
-        setError(data.message)
+        console.error("Failed to delete room:", data.message);
+        setError(data.message);
       }
     } catch (error) {
-      console.error("Error deleting room:", error)
-      setError("An error occurred while deleting the room")
+      console.error("Error deleting room:", error);
+      setError("An error occurred while deleting the room");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Assign a device to a room
   const assignDeviceToRoom = async (deviceId: number, roomName: string) => {
-    const device = devices.find((d) => d.id === deviceId)
-    if (!device) return
-
-    const room = rooms.find((r) => r.room_name === roomName)
-    if (!room) return
-
+    console.log(`Attempting to assign device ${deviceId} to room ${roomName}`);  // Log the request
+  
+    const device = devices.find((d) => d.id === deviceId);
+    if (!device) {
+      console.error(`Device ${deviceId} not found in the local state`);  // Log if device not found
+      return;
+    }
+  
+    const room = rooms.find((r) => r.room_name === roomName);
+    if (!room) {
+      console.error(`Room ${roomName} not found in the local state`);  // Log if room not found
+      return;
+    }
+  
     // Optimistically update the UI
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)))
-
+    console.log("Optimistically updating the UI...");  // Log optimistic update
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)));
+  
     try {
+      console.log("Sending request to backend to assign device to room...");  // Log the API call
       const response = await fetch(`/api/auth/devices/${deviceId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          room_id: room.room_id,
+          room_id: room.room_id,  // Use room.room_id
         }),
-      })
-
+      });
+  
+      console.log("Received response from backend:", response);  // Log the response
+  
       if (!response.ok) {
+        console.error("Backend returned an error:", response.status, response.statusText);  // Log the error
         // Revert the optimistic update if the request fails
         setDevices(
           devices.map((d) =>
             d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
           ),
-        )
-        throw new Error(`HTTP error! status: ${response.status}`)
+        );
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json()
-
+  
+      const data = await response.json();
+      console.log("Backend response data:", data);  // Log the response data
+  
       if (!data.success) {
+        console.error("Failed to assign device to room:", data.message);  // Log the failure
         // Revert the optimistic update if the request fails
         setDevices(
           devices.map((d) =>
             d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
           ),
-        )
-        console.error("Failed to assign device to room:", data.message)
-        setError(data.message)
+        );
+        setError(data.message);
+      } else {
+        console.log("Device assigned to room successfully");  // Log success
+        // Re-fetch devices to ensure the UI reflects the latest state
+        await fetchDevices();
       }
     } catch (error) {
-      console.error("Error assigning device to room:", error)
-      setError("An error occurred while assigning the device to a room")
+      console.error("Error assigning device to room:", error);  // Log any exceptions
+      setError("An error occurred while assigning the device to a room");
     }
-  }
+  };
 
   // Filter devices by selected room
   const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
@@ -891,6 +1018,8 @@ export default function DevicesPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {rooms.map((room, index) => {
                   const deviceCount = devices.filter((device) => device.room === room.room_name).length
+
+                  console.log(`Room: ${room.room_name}, Device Count: ${deviceCount}`);
                   return (
                     <motion.div
                       key={room.room_id}
@@ -1018,6 +1147,22 @@ function AddDeviceDialog({
   const [selectedDevice, setSelectedDevice] = useState<FoundDevice | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pairedDevices, setPairedDevices] = useState<Device[]>([])
+  const [householdCode, setHouseholdCode] = useState<string | null>(null)
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id");
+    if (storedUserId) {
+      setUserId(Number(storedUserId)); // Convert the string to a number
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedHouseholdCode = localStorage.getItem("household_code");
+    if (storedHouseholdCode) {
+      setHouseholdCode(storedHouseholdCode); 
+    }
+  }, []);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -1161,7 +1306,12 @@ function AddDeviceDialog({
       setError("No device selected");
       return;
     }
-  
+
+    if (!userId) {
+      setError("User ID not found. Please log in again.");
+      return;
+    } 
+
     // Find the selected icon object
     const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0];
   
@@ -1175,11 +1325,11 @@ function AddDeviceDialog({
     // Prepare the device data for the API
     const deviceData = {
       id : selectedDevice.id,
-      user_id: 19, // Replace with the actual user ID
+      user_id: userId, // Replace with the actual user ID
       room_id: selectedRoom.room_id,
       device_name: data.name,
       device_category: data.type,
-      household_code: "288LTIO", // Include household_code
+      household_code: householdCode, // Include household_code
       active_days: data.days, // Send as an array, not a string
       active_time_start: data.startTime,
       active_time_end: data.endTime,

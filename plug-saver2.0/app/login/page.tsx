@@ -78,6 +78,10 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (data.success) {
+        localStorage.setItem("user_id", data.user_id)
+        localStorage.setItem("email", email);
+        console.log("User ID stored in localStorage:", data.user_id);
+        console.log("API response data:", data);
         const nextUrl = searchParams.get("next") || "/home"
         router.push(nextUrl)
         router.refresh()

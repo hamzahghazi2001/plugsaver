@@ -163,50 +163,87 @@ def give_permission(manager_id: int, user_id: int, household_code: str, room_id:
             return {"success": False, "message": "Failed to grant permission."}
         
 
+# def delete_device(household_code: str, user_id: int, device_id: int):
+#     # Check if household exists
+#     household = supabase.table("households").select("household_code", "manager_id").eq("household_code", household_code).execute()
+#     if not household.data:
+#         return {"success": False, "message": "Invalid household code"}
+    
+#     # Check if the user has permission to configure the device
+#     device_permission = supabase.table("householdpermissions").select("can_configure").eq("household_code", household_code).eq("device_id", device_id).eq("user_id", user_id).execute()
+#     if not device_permission.data or not device_permission.data[0]["can_configure"]:
+#         return {"success": False, "message": "User does not have permission to configure this device"}
+    
+#     # Delete the device's permissions from the householdpermissions table first
+#     permission_response = supabase.table("householdpermissions").delete().eq("device_id", device_id).eq("household_code", household_code).execute()
+#     if not permission_response.data:
+#         return {"success": False, "message": "Failed to delete device permissions."}
+
+#     # Now delete the device from the devices table
+#     device_response = supabase.table("devices").delete().eq("device_id", device_id).execute()
+#     if not device_response.data:
+#         return {"success": False, "message": "Failed to delete device. The device might not exist."}
+
+#     return {"success": True, "message": "Device and permissions successfully deleted."}
+
 def delete_device(household_code: str, user_id: int, device_id: int):
-    # Check if household exists
-    household = supabase.table("households").select("household_code", "manager_id").eq("household_code", household_code).execute()
-    if not household.data:
-        return {"success": False, "message": "Invalid household code"}
+    try:
+        # Check if the device exists
+        device = supabase.table("devices").select("*").eq("device_id", device_id).eq("household_code", household_code).execute()
+        print("Device check response:", device)  # Log the response
+
+        if not device.data:
+            return {"success": False, "message": "Device not found."}
+
+        # Delete the device
+        response = supabase.table("devices").delete().eq("device_id", device_id).execute()
+        print("Delete response:", response)  # Log the response
+
+        if not response.data:
+            return {"success": False, "message": "Failed to delete device."}
+
+        return {"success": True, "message": "Device deleted successfully."}
+    except Exception as e:
+        print("Error deleting device:", str(e))  # Log the error
+        return {"success": False, "message": str(e)}
+           
+# def delete_room(household_code: str, user_id: int, room_id: int):
+#     # Check if household exists
+#     household = supabase.table("households").select("household_code", "manager_id").eq("household_code", household_code).execute()
+#     if not household.data:
+#         return {"success": False, "message": "Invalid household code"}
     
-    # Check if the user has permission to configure the device
-    device_permission = supabase.table("householdpermissions").select("can_configure").eq("household_code", household_code).eq("device_id", device_id).eq("user_id", user_id).execute()
-    if not device_permission.data or not device_permission.data[0]["can_configure"]:
-        return {"success": False, "message": "User does not have permission to configure this device"}
+#     # Check if the user is the manager of the household
+#     if household.data[0]["manager_id"] != user_id:
+#         return {"success": False, "message": "Only the manager can delete a room"}
     
-    # Delete the device's permissions from the householdpermissions table first
-    permission_response = supabase.table("householdpermissions").delete().eq("device_id", device_id).eq("household_code", household_code).execute()
-    if not permission_response.data:
-        return {"success": False, "message": "Failed to delete device permissions."}
 
-    # Now delete the device from the devices table
-    device_response = supabase.table("devices").delete().eq("device_id", device_id).execute()
-    if not device_response.data:
-        return {"success": False, "message": "Failed to delete device. The device might not exist."}
+#     # Delete household permissions for devices in the room before deleting the devices
+#     permission_response = supabase.table("householdpermissions").delete().eq("room_id", room_id).eq("household_code", household_code).execute()
+#     if not permission_response.data:
+#         return {"success": False, "message": "Failed to delete room permissions."}
 
-    return {"success": True, "message": "Device and permissions successfully deleted."}
+#     # Delete all devices associated with the room in the devices table
+#     device_response = supabase.table("devices").delete().eq("room_id", room_id).execute()
+#     if not device_response.data:
+#         return {"success": False, "message": "Failed to delete devices in the room. Devices might not exist."}
 
+#     # Now delete the room from the rooms table
+#     room_response = supabase.table("rooms").delete().eq("room_id", room_id).execute()
+#     if not room_response.data:
+#         return {"success": False, "message": "Failed to delete room. The room might not exist."}
+
+#     return {"success": True, "message": "Room, devices, and permissions successfully deleted"}
 
 def delete_room(household_code: str, user_id: int, room_id: int):
     # Check if household exists
-    household = supabase.table("households").select("household_code", "manager_id").eq("household_code", household_code).execute()
+    household = supabase.table("households").select("household_code").eq("household_code", household_code).execute()
     if not household.data:
         return {"success": False, "message": "Invalid household code"}
-    
-    # Check if the user is the manager of the household
-    if household.data[0]["manager_id"] != user_id:
-        return {"success": False, "message": "Only the manager can delete a room"}
-    
-
-    # Delete household permissions for devices in the room before deleting the devices
-    permission_response = supabase.table("householdpermissions").delete().eq("room_id", room_id).eq("household_code", household_code).execute()
-    if not permission_response.data:
-        return {"success": False, "message": "Failed to delete room permissions."}
 
     # Delete all devices associated with the room in the devices table
     device_response = supabase.table("devices").delete().eq("room_id", room_id).execute()
-    if not device_response.data:
-        return {"success": False, "message": "Failed to delete devices in the room. Devices might not exist."}
+
 
     # Now delete the room from the rooms table
     room_response = supabase.table("rooms").delete().eq("room_id", room_id).execute()
@@ -214,6 +251,7 @@ def delete_room(household_code: str, user_id: int, room_id: int):
         return {"success": False, "message": "Failed to delete room. The room might not exist."}
 
     return {"success": True, "message": "Room, devices, and permissions successfully deleted"}
+
 
 def update_device(device_id: str, updated_device_data: dict):
 
