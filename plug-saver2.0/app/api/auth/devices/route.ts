@@ -96,7 +96,7 @@ export async function GET() {
 
     // Return the data as a JSON response
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error:any) {
     console.error("Error fetching devices:", error);
 
     // Return a detailed error response
