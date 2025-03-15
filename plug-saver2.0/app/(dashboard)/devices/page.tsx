@@ -551,52 +551,69 @@ export default function DevicesPage() {
 
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+    e.preventDefault();
+  
     if (!roomName) {
-      setError("Please enter a room name")
-      return
+      setError("Please enter a room name");
+      return;
     }
-
+  
     try {
-      setIsLoading(true)
-
-      const response = await fetch("/api/auth/rooms")
-
-
+      setIsLoading(true);
+  
+      console.log("Sending POST request with the following data:");
+      console.log("Room Name:", roomName);
+      console.log("Household Code:", householdCode);
+  
+      const response = await fetch("/api/auth/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          room_name: roomName,
+          household_code: householdCode,
+        }),
+      });
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json()
-      
+  
+      const data = await response.json();
+      console.log("Backend response:", data);
+  
       if (data.success) {
         // Add the new room to our rooms state
         const newRoom = {
           room_id: data.room_id,
           room_name: roomName,
           household_code: householdCode,
-        }
-
-        setRooms([...rooms, newRoom])
-
+        };
+  
+        setRooms([...rooms, newRoom]);
+  
         // Update localStorage
-        localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, newRoom].map((r) => r.room_name)))
-        localStorage.setItem("room_id", data.room_id)
+        localStorage.setItem(
+          "plugSaver_rooms",
+          JSON.stringify([...rooms, newRoom].map((r) => r.room_name))
+        );
+        localStorage.setItem("room_id", data.room_id);
+  
         // Reset the input field and close the dialog
-        setRoomName("")
-        setIsDialogOpen(false)
+        setRoomName("");
+        setIsDialogOpen(false);
       } else {
-        console.error("Failed to add room:", data.message)
-        setError(data.message)
+        console.error("Failed to add room:", data.message);
+        setError(data.message);
       }
     } catch (error) {
-      console.error("Error adding room:", error)
-      setError("An error occurred while adding the room")
+      console.error("Error adding room:", error);
+      setError("An error occurred while adding the room");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const storedRoomId = localStorage.getItem("room_id");

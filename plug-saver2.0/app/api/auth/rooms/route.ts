@@ -2,30 +2,21 @@ import { NextResponse,NextRequest } from "next/server";
 
 export async function POST(request: Request) {
     try {
-      const body = await request.json();
-      const { household_code, room_name } = body;
+        console.log("POST request received"); // Log the request
+        const room = await request.json();
+        console.log("Received payload from frontend:", room);
   
-      if (!household_code || !room_name) {
-        return NextResponse.json(
-          { error: "Household code and room name are required" },
-          { status: 400 }
-        );
-      }
+
+      
   
       const response = await fetch("http://localhost:8000/add-room", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          household_code,
-          room_name,
-        }),
-      });
+        body: JSON.stringify(room),
+        });
   
-      if (!response.ok) {
-        throw new Error(`Failed to add room: ${response.statusText}`);
-      }
   
       const data = await response.json();
       console.log("Added room data:", data); // Inspect the response

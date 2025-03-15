@@ -583,7 +583,7 @@ async def add_room_endpoint(request: AddRoomRequest):
         print("Result from add_room function:", result)
         if not result["success"]:
             raise HTTPException(status_code=400, detail=result["message"])
-        return {"success": True, "message": "Room added successfully."}
+        return {"success": True, "message": "Room added successfully.", "room_id": result["room_id"]}
     except Exception as e:
         print("Error adding room:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
