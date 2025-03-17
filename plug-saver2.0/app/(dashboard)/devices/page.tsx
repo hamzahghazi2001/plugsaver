@@ -285,7 +285,7 @@ export default function DevicesPage() {
     }
     
   }, [router]);
-
+  
 
 
   // Load rooms from localStorage on mount
@@ -494,22 +494,40 @@ export default function DevicesPage() {
     if (!device) return;
   
     const newIsOn = !device.isOn;
+    let newPower = device.power;
+  
+    if (newIsOn) {
+      // If the device is being turned on, generate a random power value
+      newPower = `${Math.floor(Math.random() * 200)}W`; // Generate a random power value
+    } else {
+      // If the device is being turned off, set power to "0W"
+      newPower = "0W";
+    }
   
     // Optimistically update the UI
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn } : d)));
+    setDevices(
+      devices.map((d) =>
+        d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d
+      )
+    );
   
     try {
+      // Send the updated state to the backend
       const response = await fetch(`/api/auth/toggledevice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isOn: newIsOn , deviceId}),
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower }), // Include power in the request
       });
   
       if (!response.ok) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
+          )
+        );
         throw new Error(`HTTP error! status: ${response.status}`);
       }
   
@@ -517,7 +535,11 @@ export default function DevicesPage() {
   
       if (!data.success) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
+          )
+        );
         console.error("Failed to toggle device:", data.message);
         setError(data.message);
       }
@@ -526,7 +548,7 @@ export default function DevicesPage() {
       setError("An error occurred while toggling the device");
     }
   };
-
+  
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1329,7 +1351,7 @@ function AddDeviceDialog({
       active_time_start: data.startTime,
       active_time_end: data.endTime,
       icon: { name: selectedIconObj.name }, // Send as a JSON object
-      power: Math.floor(Math.random() * 200) + "W",
+      power: "0W",
       isOn: false,
       consumptionLimit: data.consumptionLimit,
       schedule: {
@@ -1363,7 +1385,7 @@ function AddDeviceDialog({
           name: data.name,
           room: data.room,
           icon: selectedIconObj.icon,
-          power: deviceData.power,
+          power: "0W",
           isOn: false,
           type: data.type,
           consumptionLimit: data.consumptionLimit,

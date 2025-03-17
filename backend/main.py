@@ -1,5 +1,6 @@
 
 # main.py
+import random
 from app.auth import create_account, registration_verify, email_code_gen, login, login_verify
 from fastapi import FastAPI, HTTPException, Depends, Query, Path
 from app.household import create_household, join_household
@@ -22,7 +23,7 @@ security = HTTPBearer()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allows all origins
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
@@ -316,14 +317,16 @@ async def assign_device_to_room(device_id: int, request: AssignRoomRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
 
+# Define the request model
 class ToggleDeviceRequest(BaseModel):
-    deviceId: int  # Ensure this matches the frontend's request body
+    deviceId: int
     isOn: bool
+    power: str  # The current power value (e.g., "144W" or "0W")
 
 @app.post("/toggle-device")
 async def toggle_device_endpoint(request: ToggleDeviceRequest):
     try:
-        print(f"Received request: deviceId={request.deviceId}, isOn={request.isOn}")  # Debug log
+        print(f"Received request: deviceId={request.deviceId}, isOn={request.isOn}, power={request.power}")  # Debug log
 
         # Fetch the device from the database
         device_result = supabase.from_("devices").select("*").eq("device_id", request.deviceId).execute()
@@ -332,18 +335,22 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
             raise HTTPException(status_code=404, detail="Device not found")
         device = device_result.data[0]
 
-        # Update the device's isOn state in the database
-        update_result = supabase.from_("devices").update({"isOn": request.isOn}).eq("device_id", request.deviceId).execute()
+        # Prepare the update data
+        update_data = {"isOn": request.isOn, "power": request.power}
+
+        # Update the device in the database
+        update_result = supabase.from_("devices").update(update_data).eq("device_id", request.deviceId).execute()
         if not update_result.data:
             print("Failed to update device state")  # Debug log
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
-        return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn}
+        return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
     except Exception as e:
         print(f"Error toggling device: {str(e)}")  # Debug log
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
+    
+        
 class EditDeviceRequest(BaseModel):
     device_id: int
     consumptionLimit: int
