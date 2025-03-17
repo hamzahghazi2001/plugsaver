@@ -63,6 +63,8 @@ export default function VerifyPage() {
       const data = await response.json()
 
       if (data.success) {
+        localStorage.setItem("user_id", data.user_id)
+        localStorage.setItem("email", data.email);
         const safeEmail = email || "";
         router.push(`/roleselect?email=${encodeURIComponent(safeEmail)}`) 
       } else {

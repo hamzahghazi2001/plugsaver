@@ -1,9 +1,8 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   User,
   Info,
@@ -23,9 +22,9 @@ import {
   Phone,
   UserPlus,
   FileQuestion,
-} from "lucide-react"
-import { motion } from "framer-motion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -33,19 +32,19 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
 export default function SettingsPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   // State for various settings
   const [user, setUser] = useState({
@@ -53,16 +52,22 @@ export default function SettingsPage() {
     role: "Household Manager",
     avatar: "/placeholder.svg?height=80&width=80",
     email: "user@example.com",
-    phone: "+971 50 123 4567",
-    address: "Downtown Dubai, UAE",
+    country: "United Arab Emirates", // Replace 'address' with 'country'
     birthdate: "1990-01-01",
     language: "English",
-  })
+  });
 
   // States for different dialog modals
-  const [activeDialog, setActiveDialog] = useState<string | null>(null)
-  const [activeSheet, setActiveSheet] = useState<string | null>(null)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [activeDialog, setActiveDialog] = useState<string | null>(null);
+  const [activeSheet, setActiveSheet] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // State for managing member permissions dialog
+  const [manageMemberDialogOpen, setManageMemberDialogOpen] = useState(false);
+  const [manageMemberPermissions, setManageMemberPermissions] = useState({
+    control: false,
+    configure: false,
+  });
 
   // Toggle states for various settings
   const [settings, setSettings] = useState({
@@ -73,7 +78,6 @@ export default function SettingsPage() {
     },
     security: {
       twoFactorAuth: false,
-      biometricLogin: true,
       rememberDevice: true,
       passwordExpiry: "90days",
     },
@@ -100,48 +104,49 @@ export default function SettingsPage() {
       size: "medium",
       rooms: 4,
     },
-  })
+  });
 
   // Handle opening dialogs
   const openDialog = (dialog: string) => {
-    setActiveDialog(dialog)
-    setSaveSuccess(false)
-  }
+    setActiveDialog(dialog);
+    setSaveSuccess(false);
+  };
 
   // Handle opening sheets (for mobile view)
   const openSheet = (sheet: string) => {
-    setActiveSheet(sheet)
-    setSaveSuccess(false)
-  }
+    setActiveSheet(sheet);
+    setSaveSuccess(false);
+  };
 
   // Handle saving settings
   const handleSave = () => {
-    setSaveSuccess(true)
+    setSaveSuccess(true);
     // Would normally save to a database or API
     setTimeout(() => {
-      if (activeDialog) setActiveDialog(null)
-      if (activeSheet) setActiveSheet(null)
-    }, 1500)
-  }
+      if (activeDialog) setActiveDialog(null);
+      if (activeSheet) setActiveSheet(null);
+      setManageMemberDialogOpen(false);
+    }, 1500);
+  };
 
   // Handle logout
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
-    router.push("/login")
-  }
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
 
   // Handle avatar upload
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setUser({ ...user, avatar: event.target.result as string })
+          setUser({ ...user, avatar: event.target.result as string });
         }
-      }
-      reader.readAsDataURL(e.target.files[0])
+      };
+      reader.readAsDataURL(e.target.files[0]);
     }
-  }
+  };
 
   // Handle toggle changes
   const handleToggleChange = (category: string, setting: string, value: boolean) => {
@@ -151,8 +156,8 @@ export default function SettingsPage() {
         ...settings[category as keyof typeof settings],
         [setting]: value,
       },
-    })
-  }
+    });
+  };
 
   // Get appropriate component based on screen size
   const SettingsItem = ({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) => (
@@ -170,7 +175,7 @@ export default function SettingsPage() {
       </div>
       <ChevronRight className="w-5 h-5 text-gray-400" />
     </motion.button>
-  )
+  );
 
   // Profile settings content
   const ProfilePictureContent = () => (
@@ -211,55 +216,88 @@ export default function SettingsPage() {
         ))}
       </div>
     </>
-  )
+  );
 
-  const PersonalInfoContent = () => (
-    <>
-      <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+  const PersonalInfoContent = () => {
+    // Comprehensive list of all countries
+    const countries = [
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia",
+      "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
+      "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
+      "Burkina Faso", "Burundi", "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
+      "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba",
+      "Cyprus", "Czechia", "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji",
+      "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea",
+      "Guinea-Bissau", "Guyana", "Haiti", "Holy See", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran",
+      "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait",
+      "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius",
+      "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
+      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
+      "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea",
+      "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+      "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia",
+      "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
+      "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+      "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia",
+      "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America",
+      "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ];
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
-          <Input id="username" value={user.username} onChange={(e) => setUser({ ...user, username: e.target.value })} />
+    return (
+      <>
+        <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input id="username" value={user.username} onChange={(e) => setUser({ ...user, username: e.target.value })} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={user.email}
+              readOnly
+              className="bg-gray-100 cursor-not-allowed" // Grey out and disable the email field
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Select
+              value={user.country} // Use 'country' from the user state
+              onValueChange={(value) => setUser({ ...user, country: value })} // Update 'country' in the user state
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your country" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto"> {/* Scrollable dropdown */}
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="birthdate">Birthdate</Label>
+            <Input
+              id="birthdate"
+              type="date"
+              value={user.birthdate}
+              onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
+            />
+          </div>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={user.email}
-            onChange={(e) => setUser({ ...user, email: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={user.phone}
-            onChange={(e) => setUser({ ...user, phone: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
-          <Input id="address" value={user.address} onChange={(e) => setUser({ ...user, address: e.target.value })} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="birthdate">Birthdate</Label>
-          <Input
-            id="birthdate"
-            type="date"
-            value={user.birthdate}
-            onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
-          />
-        </div>
-      </div>
-    </>
-  )
+      </>
+    );
+  };
 
   const DataSharingContent = () => (
     <>
@@ -299,24 +337,17 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="pt-4 border-t">
-          <h4 className="text-sm font-medium mb-2">Data Export</h4>
-          <Button variant="outline" className="w-full">
-            Export My Data
-          </Button>
-        </div>
-
         <div>
-          <h4 className="text-sm font-medium mb-2">Account Deletion</h4>
+        <div className="pt-5 border-t"/>
+          <h4 className="text-sm font-medium mb-3">Account Deletion</h4>
           <Button variant="destructive" className="w-full">
             Request Account Deletion
           </Button>
         </div>
       </div>
     </>
-  )
+  );
 
-  // Account settings content
   const SecurityContent = () => (
     <>
       <DialogDescription className="mb-4">Manage your security preferences and account protection</DialogDescription>
@@ -335,17 +366,6 @@ export default function SettingsPage() {
 
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-base">Biometric Login</Label>
-            <p className="text-sm text-gray-400">Use fingerprint or face ID</p>
-          </div>
-          <Switch
-            checked={settings.security.biometricLogin}
-            onCheckedChange={(checked) => handleToggleChange("security", "biometricLogin", checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
             <Label className="text-base">Remember Device</Label>
             <p className="text-sm text-gray-400">Stay logged in on this device</p>
           </div>
@@ -355,49 +375,14 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Password Expiry</Label>
-          <Select
-            value={settings.security.passwordExpiry}
-            onValueChange={(value) => {
-              setSettings({
-                ...settings,
-                security: {
-                  ...settings.security,
-                  passwordExpiry: value,
-                },
-              })
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select expiry period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30days">30 Days</SelectItem>
-              <SelectItem value="60days">60 Days</SelectItem>
-              <SelectItem value="90days">90 Days</SelectItem>
-              <SelectItem value="never">Never</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button variant="outline" className="w-full">
-          Change Password
-        </Button>
-
-        <div className="pt-4 border-t">
-          <h4 className="text-sm font-medium mb-2">Active Sessions</h4>
-          <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-            <div className="flex justify-between mb-1">
-              <span className="text-sm font-medium">Current Device</span>
-              <span className="text-xs text-green-500">Active Now</span>
-            </div>
-            <p className="text-xs text-gray-500">iPhone 13 Pro • Dubai, UAE</p>
-          </div>
+        <div className="pt-5 border-t">
+          <Button variant="outline" className="w-full">
+            Change Password
+          </Button>
         </div>
       </div>
     </>
-  )
+  );
 
   const NotificationsContent = () => (
     <>
@@ -426,17 +411,6 @@ export default function SettingsPage() {
               <Switch
                 checked={settings.notifications.emailNotifications}
                 onCheckedChange={(checked) => handleToggleChange("notifications", "emailNotifications", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-purple-500" />
-                <span className="text-sm">SMS Notifications</span>
-              </div>
-              <Switch
-                checked={settings.notifications.smsNotifications}
-                onCheckedChange={(checked) => handleToggleChange("notifications", "smsNotifications", checked)}
               />
             </div>
           </div>
@@ -490,7 +464,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  )
+  );
 
   const MembersContent = () => (
     <>
@@ -522,7 +496,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-gray-500">Member</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={() => setManageMemberDialogOpen(true)}>
               Manage
             </Button>
           </div>
@@ -547,7 +521,39 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  )
+  );
+
+  const MemberPermissionsContent = () => (
+    <>
+      <DialogDescription className="mb-4">Manage permissions for Anna Mohamed</DialogDescription>
+  
+      <div className="space-y-6">
+        {/* Control Section */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Control</Label>
+            <p className="text-sm text-gray-500">Allow the user to turn on/off the device.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.control}
+            onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, control: checked })}
+          />
+        </div>
+  
+        {/* Configure Section */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Configure</Label>
+            <p className="text-sm text-gray-500">Allow the user to add, delete, and edit devices.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.configure}
+            onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, configure: checked })}
+          />
+        </div>
+      </div>
+    </>
+  );
 
   const AccessibilityContent = () => (
     <>
@@ -576,28 +582,6 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Screen Reader Support</Label>
-            <p className="text-sm text-gray-400">Optimize for screen readers</p>
-          </div>
-          <Switch
-            checked={settings.accessibility.screenReader}
-            onCheckedChange={(checked) => handleToggleChange("accessibility", "screenReader", checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Reduce Motion</Label>
-            <p className="text-sm text-gray-400">Minimize animations</p>
-          </div>
-          <Switch
-            checked={settings.accessibility.reduceMotion}
-            onCheckedChange={(checked) => handleToggleChange("accessibility", "reduceMotion", checked)}
-          />
-        </div>
-
         <div className="space-y-2">
           <Label>App Theme</Label>
           <RadioGroup
@@ -609,7 +593,7 @@ export default function SettingsPage() {
                   ...settings.accessibility,
                   theme: value,
                 },
-              })
+              });
             }}
             className="flex gap-3"
           >
@@ -621,39 +605,11 @@ export default function SettingsPage() {
               <RadioGroupItem value="dark" id="theme-dark" />
               <Label htmlFor="theme-dark">Dark</Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="system" id="theme-system" />
-              <Label htmlFor="theme-system">System</Label>
-            </div>
           </RadioGroup>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Language</Label>
-          <Select
-            value={user.language}
-            onValueChange={(value) => {
-              setUser({
-                ...user,
-                language: value,
-              })
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="English">English</SelectItem>
-              <SelectItem value="Arabic">Arabic</SelectItem>
-              <SelectItem value="Hindi">Hindi</SelectItem>
-              <SelectItem value="Urdu">Urdu</SelectItem>
-              <SelectItem value="French">French</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </>
-  )
+  );
 
   const SupportContent = () => (
     <>
@@ -764,110 +720,98 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </>
-  )
+  );
 
-  const HouseholdContent = () => (
-    <>
-      <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
-
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="household-name">Household Name</Label>
-          <Input
-            id="household-name"
-            value={settings.household.name}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                household: {
-                  ...settings.household,
-                  name: e.target.value,
-                },
-              })
-            }
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Household Size</Label>
-          <Select
-            value={settings.household.size}
-            onValueChange={(value) => {
-              setSettings({
-                ...settings,
-                household: {
-                  ...settings.household,
-                  size: value,
-                },
-              })
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select household size" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="small">Small (1-2 people)</SelectItem>
-              <SelectItem value="medium">Medium (3-4 people)</SelectItem>
-              <SelectItem value="large">Large (5+ people)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="household-rooms">Number of Rooms</Label>
-          <Input
-            id="household-rooms"
-            type="number"
-            min="1"
-            max="20"
-            value={settings.household.rooms}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                household: {
-                  ...settings.household,
-                  rooms: Number.parseInt(e.target.value),
-                },
-              })
-            }
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Auto-Saving Mode</Label>
-            <p className="text-sm text-gray-400">Automatically optimize energy usage</p>
+  const HouseholdContent = () => {
+    // Function to copy the household code to the clipboard
+    const copyHouseholdCode = () => {
+      navigator.clipboard.writeText("MIT7AQ3").then(() => {
+        alert("Household code copied to clipboard!");
+      });
+    };
+  
+    return (
+      <>
+        <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
+  
+        <div className="space-y-6">
+          {/* Household Name */}
+          <div className="space-y-2">
+            <Label htmlFor="household-name">Household Name</Label>
+            <Input
+              id="household-name"
+              value={settings.household.name}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  household: {
+                    ...settings.household,
+                    name: e.target.value,
+                  },
+                })
+              }
+            />
           </div>
-          <Switch
-            checked={settings.household.autoSaving}
-            onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Smart Scheduling</Label>
-            <p className="text-sm text-gray-400">Enable device scheduling based on habits</p>
+  
+          {/* Household Code with Copy Button */}
+          <div className="space-y-2">
+            <Label htmlFor="household-code">Household Code</Label>
+            <div className="relative">
+              <Input
+                id="household-code"
+                value="MIT7AQ3" // Hardcoded value
+                readOnly // Make the input read-only
+                className="bg-gray-100 cursor-not-allowed pr-10" // Grayed out, disabled, and padding for the button
+              />
+              <button
+                onClick={copyHouseholdCode}
+                className="absolute inset-y-0 right-0 flex items-center px-3 bg-gray-100 hover:bg-gray-200 rounded-r-md"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
-          <Switch
-            checked={settings.household.smartScheduling}
-            onCheckedChange={(checked) => handleToggleChange("household", "smartScheduling", checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Guest Access</Label>
-            <p className="text-sm text-gray-400">Allow temporary access for guests</p>
+  
+          {/* Auto-Saving Mode */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Auto-Saving Mode</Label>
+              <p className="text-sm text-gray-400">Automatically optimize energy usage</p>
+            </div>
+            <Switch
+              checked={settings.household.autoSaving}
+              onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
+            />
           </div>
-          <Switch
-            checked={settings.household.guestAccess}
-            onCheckedChange={(checked) => handleToggleChange("household", "guestAccess", checked)}
-          />
+  
+          {/* Smart Scheduling */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Smart Scheduling</Label>
+              <p className="text-sm text-gray-400">Enable device scheduling based on habits</p>
+            </div>
+            <Switch
+              checked={settings.household.smartScheduling}
+              onCheckedChange={(checked) => handleToggleChange("household", "smartScheduling", checked)}
+            />
+          </div>
         </div>
-      </div>
-    </>
-  )
+      </>
+    );
+  };
 
   const DashboardContent = () => (
     <>
@@ -907,7 +851,6 @@ export default function SettingsPage() {
               { id: "active-devices", label: "Active Devices", enabled: true },
               { id: "savings-chart", label: "Savings Chart", enabled: true },
               { id: "energy-tips", label: "Energy Saving Tips", enabled: true },
-              { id: "weather-impact", label: "Weather Impact", enabled: false },
               { id: "carbon-footprint", label: "Carbon Footprint", enabled: true },
             ].map((widget) => (
               <div
@@ -944,7 +887,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="min-h-screen">
@@ -1179,6 +1122,24 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Member Permissions Dialog */}
+      <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Permissions</DialogTitle>
+          </DialogHeader>
+          {MemberPermissionsContent()}
+          <DialogFooter>
+            {saveSuccess && (
+              <p className="text-green-500 flex items-center text-sm">
+                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+              </p>
+            )}
+            <Button onClick={handleSave}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Mobile Sheets (alternative to dialogs for smaller screens) */}
       {Object.entries({
         profilePicture: { title: "Profile Picture", content: ProfilePictureContent },
@@ -1214,5 +1175,5 @@ export default function SettingsPage() {
         </Sheet>
       ))}
     </div>
-  )
+  );
 }
