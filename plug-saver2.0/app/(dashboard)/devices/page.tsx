@@ -111,7 +111,7 @@ interface Device {
 interface Room {
   room_id: number
   room_name: string
-  household_code: string
+  household_code: string | null
 }
 
 interface FoundDevice {
@@ -191,7 +191,7 @@ export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
-  const [householdCode, setHouseholdCode] = useState<string>("288LTIO") // Hardcoded for now
+  const [householdCode, setHouseholdCode] = useState<string | null> (null) // Hardcoded for now
   const [roomName, setRoomName] = useState<string>("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
@@ -370,6 +370,7 @@ export default function DevicesPage() {
     
         if (data.success && data.devices) {
           // Transform backend device data to match our frontend Device interface
+          console.log("user id:", userId); // Log the fetched devices
           const transformedDevices = await Promise.all(
             data.devices.map(async (device: any) => {
               let roomName = "Unknown Room"; // Default room name
@@ -512,42 +513,42 @@ export default function DevicesPage() {
 
   // Toggle device on/off state
   const toggleDevice = async (deviceId: number) => {
-    const device = devices.find((d) => d.id === deviceId)
-    if (!device) return
-
-    const newIsOn = !device.isOn
-
+    const device = devices.find((d) => d.id === deviceId);
+    if (!device) return;
+  
+    const newIsOn = !device.isOn;
+  
     // Optimistically update the UI
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn } : d)))
-
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn } : d)));
+  
     try {
-      const response = await fetch(`/api/auth/devices/${deviceId}/toggle`, {
+      const response = await fetch(`/api/auth/toggledevice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isOn: newIsOn }),
-      })
-
+        body: JSON.stringify({ isOn: newIsOn , deviceId}),
+      });
+  
       if (!response.ok) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)))
-        throw new Error(`HTTP error! status: ${response.status}`)
+        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json()
-
+  
+      const data = await response.json();
+  
       if (!data.success) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)))
-        console.error("Failed to toggle device:", data.message)
-        setError(data.message)
+        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        console.error("Failed to toggle device:", data.message);
+        setError(data.message);
       }
     } catch (error) {
-      console.error("Error toggling device:", error)
-      setError("An error occurred while toggling the device")
+      console.error("Error toggling device:", error);
+      setError("An error occurred while toggling the device");
     }
-  }
+  };
 
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
@@ -1036,7 +1037,7 @@ export default function DevicesPage() {
                 {rooms.map((room, index) => {
                   const deviceCount = devices.filter((device) => device.room === room.room_name).length
 
-                  console.log(`Room: ${room.room_name}, Device Count: ${deviceCount}`);
+                  // console.log(`Room: ${room.room_name}, Device Count: ${deviceCount}`);
                   return (
                     <motion.div
                       key={room.room_id}
@@ -1341,7 +1342,7 @@ function AddDeviceDialog({
   
     // Prepare the device data for the API
     const deviceData = {
-      id : selectedDevice.id,
+      //id : selectedDevice.id,
       user_id: userId, // Replace with the actual user ID
       room_id: selectedRoom.room_id,
       device_name: data.name,
@@ -1376,11 +1377,12 @@ function AddDeviceDialog({
       }
   
       const result = await response.json();
+      console.log(result.device_id);
   
       if (result.success) {
         // Add the new device to our devices state
         const newDevice: Device = {
-          id: selectedDevice.id,
+          id: result.device_id,
           name: data.name,
           room: data.room,
           icon: selectedIconObj.icon,
@@ -1395,8 +1397,10 @@ function AddDeviceDialog({
             days: data.days,
           },
         };
+        localStorage.setItem("device_id", result.device_id);
   
         onDeviceAdded(newDevice);
+
   
         // Reset form and close dialog
         setOpen(false);
@@ -1937,6 +1941,8 @@ function EditDeviceDialog({
 }) {
   const [error, setError] = useState<string | null>(null)
 
+  const deviceId = device?.id;
+
   const form = useForm({
     defaultValues: {
       consumptionLimit: device?.consumptionLimit || 100,
@@ -1976,23 +1982,25 @@ function EditDeviceDialog({
         },
       }
 
+
       // Update the device in the backend
-      const response = await fetch(`/api/auth/devices/${device.id}`, {
+      const response = await fetch(`/api/auth/editdevices`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          device_id : deviceId,
           consumptionLimit: data.consumptionLimit,
           active_time_start: data.startTime,
           active_time_end: data.endTime,
-          active_days: JSON.stringify(data.days),
-          schedule: JSON.stringify({
+          active_days: data.days,
+          schedule: {
             enabled: data.scheduleEnabled,
             startTime: data.startTime,
             endTime: data.endTime,
             days: data.days,
-          }),
+          },
         }),
       })
 

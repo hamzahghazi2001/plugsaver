@@ -57,11 +57,12 @@ def add_room(household_code: str,room_name: str):
         "room_name": room_name
     }
     room_response = supabase.table("rooms").insert(room_data).execute()
+    room_id = room_response.data[0]["room_id"]
 
     if not room_response.data:
         return {"success": False, "message": "Failed to insert room"}
 
-    return {"success": True, "message": "Room added successfully"}
+    return {"success": True, "message": "Room added successfully", "room_id": room_id}
 
 
 
@@ -99,12 +100,15 @@ def add_device(user_id, room_id, device_name, device_category, household_code, a
             "schedule": schedule,
         }).execute()
 
+        device_id = response.data[0]["device_id"]  # Get the device_id from the response
+        print("Device ID:", device_id)  # Log the device_id
+
         print("Supabase response:", response)  # Log the Supabase response
 
         if response.data:
-            return {"success": True, "message": "Device added successfully."}
+            return {"success": True, "message": "Device added successfully.", "device_id": device_id}
         else:
-            return {"success": False, "message": "Failed to add device to the database."}
+            return {"success": False, "message": "Failed to add device to the database.", "device_id": device_id}
 
     except Exception as e:
         print("Error adding device to database:", str(e))  # Log the error

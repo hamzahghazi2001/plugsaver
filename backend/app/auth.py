@@ -85,6 +85,8 @@ def registration_verify(email, name, password, userverifycode, systemverifycode)
         'name': name,
         'is_verified': True
     }).execute()
+
+    
     
     print("Supabase Response:", response)
     if response.data:
