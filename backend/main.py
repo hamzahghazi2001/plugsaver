@@ -259,12 +259,12 @@ async def get_devices(household_code: str = Query(...)):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
-@app.get("/get_household_code")
+@app.get("/get-householdcode")
 async def get_household_code(email: str = Query(...)):
     try:
         result = supabase.from_("users").select("household_code").eq("email", email).execute()
         if result.data:
-            return {"success": True, "household_code": result.data[0]["household_code"]}
+            return {"success": True, "household_code": result.data[0]["household_code"], "message": "success."}
         else:
             return {"success": False, "message": "User not found."}
     except Exception as e:

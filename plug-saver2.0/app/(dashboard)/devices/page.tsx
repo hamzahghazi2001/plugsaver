@@ -281,33 +281,10 @@ export default function DevicesPage() {
     if (storedHouseholdCode) {
       setHouseholdCode(storedHouseholdCode);
     } else if (storedEmail) {
-      fetchHouseholdCode(storedEmail);
+      setHouseholdCode(storedEmail);
     }
     
   }, [router]);
-  
-
-
-
-
-
-
-
-  const fetchHouseholdCode = async (email: string) => {
-    try {
-      const response = await fetch(`/api/auth/get_household_code?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem("household_code", data.household_code);
-        setHouseholdCode(data.household_code);
-      } else {
-        console.error("Failed to fetch household code:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching household code:", error);
-    }
-  };
 
 
 

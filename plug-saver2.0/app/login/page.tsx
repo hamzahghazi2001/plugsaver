@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [twoFACode, setTwoFACode] = useState("")
   const [isCodeValid, setIsCodeValid] = useState(false)
   const [email, setEmail] = useState("")
+  const [householdCode, setHouseholdCode] = useState("")
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -65,6 +66,23 @@ export default function LoginPage() {
     }
   }
 
+  const fetchHouseholdCode = async (email: string) => {
+    try {
+      const response = await fetch(`/api/auth/gethouseholdcode?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("household_code", data.household_code);
+        setHouseholdCode(data.household_code);
+        console.log("Household code stored in localStorage:", data.household_code);
+      } else {
+        console.error("Failed to fetch household code:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching household code:", error);
+    }
+  };
+
   const handleVerifyClick = async () => {
     try {
       const response = await fetch("/api/auth/verify_login", {
@@ -73,15 +91,18 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, userverifycode: twoFACode }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem("user_id", data.user_id)
+        localStorage.setItem("user_id", data.user_id);
         localStorage.setItem("email", email);
         console.log("User ID stored in localStorage:", data.user_id);
-        console.log("API response data:", data);
+
+        // Fetch and store the household code ONLY after successful 2FA verification
+        await fetchHouseholdCode(email);
+
         const nextUrl = searchParams.get("next") || "/home"
         router.push(nextUrl)
         router.refresh()
