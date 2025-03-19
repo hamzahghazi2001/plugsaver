@@ -13,7 +13,9 @@ def start_device_session(device_id):
     if not device.data:
         return {"success": False, "message": "Device not found."}
 
-    wattage = device.data[0]["power"]
+    # Extract the wattage and convert it to an integer
+    wattage_str = device.data[0]["power"]
+    wattage = int(wattage_str.rstrip('W'))
     start_time = datetime.now()
 
     # Store the session start time and wattage
