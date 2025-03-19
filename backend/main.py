@@ -96,7 +96,6 @@ async def end_device_session_endpoint(request: DeviceSessionRequest):
         raise HTTPException(status_code=400, detail=result["message"])
     return result
 
-# ...existing code...
 class ResendCodeRequest(BaseModel):
     email: str
 
