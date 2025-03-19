@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -42,6 +42,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase client
+const supabaseUrl = "https://xgcfvxwrcunwsrvwwjjx.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY2Z2eHdyY3Vud3Nydnd3amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTIzNzIsImV4cCI6MjA1MzU2ODM3Mn0.fgT2LL7dlx7VR185WABZCtK8ZdF4rpdOIy-crGpp6tU";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -52,10 +58,34 @@ export default function SettingsPage() {
     role: "Household Manager",
     avatar: "/placeholder.svg?height=80&width=80",
     email: "user@example.com",
-    country: "United Arab Emirates", // Replace 'address' with 'country'
+    country: "United Arab Emirates", 
     birthdate: "1990-01-01",
     language: "English",
   });
+
+  // State for household code
+  const [householdCode, setHouseholdCode] = useState<string | null>(null);
+
+  // Fetch username, country, email, and household code from localStorage on mount
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    const storedCountry = localStorage.getItem("country");
+    const storedEmail = localStorage.getItem("email");
+    const storedHouseholdCode = localStorage.getItem("household_code");
+
+    if (storedUsername) {
+      setUser((prev) => ({ ...prev, username: storedUsername }));
+    }
+    if (storedCountry) {
+      setUser((prev) => ({ ...prev, country: storedCountry }));
+    }
+    if (storedEmail) {
+      setUser((prev) => ({ ...prev, email: storedEmail }));
+    }
+    if (storedHouseholdCode) {
+      setHouseholdCode(storedHouseholdCode);
+    }
+  }, []);
 
   // States for different dialog modals
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
@@ -136,15 +166,69 @@ export default function SettingsPage() {
   };
 
   // Handle avatar upload
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setUser({ ...user, avatar: event.target.result as string });
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      alert("No file selected.");
+      return;
+    }
+  
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      alert("User ID not found. Please log in again.");
+      return;
+    }
+  
+    try {
+      // Step 1: Upload the image to Supabase Storage
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${userId}-avatar.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`; // Correct bucket name
+  
+      console.log("Uploading file:", filePath);
+  
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("profile-pictures") // Correct bucket name
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true // Overwrite the file if it already exists
+        });
+  
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+  
+      console.log("File uploaded successfully:", uploadData);
+  
+      // Step 2: Get the public URL of the uploaded image
+      const { data: publicUrlData } = supabase.storage
+        .from("profile-pictures") // Correct bucket name
+        .getPublicUrl(filePath);
+  
+      const avatarUrl = publicUrlData.publicUrl;
+  
+      console.log("Public URL:", avatarUrl);
+  
+      // Step 3: Update the user's avatar in the database
+      const { data: updateData, error: updateError } = await supabase
+        .from("users")
+        .update({ avatar: avatarUrl })
+        .eq("id", userId);
+  
+      if (updateError) {
+        console.error("Database update error:", updateError);
+        throw updateError;
+      }
+  
+      console.log("Database updated successfully:", updateData);
+  
+      // Step 4: Update the local state with the new avatar URL
+      setUser((prev) => ({ ...prev, avatar: avatarUrl }));
+      alert("Profile picture updated successfully!");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      alert("An error occurred while uploading the avatar.");
     }
   };
 
@@ -725,9 +809,11 @@ export default function SettingsPage() {
   const HouseholdContent = () => {
     // Function to copy the household code to the clipboard
     const copyHouseholdCode = () => {
-      navigator.clipboard.writeText("MIT7AQ3").then(() => {
-        alert("Household code copied to clipboard!");
-      });
+      if (householdCode) {
+        navigator.clipboard.writeText(householdCode).then(() => {
+          alert("Household code copied to clipboard!");
+        });
+      }
     };
   
     return (
@@ -759,7 +845,7 @@ export default function SettingsPage() {
             <div className="relative">
               <Input
                 id="household-code"
-                value="MIT7AQ3" // Hardcoded value
+                value={householdCode || "No household code found"} // Use household code from state
                 readOnly // Make the input read-only
                 className="bg-gray-100 cursor-not-allowed pr-10" // Grayed out, disabled, and padding for the button
               />
@@ -796,6 +882,8 @@ export default function SettingsPage() {
               onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
             />
           </div>
+  
+         
   
           {/* Smart Scheduling */}
           <div className="flex items-center justify-between">
