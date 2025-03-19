@@ -7,6 +7,7 @@ from app.household import create_household, join_household
 from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room, update_device
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
+from app.algo import start_device_session, calculate_live_consumption, end_device_session
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,6 +71,32 @@ async def verify_registration_endpoint(request: VerifyRequest):
     del verification_codes[request.email]
     return {"success": True, "message": "Account verified and created.", "user_id": user_id}
 
+
+class DeviceSessionRequest(BaseModel):
+    device_id: int
+
+@app.post("/start-device-session")
+async def start_device_session_endpoint(request: DeviceSessionRequest):
+    result = start_device_session(request.device_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+@app.get("/calculate-live-consumption/{device_id}")
+async def calculate_live_consumption_endpoint(device_id: str):
+    result = calculate_live_consumption(device_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+@app.post("/end-device-session")
+async def end_device_session_endpoint(request: DeviceSessionRequest):
+    result = end_device_session(request.device_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+# ...existing code...
 class ResendCodeRequest(BaseModel):
     email: str
 
