@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse the request body to get deviceId and isOn
+    // Parse the request body to get deviceId, isOn, and power
     const body = await req.json();
-    const { deviceId, isOn } = body;
+    const { deviceId, isOn, power } = body;
 
     console.log("Received request body:", body); // Debug log
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ deviceId, isOn }), // Forward deviceId and isOn in the request body
+      body: JSON.stringify({ deviceId, isOn, power }), // Forward deviceId, isOn, and power
     });
 
     console.log("Backend response status:", response.status); // Debug log

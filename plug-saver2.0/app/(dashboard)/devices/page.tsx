@@ -281,34 +281,11 @@ export default function DevicesPage() {
     if (storedHouseholdCode) {
       setHouseholdCode(storedHouseholdCode);
     } else if (storedEmail) {
-      fetchHouseholdCode(storedEmail);
+      setHouseholdCode(storedEmail);
     }
     
   }, [router]);
   
-
-
-
-
-
-
-
-  const fetchHouseholdCode = async (email: string) => {
-    try {
-      const response = await fetch(`/api/auth/get_household_code?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem("household_code", data.household_code);
-        setHouseholdCode(data.household_code);
-      } else {
-        console.error("Failed to fetch household code:", data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching household code:", error);
-    }
-  };
-
 
 
   // Load rooms from localStorage on mount
@@ -517,22 +494,40 @@ export default function DevicesPage() {
     if (!device) return;
   
     const newIsOn = !device.isOn;
+    let newPower = device.power;
+  
+    if (newIsOn) {
+      // If the device is being turned on, generate a random power value
+      newPower = `${Math.floor(Math.random() * 200)}W`; // Generate a random power value
+    } else {
+      // If the device is being turned off, set power to "0W"
+      newPower = "0W";
+    }
   
     // Optimistically update the UI
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn } : d)));
+    setDevices(
+      devices.map((d) =>
+        d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d
+      )
+    );
   
     try {
+      // Send the updated state to the backend
       const response = await fetch(`/api/auth/toggledevice`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isOn: newIsOn , deviceId}),
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower }), // Include power in the request
       });
   
       if (!response.ok) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
+          )
+        );
         throw new Error(`HTTP error! status: ${response.status}`);
       }
   
@@ -540,7 +535,11 @@ export default function DevicesPage() {
   
       if (!data.success) {
         // Revert the optimistic update if the request fails
-        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn } : d)));
+        setDevices(
+          devices.map((d) =>
+            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
+          )
+        );
         console.error("Failed to toggle device:", data.message);
         setError(data.message);
       }
@@ -549,7 +548,7 @@ export default function DevicesPage() {
       setError("An error occurred while toggling the device");
     }
   };
-
+  
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1278,10 +1277,14 @@ function AddDeviceDialog({
     },
   })
 
+  // Simulated scanning
   const startScan = () => {
     setIsScanning(true)
     setError(null)
-    setFoundDevices([])
+
+    // Preserve paired devices instead of clearing all devices
+  const pairedDevices = foundDevices.filter(device => device.status === "Paired")
+  setFoundDevices(pairedDevices)
 
     const totalDevices = Math.floor(Math.random() * 5) + 5 // Random number of devices (5-9)
     let devicesAdded = 0
@@ -1352,7 +1355,7 @@ function AddDeviceDialog({
       active_time_start: data.startTime,
       active_time_end: data.endTime,
       icon: { name: selectedIconObj.name }, // Send as a JSON object
-      power: Math.floor(Math.random() * 200) + "W",
+      power: "0W",
       isOn: false,
       consumptionLimit: data.consumptionLimit,
       schedule: {
@@ -1386,7 +1389,7 @@ function AddDeviceDialog({
           name: data.name,
           room: data.room,
           icon: selectedIconObj.icon,
-          power: deviceData.power,
+          power: "0W",
           isOn: false,
           type: data.type,
           consumptionLimit: data.consumptionLimit,
@@ -1428,8 +1431,8 @@ function AddDeviceDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white">{isEditMode ? "Edit Device" : "Add New Device"}</DialogTitle>
-          <DialogDescription className="text-gray-300">{steps[currentStep].description}</DialogDescription>
+          <DialogTitle className="text-black">{isEditMode ? "Edit Device" : "Add New Device"}</DialogTitle>
+          <DialogDescription className="text-black-300">{steps[currentStep].description}</DialogDescription>
         </DialogHeader>
 
         {error && (
@@ -1483,11 +1486,11 @@ function AddDeviceDialog({
                   {isScanning ? (
                     <div className="flex flex-col items-center">
                       <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-2" />
-                      <p className="text-white">Scanning for devices...</p>
+                      <p className="text-black">Scanning for devices...</p>
                     </div>
                   ) : (
                     <div className="w-full space-y-2">
-                      <p className="text-sm text-white mb-2">
+                      <p className="text-sm text-black mb-2">
                         {isScanning
                           ? `Scanning... (${foundDevices.length} device${foundDevices.length !== 1 ? "s" : ""} found)`
                           : `Select a device to pair (${foundDevices.filter((d) => d.status === "Available").length} available):`}
@@ -1508,7 +1511,7 @@ function AddDeviceDialog({
                           <div className="flex items-center gap-3">
                             <Plug className={device.status === "Paired" ? "text-green-500" : "text-blue-500"} />
                             <div>
-                              <p className="font-medium text-white">{device.name}</p>
+                              <p className="font-medium text-black">{device.name}</p>
                               <p className="text-xs text-gray-300">ID: {device.id}</p>
                             </div>
                           </div>
@@ -1540,8 +1543,8 @@ function AddDeviceDialog({
               </TabsContent>
               <TabsContent value="qr">
                 <div className="flex flex-col items-center justify-center py-8">
-                  <Scan className="w-16 h-16 text-gray-400 mb-4" />
-                  <p className="text-center text-white mb-4">
+                  <Scan className="w-16 h-16 text-black-400 mb-4" />
+                  <p className="text-center text-black mb-4">
                     Position the QR code on your smart plug within the camera view
                   </p>
                   <Button
