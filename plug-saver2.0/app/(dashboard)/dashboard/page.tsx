@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Zap, Wind, DollarSign, TrendingDown, TrendingUp } from "lucide-react"
+import { RefreshCw, Zap, Wind, DollarSign, Moon, Sun } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -27,11 +27,35 @@ const DashboardPage = () => {
   const [energyData, setEnergyData] = useState<Record<PeriodType, { name: string; value: number }[]> | null>(null)
   const [roomsData, setRoomsData] = useState<{ name: string; value: number }[] | null>(null)
   const [applianceData, setApplianceData] = useState<{ name: string; usage: number }[] | null>(null)
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
+  // Load dark mode preference from localStorage on initial render
   useEffect(() => {
-    // Fetch data from Supabase
-    fetchData()
+    const savedDarkMode = localStorage.getItem("darkMode") === "true"
+    console.log("Initial dark mode value from localStorage:", savedDarkMode) // Debugging
+    setIsDarkMode(savedDarkMode)
+    // Apply dark mode class to the document element
+    if (savedDarkMode) {
+      document.documentElement.classList.add("dark")
+      console.log("Applied 'dark' class to documentElement") // Debugging
+    } else {
+      document.documentElement.classList.remove("dark")
+      console.log("Removed 'dark' class from documentElement") // Debugging
+    }
   }, [])
+
+  // Save dark mode preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("darkMode", isDarkMode.toString())
+    console.log("Saved dark mode to localStorage:", isDarkMode) // Debugging
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark")
+      console.log("Applied 'dark' class to documentElement") // Debugging
+    } else {
+      document.documentElement.classList.remove("dark")
+      console.log("Removed 'dark' class from documentElement") // Debugging
+    }
+  }, [isDarkMode])
 
   const fetchData = async () => {
     // TODO: Implement the actual fetch logic from Supabase
@@ -46,13 +70,22 @@ const DashboardPage = () => {
     setApplianceData([])
   }
 
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev)
+  }
+
   return (
-    <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-dashboard)" }}>
+    <div className={`min-h-screen p-6 md:p-10 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h1>
-        <Button size="icon" variant="ghost" onClick={fetchData}>
-          <RefreshCw className="w-5 h-5" />
-        </Button>
+        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+        <div className="flex gap-2">
+          <Button size="icon" variant="ghost" onClick={toggleDarkMode}>
+            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </Button>
+          <Button size="icon" variant="ghost" onClick={fetchData}>
+            <RefreshCw className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -69,15 +102,15 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h2 className="font-medium mb-4">Energy Consumption</h2>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={energyData ? energyData[period] : []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4A5568" : "#E2E8F0"} />
+                <XAxis dataKey="name" stroke={isDarkMode ? "#CBD5E0" : "#718096"} />
+                <YAxis stroke={isDarkMode ? "#CBD5E0" : "#718096"} />
+                <Tooltip contentStyle={isDarkMode ? { backgroundColor: "#2D3748", borderColor: "#4A5568" } : {}} />
                 <Legend />
                 <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} name="kWh" />
               </LineChart>
@@ -85,7 +118,7 @@ const DashboardPage = () => {
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h2 className="font-medium mb-4">Rooms Consumption</h2>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -104,22 +137,22 @@ const DashboardPage = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={isDarkMode ? { backgroundColor: "#2D3748", borderColor: "#4A5568" } : {}} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h2 className="font-medium mb-4">Device Category Usage</h2>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={applianceData || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4A5568" : "#E2E8F0"} />
+                <XAxis dataKey="name" stroke={isDarkMode ? "#CBD5E0" : "#718096"} />
+                <YAxis stroke={isDarkMode ? "#CBD5E0" : "#718096"} />
+                <Tooltip contentStyle={isDarkMode ? { backgroundColor: "#2D3748", borderColor: "#4A5568" } : {}} />
                 <Legend />
                 <Bar dataKey="usage" fill="#82ca9d" name="kWh" />
               </BarChart>
@@ -127,61 +160,59 @@ const DashboardPage = () => {
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h2 className="font-medium mb-4">Energy Efficiency Score</h2>
           <div className="flex items-center justify-center h-64 md:h-80">
             <div className="text-center">
-              
-             
-              
+              {/* Placeholder for score */}
             </div>
           </div>
         </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mt-6">
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h3 className="font-medium mb-2">Electricity Usage</h3>
           <div className="flex items-center">
             <Zap className="w-8 h-8 text-yellow-400 mr-4" />
             <div>
-              
+              {/* Placeholder for data */}
             </div>
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h3 className="font-medium mb-2">Peak Power Usage</h3>
           <div className="flex items-center">
             <Zap className="w-8 h-8 text-red-400 mr-4" />
             <div>
-              
+              {/* Placeholder for data */}
             </div>
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h3 className="font-medium mb-2">Carbon Footprint</h3>
           <div className="flex items-center">
             <Wind className="w-8 h-8 text-green-400 mr-4" />
             <div>
-             
+              {/* Placeholder for data */}
             </div>
           </div>
         </Card>
 
-        <Card className="gradient-card p-4">
+        <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
           <h3 className="font-medium mb-2">Cost Savings</h3>
           <div className="flex items-center">
             <DollarSign className="w-8 h-8 text-green-400 mr-4" />
             <div>
-              
+              {/* Placeholder for data */}
             </div>
           </div>
         </Card>
       </div>
 
-      <Card className="gradient-card mt-6 p-4">
+      <Card className={`mt-6 p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
         <h2 className="font-medium mb-4">Energy-Saving Tips</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>Adjust your thermostat by 1°C to save up to 10% on your heating bill.</li>

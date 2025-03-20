@@ -1,34 +1,72 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from supabase import create_client
+import app.config as config
 
-def calculate_electricity_cost(kwh):
-    if kwh <= 2000:
-        price_per_kwh = 0.20
-    elif kwh <= 4000:
-        price_per_kwh = 0.24
-    elif kwh <= 6000:
-        price_per_kwh = 0.28
-    else:
-        price_per_kwh = 0.33
-    
-    total_cost = kwh * price_per_kwh
-    return total_cost
+supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
-def calculate_device_kwh(device_type, hours_on):
-    #this can be changed based on table
-    device_power_usage = {
-        'light_bulb': 0.06,
-        'fan': 0.075,
-        'heater': 1.5,
-        'ac': 2.0
+# Dictionary to keep track of device sessions
+device_sessions = {}
+
+def start_device_session(device_id):
+    # Fetch the device's wattage from the Supabase table
+    device = supabase.table("devices").select("power").eq("device_id", device_id).execute()
+    if not device.data:
+        return {"success": False, "message": "Device not found."}
+
+    # Extract the wattage and convert it to an integer
+    wattage_str = device.data[0]["power"]
+    wattage = int(wattage_str.rstrip('W'))
+    start_time = datetime.now()
+
+    # Store the session start time and wattage
+    device_sessions[device_id] = {
+        "start_time": start_time,
+        "wattage": wattage
     }
-    if device_type not in device_power_usage:
-        raise ValueError("Unknown device type")
-    kwh = device_power_usage[device_type] * hours_on
-    return kwh
 
-#start time and endtime needs to be passed to backend from front end
-def increment_usage(device_type, start_time, end_time):    
-    hours_on = (end_time - start_time).total_seconds() / 3600
-    # Calculate the cost based on the device type and hours on
-    total_use = calculate_device_kwh(device_type, hours_on)
-    return total_use
+    return {"success": True, "message": "Device session started."}
+
+def calculate_live_consumption(device_id):
+    if device_id not in device_sessions:
+        return {"success": False, "message": "Device session not found."}
+
+    session = device_sessions[device_id]
+    start_time = session["start_time"]
+    wattage = session["wattage"]
+
+    # Calculate the duration in hours
+    duration = (datetime.now() - start_time).total_seconds() / 3600
+
+    # Calculate the live consumption in kWh
+    live_consumption = (wattage / 1000) * duration
+
+    return {"success": True, "live_consumption": live_consumption}
+
+def end_device_session(device_id):
+    if device_id not in device_sessions:
+        return {"success": False, "message": "Device session not found."}
+
+    session = device_sessions[device_id]
+    start_time = session["start_time"]
+    wattage = session["wattage"]
+
+    # Calculate the duration in hours
+    end_time = datetime.now()
+    duration = (end_time - start_time).total_seconds() / 3600
+
+    # Calculate the total consumption in kWh
+    total_consumption = (wattage / 1000) * duration
+
+    # Store the session data in the Supabase table
+    supabase.table("device_sessions").insert({
+        "device_id": device_id,
+        "start_time": start_time.isoformat(),
+        "end_time": end_time.isoformat(),
+        "duration": duration,
+        "total_consumption": total_consumption
+    }).execute()
+
+    # Remove the session from the dictionary
+    del device_sessions[device_id]
+
+    return {"success": True, "message": "Device session ended."}

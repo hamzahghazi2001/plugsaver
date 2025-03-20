@@ -1,10 +1,13 @@
 "use client"
+import jsQR from "jsqr";
+
 import dynamic from "next/dynamic";
 import QrScanner from "react-qr-scanner";
 
+
 import type React from "react"
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
@@ -252,8 +255,6 @@ export default function DevicesPage() {
     { icon: Wrench, name: "Power Tool" },
     { icon: Dumbbell, name: "Exercise Equipment" },
   ]
-
-  
 
   const form = useForm({
     defaultValues: {
@@ -1168,6 +1169,56 @@ function AddDeviceDialog({
   const [pairedDevices, setPairedDevices] = useState<Device[]>([])
   const [householdCode, setHouseholdCode] = useState<string | null>(null)
   const [userId, setUserId] = useState<number | null>(null);
+  const [scanSuccess, setScanSuccess] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          setError("Could not get canvas context");
+          return;
+        }
+        context.drawImage(img, 0, 0, img.width, img.height);
+        const imageData = context.getImageData(0, 0, img.width, img.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          const scannedText = code.data;
+          const smartPlugIdRegex = /^\d{4}$/;
+          if (smartPlugIdRegex.test(scannedText)) {
+            setError(null);
+            setScanSuccess(true);
+            setSelectedDevice({
+              id: parseInt(scannedText, 10),
+              name: `Smart Plug ${scannedText}`,
+              status: "Paired",
+            });
+            // Delay for visual feedback before moving on
+            setTimeout(() => {
+              setCurrentStep(1);
+            }, 1500);
+          } else {
+            setError("Uploaded QR code did not contain a valid 4-digit smart plug ID");
+          }
+        } else {
+          setError("No QR code found in the uploaded image");
+        }
+      };
+      if (e.target && typeof e.target.result === "string") {
+        img.src = e.target.result;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id");
@@ -1546,29 +1597,61 @@ function AddDeviceDialog({
               <TabsContent value="qr" className="space-y-4">
   <div className="flex flex-col items-center justify-center py-8">
     <div style={{ width: "100%" }}>
-    <QrScanner
-  delay={300}
-  onScan={(result: any) => {
-    if (result) {
-      const scannedText = result.text;
-      if (scannedText === "PLUGSAVER") {
-        setError(null);
-        setCurrentStep(1); // Proceed if the correct QR is scanned
-      } else {
-        setError("QR code did not match 'PLUGSAVER'");
-      }
-    }
-  }}
-  onError={(error: any) => {
-    console.error(error);
-    setError("Error accessing the camera");
-  }}
-  style={{ width: '100%' }}
-/>
+      <QrScanner
+        delay={300}
+        onScan={(result: any) => {
+          if (result) {
+            const scannedText = result.text;
+            const smartPlugIdRegex = /^\d{4}$/;
+            if (smartPlugIdRegex.test(scannedText)) {
+              setError(null);
+              setScanSuccess(true);
+              setSelectedDevice({
+                id: parseInt(scannedText, 10),
+                name: `Smart Plug ${scannedText}`,
+                status: "Paired",
+              });
+              // Delay for visual feedback before moving on
+              setTimeout(() => {
+                setCurrentStep(1);
+              }, 1500);
+            } else {
+              setError("QR code did not contain a valid 4-digit smart plug ID");
+            }
+          }
+        }}
+        onError={(error: any) => {
+          console.error(error);
+          setError("Error accessing the camera");
+        }}
+        style={{ width: "100%" }}
+      />
     </div>
     {error && <p className="text-red-500 mt-2">{error}</p>}
+    {scanSuccess && (
+      <p className="text-green-500 mt-2 flex items-center">
+        Scan successful!
+      </p>
+    )}
+    <div className="mt-4">
+    <Button
+  variant="outline"
+  className="bg-green-500 text-white hover:bg-green-600"
+  onClick={() => fileInputRef.current?.click()}
+>
+  Upload QR Code
+</Button>
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileUpload}
+      />
+    </div>
     <p className="text-center text-black mt-4">
-      Position the QR code on your smart plug within the camera view
+      Position the QR code on your smart plug within the camera view or upload an image.
     </p>
   </div>
 </TabsContent>
@@ -2185,4 +2268,3 @@ function EditDeviceDialog({
     </Dialog>
   )
 }
-
