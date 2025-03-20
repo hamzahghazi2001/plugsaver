@@ -500,13 +500,73 @@ export default function DevicesPage() {
     let newPower = device.power;
   
     if (newIsOn) {
-      // If the device is being turned on, generate a random power value
-      newPower = `${Math.floor(Math.random() * 200)}W`; // Generate a random power value
+      // Define power ranges for different device icons (values in Watts)
+      const iconPowerRanges: Record<string, [number, number]> = {
+        "Desk Lamp": [5, 25],
+        "Light Bulb": [3, 15],
+        "Floor Lamp": [10, 30],
+        "Table Lamp": [5, 25],
+        "TV": [50, 150],
+        "Radio": [10, 50],
+        "Speaker": [5, 20],
+        "Headphones": [1, 5],
+        "Game Console": [70, 200],
+        "Monitor": [20, 60],
+        "Sound System": [20, 100],
+        "Projector": [100, 300],
+        "Refrigerator": [100, 250],
+        "Microwave": [700, 1200],
+        "Coffee Maker": [800, 1500],
+        "Toaster": [800, 1500],
+        "Slow Cooker": [200, 300],
+        "Oven": [1000, 3000],
+        "Stove": [1000, 3000],
+        "Blender": [300, 700],
+        "Sandwich Maker": [500, 800],
+        "Air Fryer": [800, 1500],
+        "Food Processor": [200, 500],
+        "Computer": [150, 300],
+        "Laptop": [50, 100],
+        "Printer": [20, 50],
+        "Scanner": [20, 50],
+        "Router": [10, 30],
+        "WiFi Extender": [5, 15],
+        "CPU/Server": [200, 500],
+        "External Drive": [10, 30],
+        "Fan": [50, 100],
+        "Air Purifier": [30, 80],
+        "Thermostat": [5, 15],
+        "Air Conditioner": [1000, 3500],
+        "Heater": [800, 2000],
+        "Humidifier": [30, 70],
+        "Water Heater": [3000, 4500],
+        "Hair Dryer": [1200, 1875],
+        "Electric Toothbrush": [2, 5],
+        "Smart Plug": [5, 15],
+        "Smart Lock": [2, 5],
+        "Doorbell": [1, 5],
+        "Security Camera": [5, 15],
+        "Alarm System": [10, 30],
+        "Battery Charger": [10, 30],
+        "Power Tool": [100, 300],
+        "Exercise Equipment": [100, 300],
+      };
+    
+      // Default range if icon is not recognized
+      let minPower = 10;
+      let maxPower = 200;
+    
+      // Find the matching icon in the deviceIcons array
+      const matchingIcon = deviceIcons.find((iconObj) => iconObj.icon === device.icon);
+      if (matchingIcon && iconPowerRanges[matchingIcon.name]) {
+        [minPower, maxPower] = iconPowerRanges[matchingIcon.name];
+      }
+    
+      // Generate a random power value within the determined range
+      newPower = `${Math.floor(Math.random() * (maxPower - minPower + 1) + minPower)}W`;
     } else {
-      // If the device is being turned off, set power to "0W"
       newPower = "0W";
     }
-  
     // Optimistically update the UI
     setDevices(
       devices.map((d) =>
@@ -521,7 +581,7 @@ export default function DevicesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower }), // Include power in the request
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower,householdCode }), // Include power in the request
       });
   
       if (!response.ok) {
@@ -787,30 +847,61 @@ export default function DevicesPage() {
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
-        <Card className="gradient-card md:col-span-2 lg:col-span-3">
-          <div className="flex justify-between mb-4">
+        <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative">
+          {/* Decorative background element */}
+          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl"></div>
+          <div className="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl"></div>
+
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
-              <h2 className="text-sm text-gray-200">Energy Consumption</h2>
-              <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center">
-                  <Lamp className="w-5 h-5 mr-2 text-yellow-400" />
-                  <div>
-                    <p className="text-xs text-gray-300">Today</p>
-                    <p className="font-bold">{totalConsumption}W</p>
+              <h2 className="text-xl font-semibold text-black mb-1">Energy Consumption</h2>
+              <p className="text-sm text-black-300">Current device usage</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mr-3 shadow-inner">
+                  <Lamp className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-300 uppercase tracking-wide">Live</p>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-bold">{totalConsumption}</p>
+                    <span className="text-sm ml-1 text-gray-400">W</span>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <Tv className="w-5 h-5 mr-2 text-blue-400" />
-                  <div>
-                    <p className="text-xs text-gray-300">This Month</p>
-                    <p className="font-bold">0</p>
+              </div>
+
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mr-3 shadow-inner">
+                  <Tv className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-300 uppercase tracking-wide">This Month</p>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-bold">0</p>
+                    <span className="text-sm ml-1 text-gray-400">kWh</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </Card>
 
+          {totalConsumption > 0 && (
+            <div className="mt-6">
+              <div className="flex justify-between mb-1">
+                <p className="text-xs text-gray-400">Usage Level</p>
+                <p className="text-xs font-medium text-blue-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
+              </div>
+              <div className="h-2.5 bg-gray-700/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-in-out"
+                  style={{ width: `${Math.min(totalConsumption / 10, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </Card>
         <section className="space-y-6 md:col-span-2 lg:col-span-3">
           {/* Devices Section */}
           <div>

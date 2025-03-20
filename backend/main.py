@@ -1,13 +1,12 @@
-
 # main.py
 import random
 from app.auth import create_account, registration_verify, email_code_gen, login, login_verify
-from fastapi import FastAPI, HTTPException, Depends, Query, Path
+from fastapi import FastAPI, HTTPException, Depends, Query, Path, UploadFile, File, Form
 from app.household import create_household, join_household
 from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room, update_device
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
-from app.algo import start_device_session, calculate_live_consumption, end_device_session
+from app.algo import calculate_live_consumption
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +14,7 @@ from fastapi.security import HTTPBearer
 from supabase import create_client
 import app.config as config
 from typing import List,Optional, Dict, Any
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 
 supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
@@ -70,31 +69,6 @@ async def verify_registration_endpoint(request: VerifyRequest):
         raise HTTPException(status_code=400, detail=result["message"])
     del verification_codes[request.email]
     return {"success": True, "message": "Account verified and created.", "user_id": user_id}
-
-
-class DeviceSessionRequest(BaseModel):
-    device_id: int
-
-@app.post("/start-device-session")
-async def start_device_session_endpoint(request: DeviceSessionRequest):
-    result = start_device_session(request.device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
-
-@app.get("/calculate-live-consumption/{device_id}")
-async def calculate_live_consumption_endpoint(device_id: str):
-    result = calculate_live_consumption(device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
-
-@app.post("/end-device-session")
-async def end_device_session_endpoint(request: DeviceSessionRequest):
-    result = end_device_session(request.device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
 
 class ResendCodeRequest(BaseModel):
     email: str
@@ -341,13 +315,13 @@ async def assign_device_to_room(device_id: int, request: AssignRoomRequest):
         return {"success": True, "message": "Device assigned to room successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
 
 # Define the request model
 class ToggleDeviceRequest(BaseModel):
     deviceId: int
     isOn: bool
     power: str  # The current power value (e.g., "144W" or "0W")
+    householdCode : str
 
 @app.post("/toggle-device")
 async def toggle_device_endpoint(request: ToggleDeviceRequest):
@@ -356,27 +330,39 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
 
         # Fetch the device from the database
         device_result = supabase.from_("devices").select("*").eq("device_id", request.deviceId).execute()
+        
+        # Check if the device exists
         if not device_result.data:
             print("Device not found")  # Debug log
             raise HTTPException(status_code=404, detail="Device not found")
+        
         device = device_result.data[0]
+        print(f"Fetched device: {device}")  # Debug log
 
         # Prepare the update data
         update_data = {"isOn": request.isOn, "power": request.power}
+        print(f"Update data: {update_data}")  # Debug log
 
         # Update the device in the database
         update_result = supabase.from_("devices").update(update_data).eq("device_id", request.deviceId).execute()
+        
+        
+        # Check if the update was successful
         if not update_result.data:
             print("Failed to update device state")  # Debug log
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
+        calculate_live_consumption(request.householdCode)
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
+    except HTTPException as http_err:
+        # Re-raise HTTP exceptions (e.g., 404, 500)
+        raise http_err
     except Exception as e:
+        # Log the full error for debugging
         print(f"Error toggling device: {str(e)}")  # Debug log
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
-        
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")    
+
 class EditDeviceRequest(BaseModel):
     device_id: int
     consumptionLimit: int
@@ -430,7 +416,104 @@ async def edit_device_endpoint(request: EditDeviceRequest):
 async def read_root():
     return {"message": "Welcome to the backend!"}
 
+@app.post("/upload-profile-picture")
+async def upload_profile_picture(user_id: str = Form(...), file: UploadFile = File(...)):
+    try:
+        # Validate user_id
+        if not user_id:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "User ID is required."}
+            )
 
+        # Print the file name to verify it's correct
+        print("Received file name:", file.filename)
+
+        # Generate a unique filename
+        file_ext = file.filename.split(".")[-1]
+        file_name = f"{user_id}-avatar.{file_ext}"
+        file_path = f"profile-pictures/{file_name}"
+
+        # Debug: Log the file path
+        print("File path for upload:", file_path)
+
+        # Upload the file to Supabase Storage
+        upload_result = supabase.storage.from_("profile-pictures").upload(
+            file_path,
+            await file.read(),
+            {
+                "cacheControl": "3600",  # Ensure this is a string
+                "upsert": "true"  # Ensure this is a string
+            }
+        )
+
+        # Check if the upload was successful
+        if not upload_result.path:
+            print("Supabase Storage Upload Error:", upload_result)
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Failed to upload file to Supabase Storage."}
+            )
+
+        # Get the public URL of the uploaded file
+        public_url = supabase.storage.from_("profile-pictures").get_public_url(file_path)
+        print("Public URL:", public_url)
+
+        # Update the user's profile picture URL in the database
+        update_result = supabase.from_("users").update({"avatar": public_url}).eq("user_id", user_id).execute()
+
+        if not update_result.data:
+            print("Database Update Error:", update_result)
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": "Failed to update user profile picture in the database."}
+            )
+
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "message": "Profile picture updated successfully", "avatar_url": public_url}
+        )
+    except Exception as e:
+        print("Error in upload_profile_picture:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e)}
+        )
+
+@app.get("/profile-picture")
+async def get_profile_picture(user_id: str = Query(...)):
+    try:
+        # Fetch the user's profile picture URL from the database
+        user_data = supabase.from_("users").select("avatar").eq("user_id", user_id).execute()
+
+        # Check if the user exists and has a profile picture
+        if not user_data.data or not user_data.data[0].get("avatar"):
+            raise HTTPException(status_code=404, detail="User not found or profile picture not set.")
+
+        # Get the profile picture URL
+        avatar_url = user_data.data[0]["avatar"]
+
+        # Debug: Log the avatar URL from the database
+        print("Avatar URL from database:", avatar_url)
+
+        # Extract the file name from the URL
+        file_name = avatar_url.split("/")[-1]
+
+        # Debug: Log the file name to download
+        print("File name to download:", file_name)
+
+        # Fetch the image file from Supabase Storage
+        image_response = supabase.storage.from_("profile-pictures").download(file_name)
+
+        if not image_response:
+            raise HTTPException(status_code=404, detail="Profile picture not found in storage.")
+
+        # Return the image file as a response
+        return StreamingResponse(image_response, media_type="image/png")  # Adjust media_type as needed
+    except Exception as e:
+        print("Error in get_profile_picture:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+                 
 # def test_signup():
 #     email = "e@example.com"
 #     password = "securePassword123"

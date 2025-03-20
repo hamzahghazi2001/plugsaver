@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\asma sathar\Documents\GitHub\plugsaver\backend\venv
+set VIRTUAL_ENV=C:\Computer Programming\plugsaver\plugsaver\backend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
