@@ -787,30 +787,61 @@ export default function DevicesPage() {
 
       <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Energy Consumption Card */}
-        <Card className="gradient-card md:col-span-2 lg:col-span-3">
-          <div className="flex justify-between mb-4">
+        <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative">
+          {/* Decorative background element */}
+          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl"></div>
+          <div className="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl"></div>
+
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
-              <h2 className="text-sm text-gray-200">Energy Consumption</h2>
-              <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center">
-                  <Lamp className="w-5 h-5 mr-2 text-yellow-400" />
-                  <div>
-                    <p className="text-xs text-gray-300">Today</p>
-                    <p className="font-bold">{totalConsumption}W</p>
+              <h2 className="text-xl font-semibold text-black mb-1">Energy Consumption</h2>
+              <p className="text-sm text-black-300">Current device usage</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mr-3 shadow-inner">
+                  <Lamp className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-300 uppercase tracking-wide">Live</p>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-bold">{totalConsumption}</p>
+                    <span className="text-sm ml-1 text-gray-400">W</span>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <Tv className="w-5 h-5 mr-2 text-blue-400" />
-                  <div>
-                    <p className="text-xs text-gray-300">This Month</p>
-                    <p className="font-bold">0</p>
+              </div>
+
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mr-3 shadow-inner">
+                  <Tv className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-300 uppercase tracking-wide">This Month</p>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-bold">0</p>
+                    <span className="text-sm ml-1 text-gray-400">kWh</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </Card>
 
+          {totalConsumption > 0 && (
+            <div className="mt-6">
+              <div className="flex justify-between mb-1">
+                <p className="text-xs text-gray-400">Usage Level</p>
+                <p className="text-xs font-medium text-blue-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
+              </div>
+              <div className="h-2.5 bg-gray-700/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-in-out"
+                  style={{ width: `${Math.min(totalConsumption / 10, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </Card>
         <section className="space-y-6 md:col-span-2 lg:col-span-3">
           {/* Devices Section */}
           <div>
