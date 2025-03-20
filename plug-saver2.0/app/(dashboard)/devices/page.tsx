@@ -500,13 +500,73 @@ export default function DevicesPage() {
     let newPower = device.power;
   
     if (newIsOn) {
-      // If the device is being turned on, generate a random power value
-      newPower = `${Math.floor(Math.random() * 200)}W`; // Generate a random power value
+      // Define power ranges for different device icons (values in Watts)
+      const iconPowerRanges: Record<string, [number, number]> = {
+        "Desk Lamp": [5, 25],
+        "Light Bulb": [3, 15],
+        "Floor Lamp": [10, 30],
+        "Table Lamp": [5, 25],
+        "TV": [50, 150],
+        "Radio": [10, 50],
+        "Speaker": [5, 20],
+        "Headphones": [1, 5],
+        "Game Console": [70, 200],
+        "Monitor": [20, 60],
+        "Sound System": [20, 100],
+        "Projector": [100, 300],
+        "Refrigerator": [100, 250],
+        "Microwave": [700, 1200],
+        "Coffee Maker": [800, 1500],
+        "Toaster": [800, 1500],
+        "Slow Cooker": [200, 300],
+        "Oven": [1000, 3000],
+        "Stove": [1000, 3000],
+        "Blender": [300, 700],
+        "Sandwich Maker": [500, 800],
+        "Air Fryer": [800, 1500],
+        "Food Processor": [200, 500],
+        "Computer": [150, 300],
+        "Laptop": [50, 100],
+        "Printer": [20, 50],
+        "Scanner": [20, 50],
+        "Router": [10, 30],
+        "WiFi Extender": [5, 15],
+        "CPU/Server": [200, 500],
+        "External Drive": [10, 30],
+        "Fan": [50, 100],
+        "Air Purifier": [30, 80],
+        "Thermostat": [5, 15],
+        "Air Conditioner": [1000, 3500],
+        "Heater": [800, 2000],
+        "Humidifier": [30, 70],
+        "Water Heater": [3000, 4500],
+        "Hair Dryer": [1200, 1875],
+        "Electric Toothbrush": [2, 5],
+        "Smart Plug": [5, 15],
+        "Smart Lock": [2, 5],
+        "Doorbell": [1, 5],
+        "Security Camera": [5, 15],
+        "Alarm System": [10, 30],
+        "Battery Charger": [10, 30],
+        "Power Tool": [100, 300],
+        "Exercise Equipment": [100, 300],
+      };
+    
+      // Default range if icon is not recognized
+      let minPower = 10;
+      let maxPower = 200;
+    
+      // Find the matching icon in the deviceIcons array
+      const matchingIcon = deviceIcons.find((iconObj) => iconObj.icon === device.icon);
+      if (matchingIcon && iconPowerRanges[matchingIcon.name]) {
+        [minPower, maxPower] = iconPowerRanges[matchingIcon.name];
+      }
+    
+      // Generate a random power value within the determined range
+      newPower = `${Math.floor(Math.random() * (maxPower - minPower + 1) + minPower)}W`;
     } else {
-      // If the device is being turned off, set power to "0W"
       newPower = "0W";
     }
-  
     // Optimistically update the UI
     setDevices(
       devices.map((d) =>
