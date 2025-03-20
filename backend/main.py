@@ -315,7 +315,6 @@ async def assign_device_to_room(device_id: int, request: AssignRoomRequest):
         return {"success": True, "message": "Device assigned to room successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
 
 # Define the request model
 class ToggleDeviceRequest(BaseModel):
@@ -330,27 +329,37 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
 
         # Fetch the device from the database
         device_result = supabase.from_("devices").select("*").eq("device_id", request.deviceId).execute()
+        
+        # Check if the device exists
         if not device_result.data:
             print("Device not found")  # Debug log
             raise HTTPException(status_code=404, detail="Device not found")
+        
         device = device_result.data[0]
+        print(f"Fetched device: {device}")  # Debug log
 
         # Prepare the update data
         update_data = {"isOn": request.isOn, "power": request.power}
+        print(f"Update data: {update_data}")  # Debug log
 
         # Update the device in the database
         update_result = supabase.from_("devices").update(update_data).eq("device_id", request.deviceId).execute()
+        
+        # Check if the update was successful
         if not update_result.data:
             print("Failed to update device state")  # Debug log
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
+    except HTTPException as http_err:
+        # Re-raise HTTP exceptions (e.g., 404, 500)
+        raise http_err
     except Exception as e:
+        # Log the full error for debugging
         print(f"Error toggling device: {str(e)}")  # Debug log
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
-        
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")    
+
 class EditDeviceRequest(BaseModel):
     device_id: int
     consumptionLimit: int
