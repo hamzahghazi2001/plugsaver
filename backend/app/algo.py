@@ -1,72 +1,41 @@
+import time
 from datetime import datetime, timedelta
 from supabase import create_client
 import app.config as config
+import time
 
-supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
-# Dictionary to keep track of device sessions
-device_sessions = {}
+def calculate_live_consumption(household_code):
+    supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
+    query = f"SELECT device_id, power, user_id FROM devices WHERE household_code = {recipient_email} AND isOn = TRUE"
+    response = supabase.rpc("sql", {"query": query}).execute()
+    """
+    Continuously checks devices that match the given household_code and are turned on.
+    Inserts them into analytics if not present, updates their wattage every 5 seconds,
+    and when a device turns off, ends that entry by setting its duration.
+    """
 
-def start_device_session(device_id):
-    # Fetch the device's wattage from the Supabase table
-    device = supabase.table("devices").select("power").eq("device_id", device_id).execute()
-    if not device.data:
-        return {"success": False, "message": "Device not found."}
+    while True:
+        # Fetch devices with matching household_code and isOn = TRUE
+        on_devices = get_on_devices_for_household(household_code)  # Placeholder
 
-    # Extract the wattage and convert it to an integer
-    wattage_str = device.data[0]["power"]
-    wattage = int(wattage_str.rstrip('W'))
-    start_time = datetime.now()
+        for device in on_devices:
+            device_id = device["device_id"]
+            user_id = device["user_id"]
+            power = device["power"]
 
-    # Store the session start time and wattage
-    device_sessions[device_id] = {
-        "start_time": start_time,
-        "wattage": wattage
-    }
+            # If not in analytics, insert a new row with start_time and date
+            if not is_in_analytics(device_id):
+                insert_new_analytics_entry(
+                    household_code, device_id, user_id, datetime.now()
+                )
+            # Update wattage in analytics
+            update_device_wattage(device_id, power)
 
-    return {"success": True, "message": "Device session started."}
+        # Check if any devices have turned off and finalize those entries
+        off_devices = get_off_devices_for_household(household_code)
+        for device in off_devices:
+            device_id = device["device_id"]
+            finalize_device_entry(device_id, datetime.now())
 
-def calculate_live_consumption(device_id):
-    if device_id not in device_sessions:
-        return {"success": False, "message": "Device session not found."}
-
-    session = device_sessions[device_id]
-    start_time = session["start_time"]
-    wattage = session["wattage"]
-
-    # Calculate the duration in hours
-    duration = (datetime.now() - start_time).total_seconds() / 3600
-
-    # Calculate the live consumption in kWh
-    live_consumption = (wattage / 1000) * duration
-
-    return {"success": True, "live_consumption": live_consumption}
-
-def end_device_session(device_id):
-    if device_id not in device_sessions:
-        return {"success": False, "message": "Device session not found."}
-
-    session = device_sessions[device_id]
-    start_time = session["start_time"]
-    wattage = session["wattage"]
-
-    # Calculate the duration in hours
-    end_time = datetime.now()
-    duration = (end_time - start_time).total_seconds() / 3600
-
-    # Calculate the total consumption in kWh
-    total_consumption = (wattage / 1000) * duration
-
-    # Store the session data in the Supabase table
-    supabase.table("device_sessions").insert({
-        "device_id": device_id,
-        "start_time": start_time.isoformat(),
-        "end_time": end_time.isoformat(),
-        "duration": duration,
-        "total_consumption": total_consumption
-    }).execute()
-
-    # Remove the session from the dictionary
-    del device_sessions[device_id]
-
-    return {"success": True, "message": "Device session ended."}
+        time.sleep(5)

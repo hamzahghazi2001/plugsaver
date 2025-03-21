@@ -1,4 +1,3 @@
-
 # main.py
 import random
 from app.auth import create_account, registration_verify, email_code_gen, login, login_verify
@@ -7,7 +6,7 @@ from app.household import create_household, join_household
 from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room, update_device
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
-from app.algo import start_device_session, calculate_live_consumption, end_device_session
+from app.algo import calculate_live_consumption
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,31 +69,6 @@ async def verify_registration_endpoint(request: VerifyRequest):
         raise HTTPException(status_code=400, detail=result["message"])
     del verification_codes[request.email]
     return {"success": True, "message": "Account verified and created.", "user_id": user_id}
-
-
-class DeviceSessionRequest(BaseModel):
-    device_id: int
-
-@app.post("/start-device-session")
-async def start_device_session_endpoint(request: DeviceSessionRequest):
-    result = start_device_session(request.device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
-
-@app.get("/calculate-live-consumption/{device_id}")
-async def calculate_live_consumption_endpoint(device_id: str):
-    result = calculate_live_consumption(device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
-
-@app.post("/end-device-session")
-async def end_device_session_endpoint(request: DeviceSessionRequest):
-    result = end_device_session(request.device_id)
-    if not result["success"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result
 
 class ResendCodeRequest(BaseModel):
     email: str
@@ -379,7 +353,11 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
+<<<<<<< HEAD
         print(request.householdCode)
+=======
+        calculate_live_consumption(request.householdCode)
+>>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
     except HTTPException as http_err:
         # Re-raise HTTP exceptions (e.g., 404, 500)
@@ -455,8 +433,14 @@ async def upload_profile_picture(user_id: str = Form(...), file: UploadFile = Fi
         # Print the file name to verify it's correct
         print("Received file name:", file.filename)
 
+<<<<<<< HEAD
         # Use the original file name for the upload
         file_name = file.filename
+=======
+        # Generate a unique filename
+        file_ext = file.filename.split(".")[-1]
+        file_name = f"{user_id}-avatar.{file_ext}"
+>>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
         file_path = f"profile-pictures/{file_name}"
 
         # Debug: Log the file path
@@ -521,6 +505,7 @@ async def get_profile_picture(user_id: str = Query(...)):
         # Debug: Log the avatar URL from the database
         print("Avatar URL from database:", avatar_url)
 
+<<<<<<< HEAD
         # Return the avatar URL directly
         return JSONResponse(
             status_code=200,
@@ -568,6 +553,25 @@ async def get_user_details(user_id: str):
         return {"success": True, "user": user_details}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+=======
+        # Extract the file name from the URL
+        file_name = avatar_url.split("/")[-1]
+
+        # Debug: Log the file name to download
+        print("File name to download:", file_name)
+
+        # Fetch the image file from Supabase Storage
+        image_response = supabase.storage.from_("profile-pictures").download(file_name)
+
+        if not image_response:
+            raise HTTPException(status_code=404, detail="Profile picture not found in storage.")
+
+        # Return the image file as a response
+        return StreamingResponse(image_response, media_type="image/png")  # Adjust media_type as needed
+    except Exception as e:
+        print("Error in get_profile_picture:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+>>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
                  
 # def test_signup():
 #     email = "e@example.com"
