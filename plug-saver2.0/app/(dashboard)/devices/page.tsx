@@ -1366,29 +1366,12 @@ export default function DevicesPage() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => {
-                                      const newRooms = rooms.filter(
-                                        (r) => r.room_name !== room.room_name
-                                      );
-                                      setRooms(newRooms);
-                                      localStorage.setItem(
-                                        "plugSaver_rooms",
-                                        JSON.stringify(newRooms.map((r) => r.room_name))
-                                      );
-                                      const updatedDevices = devices.map((device) =>
-                                        device.room === room.room_name
-                                          ? { ...device, room: null, needsRoomAssignment: true }
-                                          : device
-                                      );
-                                      setDevices(updatedDevices);
-                                      if (selectedRoom === room.room_name) {
-                                        setSelectedRoom(null);
-                                      }
-                                    }}
+                                    onClick={() => handleDeleteRoom(room.room_id, room.room_name)}
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Delete
                                   </AlertDialogAction>
+
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
