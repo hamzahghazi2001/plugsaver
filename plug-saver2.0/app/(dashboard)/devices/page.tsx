@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
+import { Home,Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
 import { motion } from "framer-motion"
 
 // New imports for dialogs, forms, tabs and alerts
@@ -902,7 +902,6 @@ export default function DevicesPage() {
             </div>
           )}
         </Card>
-        <section className="space-y-6 md:col-span-2 lg:col-span-3">
           <section className="space-y-8 md:col-span-2 lg:col-span-3">
           {/* Devices Section - Updated Layout */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
