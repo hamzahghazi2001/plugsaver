@@ -27,11 +27,13 @@ const DashboardPage = () => {
   const [energyData, setEnergyData] = useState<Record<PeriodType, { name: string; value: number }[]> | null>(null)
   const [roomsData, setRoomsData] = useState<{ name: string; value: number }[] | null>(null)
   const [applianceData, setApplianceData] = useState<{ name: string; usage: number }[] | null>(null)
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  let [isDarkMode, setIsDarkMode] = useState(() => {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   // Load dark mode preference from localStorage on initial render
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("darkMode") === "true"
+    let savedDarkMode = localStorage.getItem("darkMode") === "true"
     console.log("Initial dark mode value from localStorage:", savedDarkMode) // Debugging
     setIsDarkMode(savedDarkMode)
     // Apply dark mode class to the document element
@@ -40,6 +42,7 @@ const DashboardPage = () => {
       console.log("Applied 'dark' class to documentElement") // Debugging
     } else {
       document.documentElement.classList.remove("dark")
+      isDarkMode = false
       console.log("Removed 'dark' class from documentElement") // Debugging
     }
   }, [])
@@ -53,6 +56,7 @@ const DashboardPage = () => {
       console.log("Applied 'dark' class to documentElement") // Debugging
     } else {
       document.documentElement.classList.remove("dark")
+      isDarkMode = false
       console.log("Removed 'dark' class from documentElement") // Debugging
     }
   }, [isDarkMode])

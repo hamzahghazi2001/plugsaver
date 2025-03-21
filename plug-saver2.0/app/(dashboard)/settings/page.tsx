@@ -65,26 +65,61 @@ export default function SettingsPage() {
 
   // State for household code
   const [householdCode, setHouseholdCode] = useState<string | null>(null);
+  
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("darkMode") === "true";
+    }
+    return false;
+  });
+
+  // Apply dark mode class to the document element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", isDarkMode.toString());
+  }, [isDarkMode]);
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
 
   // Fetch username, country, email, and household code from localStorage on mount
   useEffect(() => {
-    const storedUsername = localStorage.getItem("username");
-    const storedCountry = localStorage.getItem("country");
-    const storedEmail = localStorage.getItem("email");
-    const storedHouseholdCode = localStorage.getItem("household_code");
+    const fetchUserDetails = async () => {
+      const user_id = localStorage.getItem("user_id"); // Get user_id from localStorage
+      if (!user_id) {
+        console.error("User ID not found in localStorage");
+        return;
+      }
 
-    if (storedUsername) {
-      setUser((prev) => ({ ...prev, username: storedUsername }));
-    }
-    if (storedCountry) {
-      setUser((prev) => ({ ...prev, country: storedCountry }));
-    }
-    if (storedEmail) {
-      setUser((prev) => ({ ...prev, email: storedEmail }));
-    }
-    if (storedHouseholdCode) {
-      setHouseholdCode(storedHouseholdCode);
-    }
+      try {
+        const response = await fetch(`/api/auth/get_user_details?user_id=${user_id}`);
+        const data = await response.json();
+
+        if (data.success) {
+          // Update the user state with fetched details
+          setUser((prev) => ({
+            ...prev,
+            username: data.user.name || prev.username,
+            email: data.user.email || prev.email,
+            country: data.user.country || prev.country,
+            birthdate: data.user.dob || prev.birthdate,
+          }));
+        } else {
+          console.error("Failed to fetch user details:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+
+    fetchUserDetails();
   }, []);
 
   // States for different dialog modals
@@ -165,7 +200,6 @@ export default function SettingsPage() {
     router.push("/login");
   };
 
-  // Handle avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -179,52 +213,25 @@ export default function SettingsPage() {
       return;
     }
   
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("user_id", userId); // Ensure user_id is sent as a form field
+  
     try {
-      // Step 1: Upload the image to Supabase Storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}-avatar.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`; // Correct bucket name
+      const response = await fetch("/api/auth/profile_pic", {
+        method: "POST",
+        body: formData,
+      });
   
-      console.log("Uploading file:", filePath);
+      const result = await response.json();
+      console.log("POST Response:", result);
   
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("profile-pictures") // Correct bucket name
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true // Overwrite the file if it already exists
-        });
-  
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+      if (!result.success) {
+        throw new Error(result.message);
       }
   
-      console.log("File uploaded successfully:", uploadData);
-  
-      // Step 2: Get the public URL of the uploaded image
-      const { data: publicUrlData } = supabase.storage
-        .from("profile-pictures") // Correct bucket name
-        .getPublicUrl(filePath);
-  
-      const avatarUrl = publicUrlData.publicUrl;
-  
-      console.log("Public URL:", avatarUrl);
-  
-      // Step 3: Update the user's avatar in the database
-      const { data: updateData, error: updateError } = await supabase
-        .from("users")
-        .update({ avatar: avatarUrl })
-        .eq("id", userId);
-  
-      if (updateError) {
-        console.error("Database update error:", updateError);
-        throw updateError;
-      }
-  
-      console.log("Database updated successfully:", updateData);
-  
-      // Step 4: Update the local state with the new avatar URL
-      setUser((prev) => ({ ...prev, avatar: avatarUrl }));
+      // Update the local state with the new avatar URL
+      setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
       alert("Profile picture updated successfully!");
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -232,6 +239,32 @@ export default function SettingsPage() {
     }
   };
 
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+  
+      try {
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`);
+        const result = await response.json();
+  
+        if (result.success && result.avatar_url) {
+          // Update the local state with the fetched avatar URL
+          setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
+  
+          // Debug: Log the fetched avatar URL
+          console.log("Fetched Avatar URL:", result.avatar_url);
+        } else {
+          console.error("Error fetching profile picture:", result);
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error);
+      }
+    };
+  
+    fetchProfilePicture();
+  }, []);
+  
   // Handle toggle changes
   const handleToggleChange = (category: string, setting: string, value: boolean) => {
     setSettings({
@@ -270,7 +303,7 @@ export default function SettingsPage() {
 
       <div className="flex flex-col items-center gap-4 mb-6">
         <Avatar className="w-24 h-24">
-          <AvatarImage src={user.avatar} />
+          <AvatarImage src={`${user.avatar}`} /> 
           <AvatarFallback>{user.username[0]}</AvatarFallback>
         </Avatar>
 
@@ -639,7 +672,15 @@ export default function SettingsPage() {
     </>
   );
 
-  const AccessibilityContent = () => (
+  const AccessibilityContent = () => {
+    // Handle theme change
+    const handleThemeChange = (value: string) => {
+      if (value === "light") {
+        setIsDarkMode(false); // Disable dark mode
+      } else if (value === "dark") {
+        setIsDarkMode(true); // Enable dark mode
+      }
+    }; return (
     <>
       <DialogDescription className="mb-4">Customize your accessibility preferences</DialogDescription>
 
@@ -678,6 +719,7 @@ export default function SettingsPage() {
                   theme: value,
                 },
               });
+              handleThemeChange(value);
             }}
             className="flex gap-3"
           >
@@ -693,7 +735,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  );
+  )};
 
   const SupportContent = () => (
     <>
