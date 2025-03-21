@@ -2,7 +2,7 @@
 # main.py
 import random
 from app.auth import create_account, registration_verify, email_code_gen, login, login_verify
-from fastapi import FastAPI, HTTPException, Depends, Query, Path
+from fastapi import FastAPI, HTTPException, Depends, Query, Path, UploadFile, File, Form
 from app.household import create_household, join_household
 from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room, update_device
 from app.rewards import Points_and_badges, get_global, get_local, get_household
@@ -15,7 +15,7 @@ from fastapi.security import HTTPBearer
 from supabase import create_client
 import app.config as config
 from typing import List,Optional, Dict, Any
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 
 supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
@@ -347,6 +347,7 @@ class ToggleDeviceRequest(BaseModel):
     deviceId: int
     isOn: bool
     power: str  # The current power value (e.g., "144W" or "0W")
+    householdCode : str
 
 @app.post("/toggle-device")
 async def toggle_device_endpoint(request: ToggleDeviceRequest):
@@ -371,12 +372,14 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
         # Update the device in the database
         update_result = supabase.from_("devices").update(update_data).eq("device_id", request.deviceId).execute()
         
+        
         # Check if the update was successful
         if not update_result.data:
             print("Failed to update device state")  # Debug log
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
+        print(request.householdCode)
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
     except HTTPException as http_err:
         # Re-raise HTTP exceptions (e.g., 404, 500)
@@ -439,7 +442,133 @@ async def edit_device_endpoint(request: EditDeviceRequest):
 async def read_root():
     return {"message": "Welcome to the backend!"}
 
+@app.post("/upload-profile-picture")
+async def upload_profile_picture(user_id: str = Form(...), file: UploadFile = File(...)):
+    try:
+        # Validate user_id
+        if not user_id:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "User ID is required."}
+            )
 
+        # Print the file name to verify it's correct
+        print("Received file name:", file.filename)
+
+        # Use the original file name for the upload
+        file_name = file.filename
+        file_path = f"profile-pictures/{file_name}"
+
+        # Debug: Log the file path
+        print("File path for upload:", file_path)
+
+        # Upload the file to Supabase Storage
+        upload_result = supabase.storage.from_("profile-pictures").upload(
+            file_path,
+            await file.read(),
+            {
+                "cacheControl": "3600",  # Ensure this is a string
+                "upsert": "true"  # Ensure this is a string
+            }
+        )
+
+        # Check if the upload was successful
+        if not upload_result.path:
+            print("Supabase Storage Upload Error:", upload_result)
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Failed to upload file to Supabase Storage."}
+            )
+
+        # Get the public URL of the uploaded file
+        public_url = supabase.storage.from_("profile-pictures").get_public_url(file_path)
+        print("Public URL:", public_url)
+
+        # Update the user's profile picture URL in the database
+        update_result = supabase.from_("users").update({"avatar": public_url}).eq("user_id", user_id).execute()
+
+        if not update_result.data:
+            print("Database Update Error:", update_result)
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": "Failed to update user profile picture in the database."}
+            )
+
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "message": "Profile picture updated successfully", "avatar_url": public_url}
+        )
+    except Exception as e:
+        print("Error in upload_profile_picture:", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": str(e)}
+        )
+
+@app.get("/profile-picture")
+async def get_profile_picture(user_id: str = Query(...)):
+    try:
+        # Fetch the user's profile picture URL from the database
+        user_data = supabase.from_("users").select("avatar").eq("user_id", user_id).execute()
+
+        # Check if the user exists and has a profile picture
+        if not user_data.data or not user_data.data[0].get("avatar"):
+            raise HTTPException(status_code=404, detail="User not found or profile picture not set.")
+
+        # Get the profile picture URL
+        avatar_url = user_data.data[0]["avatar"]
+
+        # Debug: Log the avatar URL from the database
+        print("Avatar URL from database:", avatar_url)
+
+        # Return the avatar URL directly
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "avatar_url": avatar_url}
+        )
+    except Exception as e:
+        print("Error in get_profile_picture:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+    
+class ProfileSetupRequest(BaseModel):
+    user_id: str
+    username: str
+    date_of_birth: str
+    country: str
+
+@app.post("/setup_profile")
+async def setup_profile_endpoint(request: ProfileSetupRequest):
+    try:
+        # Update the user's profile with the new information
+        update_result = supabase.from_("users").update({
+            "name": request.username,
+            "dob": request.date_of_birth,
+            "country": request.country
+        }).eq("user_id", request.user_id).execute()
+
+        if not update_result.data:
+            raise HTTPException(status_code=500, detail="Failed to update user profile.")
+
+        # Store the profile information in local storage (if needed)
+        # This is typically done on the client side, but you can return the data here
+        return {"success": True, "message": "Profile setup successful.", "username": request.username, "date_of_birth": request.date_of_birth, "country": request.country}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/get_user_details")
+async def get_user_details(user_id: str):
+    try:
+        # Fetch user details from the database
+        result = supabase.from_("users").select("*").eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_details = result.data[0]  # Get the first (and only) user
+        return {"success": True, "user": user_details}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+                 
 # def test_signup():
 #     email = "e@example.com"
 #     password = "securePassword123"

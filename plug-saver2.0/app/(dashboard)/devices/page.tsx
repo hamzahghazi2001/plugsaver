@@ -581,7 +581,7 @@ export default function DevicesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower }), // Include power in the request
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower,householdCode }), // Include power in the request
       });
   
       if (!response.ok) {
