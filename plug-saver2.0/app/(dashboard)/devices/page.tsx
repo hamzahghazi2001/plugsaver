@@ -981,7 +981,7 @@ export default function DevicesPage() {
               <p className="text-xs text-gray-400">Turn on devices to monitor energy consumption</p>
             </div>
           )}
-          {/* Add a tip section at the bottom */}
+          {/* Add a tip section at the bottom
           <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-2">
             <div className="bg-blue-500/20 p-1.5 rounded-lg">
               <Lightbulb className="w-4 h-4 text-blue-300" />
@@ -989,7 +989,7 @@ export default function DevicesPage() {
             <p className="text-xs text-gray-300">
               <span className="text-blue-300 font-medium">Energy Tip:</span> Devices in standby mode can consume up to 10% of your home's energy. Consider using smart plugs to completely turn off devices when not in use.
             </p>
-          </div>
+          </div> */}
 
         </Card>
         <section className="space-y-8 md:col-span-2 lg:col-span-3">
@@ -1299,10 +1299,11 @@ export default function DevicesPage() {
                               {deviceCount} device{deviceCount !== 1 ? "s" : ""}
                             </Badge>
                             {activeDevices > 0 && (
-                              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
-                                {activeDevices} active
-                              </Badge>
-                            )}
+  <Badge className="bg-green-500/50 text-white border-green-500/70">
+    {activeDevices} active
+  </Badge>
+)}
+
                           </div>
                           <div className="flex gap-2 w-full justify-center">
                             <Button
