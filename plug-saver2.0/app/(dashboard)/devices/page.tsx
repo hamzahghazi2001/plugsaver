@@ -270,6 +270,8 @@ export default function DevicesPage() {
     },
   })
 
+
+
   // Add this CSS animation for subtle pulse effect
   useEffect(() => {
     const style = document.createElement("style");
@@ -996,9 +998,12 @@ export default function DevicesPage() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="bg-blue-500/20 p-2 rounded-full">
-                  <Plug className="w-5 h-5 text-blue-400" />
+                  <Plug className="w-5 h-5 text-blue-300" />
                 </div>
-                <h2 className="text-xl font-semibold">Your Devices</h2>
+                <div>
+                  <h2 className="text-xl font-semibold">Your Devices</h2>
+                  <p className="text-xs text-white-400 mt-0.5">Manage and monitor your connected devices</p>
+                </div>
               </div>
 
               <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
@@ -1009,13 +1014,14 @@ export default function DevicesPage() {
                     onClick={() => setSelectedRoom(null)}
                     className={
                       selectedRoom === null
-                        ? "bg-blue-500 hover:bg-blue-600"
-                        : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                        ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-xl transition-all duration-300"
+                        : "bg-gray-700 hover:bg-gray-600 text-white border-transparent transition-all duration-300"
                     }
                     disabled={rooms.length === 0}
                   >
-                    All
+                    All Rooms
                   </Button>
+
                   {rooms.map((room) => (
                     <Button
                       key={room.room_id}
@@ -1034,13 +1040,14 @@ export default function DevicesPage() {
                 </div>
 
                 {rooms.length > 0 && (
-                  <Button
-                    onClick={() => setAddDeviceDialogOpen(true)}
-                    size="sm"
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-1" /> Add Device
-                  </Button>
+                  <div className="relative hidden sm:block">
+                    <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-transform duration-300 hover:scale-110" />
+                    <Input
+                      placeholder="Search devices..."
+                      className="pl-10 bg-white/10 border border-white/20 text-white w-[180px] h-10 rounded-md transition-all duration-300 focus:w-[240px]"
+                    />
+                  </div>
+
                 )}
               </div>
 
@@ -1157,25 +1164,29 @@ export default function DevicesPage() {
               )}
               {rooms.length > 0 ? (
                 <motion.div
+
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: filteredDevices.length * 0.05 }}
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                 >
                   <Card
-                    className="gradient-card p-5 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20 flex items-center justify-center"
+                    className="gradient-card p-5 cursor-pointer transition-all duration-300 border border-dashed border-white/20 hover:shadow-2xl group"
                     onClick={() => setAddDeviceDialogOpen(true)}
                   >
-                    <div className="flex flex-col items-center gap-3 py-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-blue-400 group-hover:rotate-90 transition-transform duration-300" />
+                    <div className="flex flex-col items-center justify-center h-full py-8">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center mb-4 shadow-inner group-hover:shadow-2xl transition-all duration-300">
+                        {/* Increased rotation angle and added smoother transition */}
+                        <Plus className="w-7 h-7 text-blue-400 group-hover:text-blue-300 transition-transform duration-500 group-hover:rotate-180" />
                       </div>
-
-                      <span className="font-medium">Add New Device</span>
+                      <span className="font-semibold text-xl">Add New Device</span>
+                      <span className="text-sm text-gray-400 mt-1 text-center">
+                        Connect a smart device to start saving energy
+                      </span>
                     </div>
                   </Card>
                 </motion.div>
+
 
               ) : (
                 <motion.div
@@ -1193,15 +1204,21 @@ export default function DevicesPage() {
               )}
             </div>
           </div>
+          {/* Rooms Section */}
+          <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20 relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute -left-20 -top-20 w-40 h-40 rounded-full bg-purple-500/5 blur-3xl"></div>
+            <div className="absolute -right-20 -bottom-20 w-40 h-40 rounded-full bg-blue-500/5 blur-3xl"></div>
 
-          {/* Rooms Section - Updated Layout */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 relative">
               <div className="flex items-center gap-3">
-                <div className="bg-purple-500/20 p-2 rounded-full">
-                  <Home className="w-5 h-5 text-purple-400" />
+                <div className="bg-gradient-to-br from-purple-500/30 to-purple-600/30 p-2.5 rounded-full shadow-inner">
+                  <Home className="w-5 h-5 text-purple-300" />
                 </div>
-                <h2 className="text-xl font-semibold">Your Rooms</h2>
+                <div>
+                  <h2 className="text-xl font-semibold">Your Rooms</h2>
+                  <p className="text-xs text-white-400 mt-0.5">Organize your devices by room</p>
+                </div>
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
@@ -1242,52 +1259,80 @@ export default function DevicesPage() {
             {rooms.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {rooms.map((room, index) => {
-                  const deviceCount = devices.filter((device) => device.room === room.room_name).length;
+                  const deviceCount = devices.filter(
+                    (device) => device.room === room.room_name
+                  ).length;
+                  const activeDevices = devices.filter(
+                    (device) => device.room === room.room_name && device.isOn
+                  ).length;
                   return (
                     <motion.div
                       key={room.room_id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      whileHover={{ y: -4 }}
                     >
                       <Card
-                        className={`gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl hover:scale-105 ${selectedRoom === room.room_name ? "ring-2 ring-blue-500" : ""
+                        className={`gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl ${selectedRoom === room.room_name
+                            ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-900/30 to-blue-800/10"
+                            : "bg-gradient-to-br from-purple-900/20 to-purple-800/10"
                           }`}
                       >
                         <div className="flex flex-col items-center">
-                          <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3">
-                            <Home className="w-6 h-6 text-purple-400" />
+                          <div
+                            className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner ${selectedRoom === room.room_name
+                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30"
+                                : "bg-gradient-to-br from-purple-500/20 to-purple-600/20"
+                              }`}
+                          >
+                            <Home
+                              className={`w-7 h-7 ${selectedRoom === room.room_name
+                                  ? "text-blue-300"
+                                  : "text-purple-300"
+                                }`}
+                            />
                           </div>
-                          <p className="font-medium text-lg">{room.room_name}</p>
-                          <p className="text-sm text-gray-300 mb-3">
-                            {deviceCount} device{deviceCount !== 1 ? "s" : ""}
-                          </p>
-                          <div className="flex mt-2 space-x-2">
+                          <p className="font-medium text-lg mb-1">{room.room_name}</p>
+                          <div className="flex gap-2 justify-center mb-4">
+                            <Badge variant="outline" className="bg-white/10 border-white/20">
+                              {deviceCount} device{deviceCount !== 1 ? "s" : ""}
+                            </Badge>
+                            {activeDevices > 0 && (
+                              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                                {activeDevices} active
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-2 w-full justify-center">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-white/20 hover:bg-white/10"
+                              className="border-white/20 hover:bg-white/10 flex-1 flex items-center gap-1.5"
                               onClick={() => setSelectedRoom(room.room_name)}
                             >
-                              <Filter className="h-4 w-4 mr-1" /> Filter
+                              <Filter className="h-3.5 w-3.5" /> Filter
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-1 flex items-center gap-1.5"
                                 >
-                                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                  <Trash2 className="h-3.5 w-3.5" /> Delete
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure you want to delete this room?</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Are you sure you want to delete this room?
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     {deviceCount > 0 ? (
                                       <>
-                                        This room has {deviceCount} device{deviceCount !== 1 ? "s" : ""} assigned to it.
+                                        This room has {deviceCount} device
+                                        {deviceCount !== 1 ? "s" : ""} assigned to it.
                                         If you delete this room, these devices will need to be manually reassigned.
                                       </>
                                     ) : (
@@ -1298,7 +1343,25 @@ export default function DevicesPage() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => handleDeleteRoom(room.room_id, room.room_name)}
+                                    onClick={() => {
+                                      const newRooms = rooms.filter(
+                                        (r) => r.room_name !== room.room_name
+                                      );
+                                      setRooms(newRooms);
+                                      localStorage.setItem(
+                                        "plugSaver_rooms",
+                                        JSON.stringify(newRooms.map((r) => r.room_name))
+                                      );
+                                      const updatedDevices = devices.map((device) =>
+                                        device.room === room.room_name
+                                          ? { ...device, room: null, needsRoomAssignment: true }
+                                          : device
+                                      );
+                                      setDevices(updatedDevices);
+                                      if (selectedRoom === room.room_name) {
+                                        setSelectedRoom(null);
+                                      }
+                                    }}
                                     className="bg-red-500 hover:bg-red-600"
                                   >
                                     Delete
@@ -1513,6 +1576,7 @@ function AddDeviceDialog({
     { icon: BatteryCharging, name: "Battery Charger" },
     { icon: Wrench, name: "Power Tool" },
     { icon: Dumbbell, name: "Exercise Equipment" },
+
   ]
 
   const deviceTypeOptions = [
