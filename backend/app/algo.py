@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from supabase import create_client
 import app.config as config
 
@@ -41,8 +41,6 @@ def finalize_device_entry(device_id, end_time):
     supabase.rpc("sql", {"query": query}).execute()
 
 def calculate_live_consumption(household_code):
-    device_start_times = {}
-
     while True:
         query = f"SELECT device_id, power, user_id FROM devices WHERE household_code = {household_code} AND isOn = TRUE"
         response = supabase.rpc("sql", {"query": query}).execute()
@@ -59,7 +57,6 @@ def calculate_live_consumption(household_code):
             # If not in analytics, insert a new row with start_time and date
             if not is_in_analytics(device_id):
                 start_time = datetime.now()
-                device_start_times[device_id] = start_time
                 insert_new_analytics_entry(
                     household_code, device_id, user_id, start_time
                 )
@@ -72,14 +69,9 @@ def calculate_live_consumption(household_code):
         for device in off_devices:
             device_id = device["device_id"]
             end_time = datetime.now()
-            if device_id in device_start_times:
-                start_time = device_start_times[device_id]
-                duration = (end_time - start_time).total_seconds() / 3600  # duration in hours
-                power = int(device["power"].rstrip('W'))
-                total_wattage = power * duration
-                print(f"Device {device_id} consumed {total_wattage} watt-hours")
-                finalize_device_entry(device_id, end_time)
-                del device_start_times[device_id]
+            # Finalize the entry for the device
+            finalize_device_entry(device_id, end_time)
+            print(f"Device {device_id} has been turned off and its entry finalized.")
 
         # Wait for 5 seconds before the next iteration
         time.sleep(5)
