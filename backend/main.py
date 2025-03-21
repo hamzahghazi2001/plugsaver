@@ -353,11 +353,7 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
-<<<<<<< HEAD
         print(request.householdCode)
-=======
-        calculate_live_consumption(request.householdCode)
->>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
     except HTTPException as http_err:
         # Re-raise HTTP exceptions (e.g., 404, 500)
@@ -433,14 +429,8 @@ async def upload_profile_picture(user_id: str = Form(...), file: UploadFile = Fi
         # Print the file name to verify it's correct
         print("Received file name:", file.filename)
 
-<<<<<<< HEAD
         # Use the original file name for the upload
         file_name = file.filename
-=======
-        # Generate a unique filename
-        file_ext = file.filename.split(".")[-1]
-        file_name = f"{user_id}-avatar.{file_ext}"
->>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
         file_path = f"profile-pictures/{file_name}"
 
         # Debug: Log the file path
@@ -505,7 +495,6 @@ async def get_profile_picture(user_id: str = Query(...)):
         # Debug: Log the avatar URL from the database
         print("Avatar URL from database:", avatar_url)
 
-<<<<<<< HEAD
         # Return the avatar URL directly
         return JSONResponse(
             status_code=200,
@@ -553,25 +542,6 @@ async def get_user_details(user_id: str):
         return {"success": True, "user": user_details}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-=======
-        # Extract the file name from the URL
-        file_name = avatar_url.split("/")[-1]
-
-        # Debug: Log the file name to download
-        print("File name to download:", file_name)
-
-        # Fetch the image file from Supabase Storage
-        image_response = supabase.storage.from_("profile-pictures").download(file_name)
-
-        if not image_response:
-            raise HTTPException(status_code=404, detail="Profile picture not found in storage.")
-
-        # Return the image file as a response
-        return StreamingResponse(image_response, media_type="image/png")  # Adjust media_type as needed
-    except Exception as e:
-        print("Error in get_profile_picture:", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
->>>>>>> 4d832d9d4d99eee037352c2a2ea88646b03a3791
                  
 # def test_signup():
 #     email = "e@example.com"
