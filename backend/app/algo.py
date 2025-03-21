@@ -7,43 +7,46 @@ supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
 def is_in_analytics(device_id):
     # Check if the device is already in the analytics table
-    query = f"SELECT COUNT(*) FROM analytics WHERE device_id = {device_id} AND end_time IS NULL"
-    response = supabase.rpc("sql", {"query": query}).execute()
-    return response.data[0]['count'] > 0
+    response = supabase.table('analytics').select('*', count='exact').eq('device_id', device_id).is_('end_time', None).execute()
+    return response.count > 0
 
 def insert_new_analytics_entry(household_code, device_id, user_id, start_time):
-    # Insert a new row into the analytics table with start_time and date
-    query = f"""INSERT INTO analytics (household_code, device_id, user_id, start_time, date)
-    VALUES ({household_code}, {device_id}, {user_id}, '{start_time}', '{start_time.date()}')"""
-    supabase.rpc("sql", {"query": query}).execute()
+    # Convert datetime to string
+    start_time_str = start_time.isoformat()
+    # Insert a new row into the analytics table with start_time
+    response = supabase.table('analytics').insert({
+        'household_code': household_code,
+        'device_id': device_id,
+        'user_id': user_id,
+        'start_time': start_time_str}).execute()
 
 def update_device_wattage(device_id, power):
-    # Update the wattage in the analytics table for the given device
-    query = f"""
-    UPDATE analytics
-    SET wattage = wattage + {power}
-    WHERE device_id = {device_id} AND end_time IS NULL
-    """
-    supabase.rpc("sql", {"query": query}).execute()
+    # Get the current energy_consumed value
+    response = supabase.table('analytics').select('energy_consumed').eq('device_id', device_id).is_('end_time', None).execute()
+    current_energy_consumed = response.data[0]['energy_consumed']
+    # If current_energy_consumed is None, set it to 0
+    if current_energy_consumed is None:
+        current_energy_consumed = 0
+    # Update the energy_consumed in the analytics table for the given device
+    response = supabase.table('analytics').update({
+        'energy_consumed': current_energy_consumed + power}).eq('device_id', device_id).is_('end_time', None).execute()
 
 def get_off_devices_for_household(household_code):
     # Get the list of devices that have turned off for the given household
-    query = f"SELECT device_id FROM devices WHERE household_code = {household_code} AND isOn = FALSE"
-    response = supabase.rpc("sql", {"query": query}).execute()
-    return response.data
+    response = supabase.table('devices').select('device_id').eq('household_code', household_code).eq('isOn', False).execute()
+    return response.data if response.data else []
 
 def finalize_device_entry(device_id, end_time):
+    # Convert datetime to string
+    end_time_str = end_time.isoformat()
     # Finalize the entry in the analytics table by setting the end_time
-    query = f"""
-    UPDATE analytics
-    SET end_time = '{end_time}'
-    WHERE device_id = {device_id} AND end_time IS NULL"""
-    supabase.rpc("sql", {"query": query}).execute()
+    response = supabase.table('analytics').update({
+        'end_time': end_time_str
+    }).eq('device_id', device_id).is_('end_time', None).execute()
 
 def calculate_live_consumption(household_code):
     while True:
-        query = f"SELECT device_id, power, user_id FROM devices WHERE household_code = {household_code} AND isOn = TRUE"
-        response = supabase.rpc("sql", {"query": query}).execute()
+        response = supabase.table('devices').select('device_id', 'power', 'user_id').eq('household_code', household_code).eq('isOn', True).execute()
 
         # Fetch devices with matching household_code and isOn = TRUE
         for device in response.data:
@@ -75,4 +78,3 @@ def calculate_live_consumption(household_code):
 
         # Wait for 5 seconds before the next iteration
         time.sleep(5)
-

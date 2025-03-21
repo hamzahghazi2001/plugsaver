@@ -51,7 +51,7 @@ async def create_account_endpoint(request: RegisterRequest):
     verification_codes[request.email] = result["verification_code"]
     return {"success": True, "message": "Verification code sent."}
 
-#calculate_live_consumption("288LTIO")
+
 
 @app.post("/verify_registration")
 async def verify_registration_endpoint(request: VerifyRequest):
@@ -363,7 +363,9 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
     except Exception as e:
         # Log the full error for debugging
         print(f"Error toggling device: {str(e)}")  # Debug log
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")    
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")   
+
+calculate_live_consumption("288LTIO") 
 
 class EditDeviceRequest(BaseModel):
     device_id: int
