@@ -75,3 +75,4 @@ def calculate_live_consumption(household_code):
 
         # Wait for 5 seconds before the next iteration
         time.sleep(5)
+

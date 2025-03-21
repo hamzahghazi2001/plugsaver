@@ -51,6 +51,8 @@ async def create_account_endpoint(request: RegisterRequest):
     verification_codes[request.email] = result["verification_code"]
     return {"success": True, "message": "Verification code sent."}
 
+#calculate_live_consumption("288LTIO")
+
 @app.post("/verify_registration")
 async def verify_registration_endpoint(request: VerifyRequest):
     systemverifycode = verification_codes.get(request.email)
@@ -542,6 +544,26 @@ async def get_user_details(user_id: str):
         return {"success": True, "user": user_details}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/get_household_users")
+async def get_household_users(household_code: str = Query(...)):
+    try:
+        # Fetch all users in the household
+        result = supabase.from_("users").select("*").eq("household_code", household_code).execute()
+
+        if not result.data:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No users found in this household."}
+            )
+
+        # Return the list of users
+        return {"success": True, "users": result.data}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"An error occurred: {str(e)}"}
+        )
                  
 # def test_signup():
 #     email = "e@example.com"

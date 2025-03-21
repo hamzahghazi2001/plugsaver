@@ -65,6 +65,9 @@ export default function SettingsPage() {
 
   // State for household code
   const [householdCode, setHouseholdCode] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -88,6 +91,57 @@ export default function SettingsPage() {
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
   };
+
+  useEffect(() => {
+    const fetchHouseholdUsers = async () => {
+      const household_code = localStorage.getItem("household_code");
+      const user_id = localStorage.getItem("user_id");
+  
+      if (!household_code || !user_id) {
+        setError("Household code or user ID not found in localStorage");
+        setLoading(false);
+        return;
+      }
+  
+      try {
+        const response = await fetch(
+          `/api/auth/get_householdusers?household_code=${household_code}`
+        );
+        const data = await response.json();
+  
+        if (data.success) {
+          // Find the current user (manager or member)
+          const currentUser = data.users.find((user: any) => user.user_id.toString() === user_id.toString());
+  
+          if (currentUser) {
+            // Set the current user's details
+            setUser((prev) => ({
+              ...prev,
+              username: currentUser.name || prev.username,
+              email: currentUser.email || prev.email,
+              country: currentUser.country || prev.country,
+              birthdate: currentUser.dob || prev.birthdate,
+              role: currentUser.role || prev.role,
+            }));
+  
+            // Set the list of all household members (including the manager)
+            setUsers(data.users);
+          } else {
+            setError("Current user not found in household");
+          }
+        } else {
+          setError(data.message || "Failed to fetch household users");
+        }
+      } catch (error) {
+        console.error("Error fetching household users:", error);
+        setError("An error occurred while fetching household users");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchHouseholdUsers();
+  }, []);
 
   // Fetch username, country, email, and household code from localStorage on mount
   useEffect(() => {
@@ -583,12 +637,16 @@ export default function SettingsPage() {
     </>
   );
 
-  const MembersContent = () => (
-    <>
-      <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
-
-      <div className="space-y-6">
-        <div className="space-y-4">
+  const MembersContent = () => {
+    const loggedInUserId = localStorage.getItem("user_id"); // Get the logged-in user's ID
+    const isManager = user.role === "manager"; // Check if the logged-in user is a manager
+  
+    return (
+      <>
+        <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
+  
+        <div className="space-y-6">
+          {/* Current User (Logged-In User) */}
           <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -597,48 +655,73 @@ export default function SettingsPage() {
               </Avatar>
               <div>
                 <p className="text-sm font-medium">{user.username} (You)</p>
-                <p className="text-xs text-gray-500">Household Manager</p>
+                <p className="text-xs text-gray-500">{user.role}</p>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=AM" />
-                <AvatarFallback>AM</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium">Anna Mohamed</p>
-                <p className="text-xs text-gray-500">Member</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setManageMemberDialogOpen(true)}>
-              Manage
+  
+          {/* List of Other Household Members */}
+          {users.length > 0 ? (
+            users
+              .filter((member) => member.user_id.toString() !== loggedInUserId) // Filter out the logged-in user
+              .map((member) => (
+                <div
+                  key={member.user_id}
+                  className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{member.name}</p>
+                      <p className="text-xs text-gray-500">{member.role}</p>
+                    </div>
+                  </div>
+                  {/* Show "Manage" button only if the logged-in user is a manager */}
+                  {isManager && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setManageMemberDialogOpen(true)}
+                    >
+                      Manage
+                    </Button>
+                  )}
+                </div>
+              ))
+          ) : (
+            <p className="text-sm text-gray-500">No other members found.</p>
+          )}
+  
+          {/* Invite New Member Button (Only for Managers) */}
+          {isManager && (
+            <Button className="w-full flex items-center justify-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span>Invite New Member</span>
             </Button>
-          </div>
-        </div>
-
-        <Button className="w-full flex items-center justify-center gap-2">
-          <UserPlus className="w-4 h-4" />
-          <span>Invite New Member</span>
-        </Button>
-
-        <div className="space-y-2 pt-4 border-t">
-          <Label className="text-base">Pending Invitations</Label>
-          <div className="text-sm p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-            <p className="font-medium">sarah@example.com</p>
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-gray-500">Sent 2 days ago</p>
-              <Button variant="link" size="sm" className="h-auto p-0">
-                Resend
-              </Button>
+          )}
+  
+          {/* Pending Invitations (Only for Managers) */}
+          {isManager && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-base">Pending Invitations</Label>
+              <div className="text-sm p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <p className="font-medium">sarah@example.com</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500">Sent 2 days ago</p>
+                  <Button variant="link" size="sm" className="h-auto p-0">
+                    Resend
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   const MemberPermissionsContent = () => (
     <>
