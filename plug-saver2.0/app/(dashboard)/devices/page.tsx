@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Home,Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
+import { Home, Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
 import { motion } from "framer-motion"
 
 // New imports for dialogs, forms, tabs and alerts
@@ -196,7 +196,7 @@ export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
-  const [householdCode, setHouseholdCode] = useState<string | null> (null) // Hardcoded for now
+  const [householdCode, setHouseholdCode] = useState<string | null>(null) // Hardcoded for now
   const [roomName, setRoomName] = useState<string>("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [addDeviceDialogOpen, setAddDeviceDialogOpen] = useState<boolean>(false)
@@ -286,9 +286,9 @@ export default function DevicesPage() {
     } else if (storedEmail) {
       setHouseholdCode(storedEmail);
     }
-    
+
   }, [router]);
-  
+
 
 
   // Load rooms from localStorage on mount
@@ -301,137 +301,137 @@ export default function DevicesPage() {
       fetchData();
     }
   }, [userId, householdCode]);
-  
-    // Fetch rooms from the backend
-    const fetchRooms = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`);
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-  
-        const data = await response.json();
-  
-        if (data.success && data.rooms) {
-          // Ensure that each room has a room_id property
-          const roomsWithId = data.rooms.map((room: any) => {
-            if (!room.room_id) {
-              console.error("Room is missing room_id:", room);
-            }
-            return room;
-          });
 
-          setRooms(roomsWithId);
-          localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)));
-        } else {
-          console.error("Failed to fetch rooms:", data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching rooms:", error);
-      } finally {
-        setIsLoading(false);
+  // Fetch rooms from the backend
+  const fetchRooms = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
-  
-    // Fetch devices from the backend
-    const fetchDevices = async () => {
-      console.log("Fetching devices...");
-      try {
-        setIsLoading(true); // Ensure this is correctly set
-        const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-    
-        const data = await response.json();
-    
-        if (data.success && data.devices) {
-          // Transform backend device data to match our frontend Device interface
-          console.log("user id:", userId); // Log the fetched devices
-          const transformedDevices = await Promise.all(
-            data.devices.map(async (device: any) => {
-              let roomName = "Unknown Room"; // Default room name
-    
-              // Fetch the room name if room_id is available
-              console.log(" Room ID:", device.room_id); // Log the room ID
-              if (device.room_id) {
-                try {
-                  const roomResponse = await fetch(
-                    `/api/auth/getroomname?room_id=${encodeURIComponent(device.room_id)}`
-                  );
-                  const roomData = await roomResponse.json();
-                  if (roomData.success) {
-                    roomName = roomData.room_name;
-                  }
-                } catch (err) {
-                  console.error("Error fetching room name:", err);
-                }
-              }
-    
-              // Get the icon component based on the icon name or use a default
-              let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
-              if (typeof device.icon === "string") {
-                try {
-                  // Parse the JSON string to get the icon name
-                  const iconData = JSON.parse(device.icon);
-                  const iconName = iconData.name; // Extract the icon name
-    
-                  // Find the corresponding icon component from the deviceIcons array
-                  const iconObj = deviceIcons.find((di) => di.name === iconName);
-                  if (iconObj) {
-                    iconComponent = iconObj.icon; // Use the found icon
-                  }
-                } catch (error) {
-                  console.error("Error parsing icon JSON:", error);
-                }
-              }
-    
-              let activeDays = [];
-              if (typeof device.active_days === "string") {
-                activeDays = device.active_days.split(",");
-              } else if (Array.isArray(device.active_days)) {
-                activeDays = device.active_days;
-              } else {
-                activeDays = [];
-              }
-    
-              localStorage.setItem("device_id", device.device_id);
-              console.log("Room Name:", roomName); // Log the room name
-    
-              return {
-                id: device.device_id,
-                name: device.device_name,
-                room: roomName, // Use the fetched room name
-                icon: iconComponent,
-                power: device.power || "0W",
-                isOn: device.isOn === "TRUE" || device.isOn === true,
-                type: device.device_category,
-                needsRoomAssignment: device.room_id === null || device.room_id === undefined,
-                consumptionLimit: Number.parseInt(device.consumptionLimit) || 100,
-                schedule: {
-                  enabled: device.schedule?.enabled || false,
-                  startTime: device.active_time_start || "08:00",
-                  endTime: device.active_time_end || "22:00",
-                  days: activeDays,
-                },
-              };
-            })
-          );
-    
-          console.log("Transformed Devices:", transformedDevices); // Log transformed devices
-          setDevices(transformedDevices);
-        } else {
-          console.error("Failed to fetch devices:", data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching devices:", error);
-      } finally {
-        setIsLoading(false);
+
+      const data = await response.json();
+
+      if (data.success && data.rooms) {
+        // Ensure that each room has a room_id property
+        const roomsWithId = data.rooms.map((room: any) => {
+          if (!room.room_id) {
+            console.error("Room is missing room_id:", room);
+          }
+          return room;
+        });
+
+        setRooms(roomsWithId);
+        localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)));
+      } else {
+        console.error("Failed to fetch rooms:", data.message);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch devices from the backend
+  const fetchDevices = async () => {
+    console.log("Fetching devices...");
+    try {
+      setIsLoading(true); // Ensure this is correctly set
+      const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.devices) {
+        // Transform backend device data to match our frontend Device interface
+        console.log("user id:", userId); // Log the fetched devices
+        const transformedDevices = await Promise.all(
+          data.devices.map(async (device: any) => {
+            let roomName = "Unknown Room"; // Default room name
+
+            // Fetch the room name if room_id is available
+            console.log(" Room ID:", device.room_id); // Log the room ID
+            if (device.room_id) {
+              try {
+                const roomResponse = await fetch(
+                  `/api/auth/getroomname?room_id=${encodeURIComponent(device.room_id)}`
+                );
+                const roomData = await roomResponse.json();
+                if (roomData.success) {
+                  roomName = roomData.room_name;
+                }
+              } catch (err) {
+                console.error("Error fetching room name:", err);
+              }
+            }
+
+            // Get the icon component based on the icon name or use a default
+            let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
+            if (typeof device.icon === "string") {
+              try {
+                // Parse the JSON string to get the icon name
+                const iconData = JSON.parse(device.icon);
+                const iconName = iconData.name; // Extract the icon name
+
+                // Find the corresponding icon component from the deviceIcons array
+                const iconObj = deviceIcons.find((di) => di.name === iconName);
+                if (iconObj) {
+                  iconComponent = iconObj.icon; // Use the found icon
+                }
+              } catch (error) {
+                console.error("Error parsing icon JSON:", error);
+              }
+            }
+
+            let activeDays = [];
+            if (typeof device.active_days === "string") {
+              activeDays = device.active_days.split(",");
+            } else if (Array.isArray(device.active_days)) {
+              activeDays = device.active_days;
+            } else {
+              activeDays = [];
+            }
+
+            localStorage.setItem("device_id", device.device_id);
+            console.log("Room Name:", roomName); // Log the room name
+
+            return {
+              id: device.device_id,
+              name: device.device_name,
+              room: roomName, // Use the fetched room name
+              icon: iconComponent,
+              power: device.power || "0W",
+              isOn: device.isOn === "TRUE" || device.isOn === true,
+              type: device.device_category,
+              needsRoomAssignment: device.room_id === null || device.room_id === undefined,
+              consumptionLimit: Number.parseInt(device.consumptionLimit) || 100,
+              schedule: {
+                enabled: device.schedule?.enabled || false,
+                startTime: device.active_time_start || "08:00",
+                endTime: device.active_time_end || "22:00",
+                days: activeDays,
+              },
+            };
+          })
+        );
+
+        console.log("Transformed Devices:", transformedDevices); // Log transformed devices
+        setDevices(transformedDevices);
+      } else {
+        console.error("Failed to fetch devices:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Add a new device
   const addDevice = (newDevice: Device) => {
@@ -440,7 +440,7 @@ export default function DevicesPage() {
   useEffect(() => {
     const storedDeviceId = localStorage.getItem("device_id");
     if (storedDeviceId) {
-      setDeviceId(Number(storedDeviceId)); 
+      setDeviceId(Number(storedDeviceId));
     }
   }, []);
 
@@ -453,7 +453,7 @@ export default function DevicesPage() {
       console.log("Device ID:", deviceId);
       console.log("Household Code:", householdCode);
       console.log("User ID:", userId);
-  
+
 
       const response = await fetch(
         `/api/auth/devices`,
@@ -468,14 +468,14 @@ export default function DevicesPage() {
             user_id: userId,
           }),
         });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log("Backend response:", data);
-  
+
       if (data.success) {
         // Remove the device from our devices state
         setDevices(devices.filter((device) => device.id !== deviceId));
@@ -495,10 +495,10 @@ export default function DevicesPage() {
   const toggleDevice = async (deviceId: number) => {
     const device = devices.find((d) => d.id === deviceId);
     if (!device) return;
-  
+
     const newIsOn = !device.isOn;
     let newPower = device.power;
-  
+
     if (newIsOn) {
       // Define power ranges for different device icons (values in Watts)
       const iconPowerRanges: Record<string, [number, number]> = {
@@ -551,17 +551,17 @@ export default function DevicesPage() {
         "Power Tool": [100, 300],
         "Exercise Equipment": [100, 300],
       };
-    
+
       // Default range if icon is not recognized
       let minPower = 10;
       let maxPower = 200;
-    
+
       // Find the matching icon in the deviceIcons array
       const matchingIcon = deviceIcons.find((iconObj) => iconObj.icon === device.icon);
       if (matchingIcon && iconPowerRanges[matchingIcon.name]) {
         [minPower, maxPower] = iconPowerRanges[matchingIcon.name];
       }
-    
+
       // Generate a random power value within the determined range
       newPower = `${Math.floor(Math.random() * (maxPower - minPower + 1) + minPower)}W`;
     } else {
@@ -573,7 +573,7 @@ export default function DevicesPage() {
         d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d
       )
     );
-  
+
     try {
       // Send the updated state to the backend
       const response = await fetch(`/api/auth/toggledevice`, {
@@ -581,9 +581,9 @@ export default function DevicesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower,householdCode }), // Include power in the request
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower, householdCode }), // Include power in the request
       });
-  
+
       if (!response.ok) {
         // Revert the optimistic update if the request fails
         setDevices(
@@ -593,9 +593,9 @@ export default function DevicesPage() {
         );
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
-  
+
       if (!data.success) {
         // Revert the optimistic update if the request fails
         setDevices(
@@ -611,23 +611,23 @@ export default function DevicesPage() {
       setError("An error occurred while toggling the device");
     }
   };
-  
+
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!roomName) {
       setError("Please enter a room name");
       return;
     }
-  
+
     try {
       setIsLoading(true);
-  
+
       console.log("Sending POST request with the following data:");
       console.log("Room Name:", roomName);
       console.log("Household Code:", householdCode);
-  
+
       const response = await fetch("/api/auth/rooms", {
         method: "POST",
         headers: {
@@ -638,14 +638,14 @@ export default function DevicesPage() {
           household_code: householdCode,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log("Backend response:", data);
-  
+
       if (data.success) {
         // Add the new room to our rooms state
         const newRoom = {
@@ -653,16 +653,16 @@ export default function DevicesPage() {
           room_name: roomName,
           household_code: householdCode,
         };
-  
+
         setRooms([...rooms, newRoom]);
-  
+
         // Update localStorage
         localStorage.setItem(
           "plugSaver_rooms",
           JSON.stringify([...rooms, newRoom].map((r) => r.room_name))
         );
         localStorage.setItem("room_id", data.room_id);
-  
+
         // Reset the input field and close the dialog
         setRoomName("");
         setIsDialogOpen(false);
@@ -681,7 +681,7 @@ export default function DevicesPage() {
   useEffect(() => {
     const storedRoomId = localStorage.getItem("room_id");
     if (storedRoomId) {
-      setRoomId(Number(storedRoomId)); 
+      setRoomId(Number(storedRoomId));
     }
   }, []);
 
@@ -689,42 +689,42 @@ export default function DevicesPage() {
   const handleDeleteRoom = async (roomId: number, roomName: string) => {
     try {
       setIsLoading(true);
-  
-      const response = await fetch(`/api/auth/rooms`,{
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            room_id: roomId,
-            household_code: householdCode,
-            user_id: userId,
-          }),
-        });
-  
+
+      const response = await fetch(`/api/auth/rooms`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          room_id: roomId,
+          household_code: householdCode,
+          user_id: userId,
+        }),
+      });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
-  
+
       if (data.success) {
         // Remove the room from our rooms state
         setRooms(rooms.filter((r) => r.room_id !== roomId));
-  
+
         // Update localStorage
         localStorage.setItem(
           "plugSaver_rooms",
           JSON.stringify(rooms.filter((r) => r.room_id !== roomId).map((r) => r.room_name)),
         );
-  
+
         // Mark devices in this room as needing reassignment
         setDevices(
           devices.map((device) =>
             device.room === roomName ? { ...device, room: null, needsRoomAssignment: true } : device,
           ),
         );
-  
+
         // Reset selected room if it was the deleted one
         if (selectedRoom === roomName) {
           setSelectedRoom(null);
@@ -744,23 +744,23 @@ export default function DevicesPage() {
   // Assign a device to a room
   const assignDeviceToRoom = async (deviceId: number, roomName: string) => {
     console.log(`Attempting to assign device ${deviceId} to room ${roomName}`);  // Log the request
-  
+
     const device = devices.find((d) => d.id === deviceId);
     if (!device) {
       console.error(`Device ${deviceId} not found in the local state`);  // Log if device not found
       return;
     }
-  
+
     const room = rooms.find((r) => r.room_name === roomName);
     if (!room) {
       console.error(`Room ${roomName} not found in the local state`);  // Log if room not found
       return;
     }
-  
+
     // Optimistically update the UI
     console.log("Optimistically updating the UI...");  // Log optimistic update
     setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)));
-  
+
     try {
       console.log("Sending request to backend to assign device to room...");  // Log the API call
       const response = await fetch(`/api/auth/devices/${deviceId}`, {
@@ -772,9 +772,9 @@ export default function DevicesPage() {
           room_id: room.room_id,  // Use room.room_id
         }),
       });
-  
+
       console.log("Received response from backend:", response);  // Log the response
-  
+
       if (!response.ok) {
         console.error("Backend returned an error:", response.status, response.statusText);  // Log the error
         // Revert the optimistic update if the request fails
@@ -785,10 +785,10 @@ export default function DevicesPage() {
         );
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log("Backend response data:", data);  // Log the response data
-  
+
       if (!data.success) {
         console.error("Failed to assign device to room:", data.message);  // Log the failure
         // Revert the optimistic update if the request fails
@@ -902,7 +902,7 @@ export default function DevicesPage() {
             </div>
           )}
         </Card>
-          <section className="space-y-8 md:col-span-2 lg:col-span-3">
+        <section className="space-y-8 md:col-span-2 lg:col-span-3">
           {/* Devices Section - Updated Layout */}
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
             <div className="flex items-center justify-between mb-6">
@@ -912,15 +912,50 @@ export default function DevicesPage() {
                 </div>
                 <h2 className="text-xl font-semibold">Your Devices</h2>
               </div>
-              {rooms.length > 0 && (
-                <Button
-                  onClick={() => setAddDeviceDialogOpen(true)}
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add Device
-                </Button>
-              )}
+
+              <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={selectedRoom === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedRoom(null)}
+                    className={
+                      selectedRoom === null
+                        ? "bg-blue-500 hover:bg-blue-600"
+                        : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                    }
+                    disabled={rooms.length === 0}
+                  >
+                    All
+                  </Button>
+                  {rooms.map((room) => (
+                    <Button
+                      key={room.room_id}
+                      variant={selectedRoom === room.room_name ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedRoom(room.room_name)}
+                      className={
+                        selectedRoom === room.room_name
+                          ? "bg-blue-500 hover:bg-blue-600"
+                          : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
+                      }
+                    >
+                      {room.room_name}
+                    </Button>
+                  ))}
+                </div>
+
+                {rooms.length > 0 && (
+                  <Button
+                    onClick={() => setAddDeviceDialogOpen(true)}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Add Device
+                  </Button>
+                )}
+              </div>
+
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1036,18 +1071,23 @@ export default function DevicesPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: devices.length * 0.1 }}
+                  transition={{ duration: 0.3, delay: filteredDevices.length * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <Card
-                    className="gradient-card p-4 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20"
+                    className="gradient-card p-5 cursor-pointer hover:bg-white/20 transition-all duration-300 border border-dashed border-white/20 flex items-center justify-center"
                     onClick={() => setAddDeviceDialogOpen(true)}
                   >
-                    <div className="flex items-center gap-2">
-                      <Plus className="w-5 h-5" />
-                      <span>Add Device</span>
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <Plus className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <span className="font-medium">Add New Device</span>
                     </div>
                   </Card>
                 </motion.div>
+
               ) : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1582,10 +1622,10 @@ function AddDeviceDialog({
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${index === currentStep
-                    ? "bg-pink-500 text-white"
-                    : index < currentStep
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-500"
+                  ? "bg-pink-500 text-white"
+                  : index < currentStep
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-500"
                   }`}
               >
                 {index < currentStep ? index + 1 : index + 1}
@@ -1634,8 +1674,8 @@ function AddDeviceDialog({
                           transition={{ duration: 0.3 }}
                           onClick={() => device.status === "Available" && selectDevice(device)}
                           className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${device.status === "Paired"
-                              ? "border-green-500 bg-green-50/10 cursor-not-allowed"
-                              : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
+                            ? "border-green-500 bg-green-50/10 cursor-not-allowed"
+                            : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
                             }`}
                         >
                           <div className="flex items-center gap-3">
@@ -1827,8 +1867,8 @@ function AddDeviceDialog({
                               key={iconObj.name}
                               onClick={() => field.onChange(iconObj.name)}
                               className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${field.value === iconObj.name
-                                  ? "bg-blue-900/70 border border-blue-400 text-white"
-                                  : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
+                                ? "bg-blue-900/70 border border-blue-400 text-white"
+                                : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
                                 }`}
                             >
                               <IconComponent className="w-6 h-6 mb-1 text-white" />
@@ -1971,8 +2011,8 @@ function AddDeviceDialog({
                               <div
                                 key={day}
                                 className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-200/20 text-gray-500"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-200/20 text-gray-500"
                                   }`}
                                 onClick={() => {
                                   const updatedDays = field.value?.includes(dayLower)
@@ -2301,8 +2341,8 @@ function EditDeviceDialog({
                             <div
                               key={day}
                               className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-gray-200/20 text-gray-500"
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-200/20 text-gray-500"
                                 }`}
                               onClick={() => {
                                 const updatedDays = field.value?.includes(dayLower)
