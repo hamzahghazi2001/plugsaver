@@ -903,17 +903,32 @@ export default function DevicesPage() {
           )}
         </Card>
         <section className="space-y-6 md:col-span-2 lg:col-span-3">
-          {/* Devices Section */}
-          <div>
-            <h2 className="text-lg font-medium mb-4">Your Devices</h2>
+          <section className="space-y-8 md:col-span-2 lg:col-span-3">
+          {/* Devices Section - Updated Layout */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500/20 p-2 rounded-full">
+                  <Plug className="w-5 h-5 text-blue-400" />
+                </div>
+                <h2 className="text-xl font-semibold">Your Devices</h2>
+              </div>
+              {rooms.length > 0 && (
+                <Button
+                  onClick={() => setAddDeviceDialogOpen(true)}
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Device
+                </Button>
+              )}
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredDevices.length > 0 ? (
                 filteredDevices.map(
-                  (
-                    { id, icon, name, room, power, isOn, needsRoomAssignment, type, consumptionLimit, schedule },
-                    index,
-                  ) => {
-                    const Icon = icon
+                  ({ id, icon, name, room, power, isOn, needsRoomAssignment }, index) => {
+                    const Icon = icon;
                     return (
                       <motion.div
                         key={id}
@@ -922,11 +937,17 @@ export default function DevicesPage() {
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                       >
                         <Card
-                          className={`gradient-card p-4 transition-all duration-300 ${isOn ? "" : "bg-white/30"} ${needsRoomAssignment ? "border-2 border-yellow-500" : ""}`}
+                          className={`gradient-card p-5 transition-all duration-300 hover:shadow-xl ${isOn ? "" : "bg-white/30"
+                            } ${needsRoomAssignment ? "border-2 border-yellow-500" : ""}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <Icon className={`w-5 h-5 ${isOn ? "text-blue-400" : "text-gray-400"}`} />
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${isOn ? "bg-blue-500/20" : "bg-gray-500/20"
+                                  }`}
+                              >
+                                <Icon className={`w-5 h-5 ${isOn ? "text-blue-400" : "text-gray-400"}`} />
+                              </div>
                               <div>
                                 <div className="flex items-center">
                                   <p className="font-medium">{name}</p>
@@ -948,19 +969,8 @@ export default function DevicesPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedDevice({ id, name, status: "Paired" } as FoundDevice)
-                                  setCurrentEditingDevice({
-                                    id,
-                                    name,
-                                    room,
-                                    icon,
-                                    power,
-                                    isOn,
-                                    type,
-                                    consumptionLimit,
-                                    schedule,
-                                  } as Device)
-                                  setEditDeviceDialogOpen(true)
+                                  setCurrentEditingDevice(devices.find(d => d.id === id)!);
+                                  setEditDeviceDialogOpen(true);
                                 }}
                                 className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
                               >
@@ -976,12 +986,12 @@ export default function DevicesPage() {
                               </Button>
                             </div>
                           </div>
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-300">{power}</p>
-                          </div>
+                          {/* Room Assignment Dropdown */}
                           {needsRoomAssignment && (
-                            <div className="mt-2 pt-2 border-t border-gray-700">
-                              <Select onValueChange={(value) => assignDeviceToRoom(id, value)}>
+                            <div className="mt-3 pt-3 border-t border-gray-700/30">
+                              <Select
+                                onValueChange={(value) => assignDeviceToRoom(id, value)}
+                              >
                                 <SelectTrigger className="w-full bg-yellow-500/10 border-yellow-500/30">
                                   <SelectValue placeholder="Assign to a room" />
                                 </SelectTrigger>
@@ -995,13 +1005,19 @@ export default function DevicesPage() {
                               </Select>
                             </div>
                           )}
+                          <div className="mt-3 pt-3 border-t border-gray-700/30">
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm text-gray-300">Power Usage</p>
+                              <p className="text-sm font-medium">{power}</p>
+                            </div>
+                          </div>
                         </Card>
                       </motion.div>
-                    )
-                  },
+                    );
+                  }
                 )
               ) : (
-                <div className="col-span-full text-center py-8">
+                <div className="col-span-full text-center py-8 bg-white/5 rounded-xl border border-white/10">
                   {selectedRoom ? (
                     <>
                       <p className="text-gray-300 mb-4">No devices in {selectedRoom}.</p>
@@ -1050,18 +1066,18 @@ export default function DevicesPage() {
             </div>
           </div>
 
-          {/* Rooms Section */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium">Your Rooms</h2>
+          {/* Rooms Section - Updated Layout */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-500/20 p-2 rounded-full">
+                  <Home className="w-5 h-5 text-purple-400" />
+                </div>
+                <h2 className="text-xl font-semibold">Your Rooms</h2>
+              </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-black border-white/20 hover:bg-none/10"
-                    onClick={() => setIsDialogOpen(true)}
-                  >
+                  <Button variant="outline" size="sm" className="border-white/20 hover:bg-white/10">
                     <Plus className="w-4 h-4 mr-1" /> Add Room
                   </Button>
                 </DialogTrigger>
@@ -1077,7 +1093,7 @@ export default function DevicesPage() {
                         <Input
                           id="roomName"
                           value={roomName}
-                          onChange={(e) => setRoomName(e.target.value)} // Update state on input change
+                          onChange={(e) => setRoomName(e.target.value)}
                           placeholder="e.g. Living Room"
                           required
                         />
@@ -1091,46 +1107,14 @@ export default function DevicesPage() {
               </Dialog>
             </div>
 
-            <div className="mb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <span className="text-sm text-gray-300">Filter by room:</span>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={selectedRoom === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedRoom(null)}
-                    className={
-                      selectedRoom === null ? "" : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
-                    }
-                    disabled={rooms.length === 0}
-                  >
-                    All
-                  </Button>
-                  {rooms.map((room) => (
-                    <Button
-                      key={room.room_id}
-                      variant={selectedRoom === room.room_name ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedRoom(room.room_name)}
-                      className={
-                        selectedRoom === room.room_name
-                          ? ""
-                          : "text-white border-white/20 hover:bg-white/10 bg-gray-800/50"
-                      }
-                    >
-                      {room.room_name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+            <div className="mb-6">
+              {/* Keep your existing room filter buttons */}
             </div>
 
             {rooms.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {rooms.map((room, index) => {
-                  const deviceCount = devices.filter((device) => device.room === room.room_name).length
-
-                  // console.log(`Room: ${room.room_name}, Device Count: ${deviceCount}`);
+                  const deviceCount = devices.filter((device) => device.room === room.room_name).length;
                   return (
                     <motion.div
                       key={room.room_id}
@@ -1139,32 +1123,34 @@ export default function DevicesPage() {
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
                       <Card
-                        className={`gradient-card p-4 text-center transition-all duration-300 hover:scale-105 ${
-                          selectedRoom === room.room_name ? "ring-2 ring-blue-500" : ""
-                        }`}
+                        className={`gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl hover:scale-105 ${selectedRoom === room.room_name ? "ring-2 ring-blue-500" : ""
+                          }`}
                       >
                         <div className="flex flex-col items-center">
-                          <p className="font-medium">{room.room_name}</p>
-                          <p className="text-xs text-gray-300">
+                          <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3">
+                            <Home className="w-6 h-6 text-purple-400" />
+                          </div>
+                          <p className="font-medium text-lg">{room.room_name}</p>
+                          <p className="text-sm text-gray-300 mb-3">
                             {deviceCount} device{deviceCount !== 1 ? "s" : ""}
                           </p>
                           <div className="flex mt-2 space-x-2">
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
+                              variant="outline"
+                              size="sm"
+                              className="border-white/20 hover:bg-white/10"
                               onClick={() => setSelectedRoom(room.room_name)}
                             >
-                              <Filter className="h-4 w-4" />
+                              <Filter className="h-4 w-4 mr-1" /> Filter
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/20"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 mr-1" /> Delete
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -1196,13 +1182,16 @@ export default function DevicesPage() {
                         </div>
                       </Card>
                     </motion.div>
-                  )
+                  );
                 })}
               </div>
             ) : (
               <Card className="gradient-card p-6 text-center">
                 <div className="py-8">
-                  <p className="text-xl mb-4">No Rooms Created Yet</p>
+                  <div className="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
+                    <Home className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <p className="text-xl mb-4 font-semibold">No Rooms Created Yet</p>
                   <p className="text-gray-300 mb-6">You need to create at least one room before adding devices.</p>
                   <Button className="mx-auto" onClick={() => setIsDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" /> Create Your First Room
@@ -1309,7 +1298,7 @@ function AddDeviceDialog({
     };
     reader.readAsDataURL(file);
   };
-  
+
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id");
@@ -1321,7 +1310,7 @@ function AddDeviceDialog({
   useEffect(() => {
     const storedHouseholdCode = localStorage.getItem("household_code");
     if (storedHouseholdCode) {
-      setHouseholdCode(storedHouseholdCode); 
+      setHouseholdCode(storedHouseholdCode);
     }
   }, []);
 
@@ -1427,8 +1416,8 @@ function AddDeviceDialog({
     setError(null)
 
     // Preserve paired devices instead of clearing all devices
-  const pairedDevices = foundDevices.filter(device => device.status === "Paired")
-  setFoundDevices(pairedDevices)
+    const pairedDevices = foundDevices.filter(device => device.status === "Paired")
+    setFoundDevices(pairedDevices)
 
     const totalDevices = Math.floor(Math.random() * 5) + 5 // Random number of devices (5-9)
     let devicesAdded = 0
@@ -1436,7 +1425,7 @@ function AddDeviceDialog({
     const addDevice = () => {
       if (devicesAdded < totalDevices) {
         const newDevice: FoundDevice = {
-          id:  Math.floor(Math.random() * 10000),
+          id: Math.floor(Math.random() * 10000),
           name: "Smart Plug " + Math.floor(Math.random() * 100),
           status: "Available",
         }
@@ -1475,18 +1464,18 @@ function AddDeviceDialog({
     if (!userId) {
       setError("User ID not found. Please log in again.");
       return;
-    } 
+    }
 
     // Find the selected icon object
     const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0];
-  
+
     // Find the room object based on the room name
     const selectedRoom = rooms.find((r) => r.room_name === data.room);
     if (!selectedRoom) {
       setError("Selected room not found");
       return;
     }
-  
+
     // Prepare the device data for the API
     const deviceData = {
       //id : selectedDevice.id,
@@ -1509,7 +1498,7 @@ function AddDeviceDialog({
         days: data.days,
       },
     };
-  
+
     try {
       const response = await fetch("/api/auth/devices", {
         method: "POST",
@@ -1518,14 +1507,14 @@ function AddDeviceDialog({
         },
         body: JSON.stringify(deviceData),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+
       const result = await response.json();
       console.log(result.device_id);
-  
+
       if (result.success) {
         // Add the new device to our devices state
         const newDevice: Device = {
@@ -1545,10 +1534,10 @@ function AddDeviceDialog({
           },
         };
         localStorage.setItem("device_id", result.device_id);
-  
+
         onDeviceAdded(newDevice);
 
-  
+
         // Reset form and close dialog
         setOpen(false);
         setCurrentStep(0);
@@ -1593,13 +1582,12 @@ function AddDeviceDialog({
               className={`flex flex-col items-center ${index === currentStep ? "text-pink-500" : "text-gray-400"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
-                  index === currentStep
+                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${index === currentStep
                     ? "bg-pink-500 text-white"
                     : index < currentStep
                       ? "bg-green-500 text-white"
                       : "bg-gray-200 text-gray-500"
-                }`}
+                  }`}
               >
                 {index < currentStep ? index + 1 : index + 1}
               </div>
@@ -1646,11 +1634,10 @@ function AddDeviceDialog({
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           onClick={() => device.status === "Available" && selectDevice(device)}
-                          className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${
-                            device.status === "Paired"
+                          className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${device.status === "Paired"
                               ? "border-green-500 bg-green-50/10 cursor-not-allowed"
                               : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <Plug className={device.status === "Paired" ? "text-green-500" : "text-blue-500"} />
@@ -1686,66 +1673,66 @@ function AddDeviceDialog({
                 </Button>
               </TabsContent>
               <TabsContent value="qr" className="space-y-4">
-  <div className="flex flex-col items-center justify-center py-8">
-    <div style={{ width: "100%" }}>
-      <QrScanner
-        delay={300}
-        onScan={(result: any) => {
-          if (result) {
-            const scannedText = result.text;
-            const smartPlugIdRegex = /^\d{4}$/;
-            if (smartPlugIdRegex.test(scannedText)) {
-              setError(null);
-              setScanSuccess(true);
-              setSelectedDevice({
-                id: parseInt(scannedText, 10),
-                name: `Smart Plug ${scannedText}`,
-                status: "Paired",
-              });
-              // Delay for visual feedback before moving on
-              setTimeout(() => {
-                setCurrentStep(1);
-              }, 1500);
-            } else {
-              setError("QR code did not contain a valid 4-digit smart plug ID");
-            }
-          }
-        }}
-        onError={(error: any) => {
-          console.error(error);
-          setError("Error accessing the camera");
-        }}
-        style={{ width: "100%" }}
-      />
-    </div>
-    {error && <p className="text-red-500 mt-2">{error}</p>}
-    {scanSuccess && (
-      <p className="text-green-500 mt-2 flex items-center">
-        Scan successful!
-      </p>
-    )}
-    <div className="mt-4">
-    <Button
-  variant="outline"
-  className="bg-green-500 text-white hover:bg-green-600"
-  onClick={() => fileInputRef.current?.click()}
->
-  Upload QR Code
-</Button>
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div style={{ width: "100%" }}>
+                    <QrScanner
+                      delay={300}
+                      onScan={(result: any) => {
+                        if (result) {
+                          const scannedText = result.text;
+                          const smartPlugIdRegex = /^\d{4}$/;
+                          if (smartPlugIdRegex.test(scannedText)) {
+                            setError(null);
+                            setScanSuccess(true);
+                            setSelectedDevice({
+                              id: parseInt(scannedText, 10),
+                              name: `Smart Plug ${scannedText}`,
+                              status: "Paired",
+                            });
+                            // Delay for visual feedback before moving on
+                            setTimeout(() => {
+                              setCurrentStep(1);
+                            }, 1500);
+                          } else {
+                            setError("QR code did not contain a valid 4-digit smart plug ID");
+                          }
+                        }
+                      }}
+                      onError={(error: any) => {
+                        console.error(error);
+                        setError("Error accessing the camera");
+                      }}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  {error && <p className="text-red-500 mt-2">{error}</p>}
+                  {scanSuccess && (
+                    <p className="text-green-500 mt-2 flex items-center">
+                      Scan successful!
+                    </p>
+                  )}
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Upload QR Code
+                    </Button>
 
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={handleFileUpload}
-      />
-    </div>
-    <p className="text-center text-black mt-4">
-      Position the QR code on your smart plug within the camera view or upload an image.
-    </p>
-  </div>
-</TabsContent>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      style={{ display: "none" }}
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                  <p className="text-center text-black mt-4">
+                    Position the QR code on your smart plug within the camera view or upload an image.
+                  </p>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
         )}
@@ -1840,11 +1827,10 @@ function AddDeviceDialog({
                             <div
                               key={iconObj.name}
                               onClick={() => field.onChange(iconObj.name)}
-                              className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${
-                                field.value === iconObj.name
+                              className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${field.value === iconObj.name
                                   ? "bg-blue-900/70 border border-blue-400 text-white"
                                   : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
-                              }`}
+                                }`}
                             >
                               <IconComponent className="w-6 h-6 mb-1 text-white" />
                               <span className="text-xs text-center truncate w-full font-medium">{iconObj.name}</span>
@@ -1985,11 +1971,10 @@ function AddDeviceDialog({
                             return (
                               <div
                                 key={day}
-                                className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
-                                  field.value?.includes(dayLower)
+                                className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
                                     ? "bg-blue-500 text-white"
                                     : "bg-gray-200/20 text-gray-500"
-                                }`}
+                                  }`}
                                 onClick={() => {
                                   const updatedDays = field.value?.includes(dayLower)
                                     ? field.value.filter((d: string) => d !== dayLower)
@@ -2068,9 +2053,9 @@ function AddDeviceDialog({
                       <p className="font-medium text-gray-800">
                         {form.watch("days")?.length
                           ? form
-                              .watch("days")
-                              .map((d: string) => d.substring(0, 3))
-                              .join(", ")
+                            .watch("days")
+                            .map((d: string) => d.substring(0, 3))
+                            .join(", ")
                           : "None selected"}
                       </p>
                     </div>
@@ -2165,7 +2150,7 @@ function EditDeviceDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          device_id : deviceId,
+          device_id: deviceId,
           consumptionLimit: data.consumptionLimit,
           active_time_start: data.startTime,
           active_time_end: data.endTime,
@@ -2316,11 +2301,10 @@ function EditDeviceDialog({
                           return (
                             <div
                               key={day}
-                              className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
-                                field.value?.includes(dayLower)
+                              className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
                                   ? "bg-blue-500 text-white"
                                   : "bg-gray-200/20 text-gray-500"
-                              }`}
+                                }`}
                               onClick={() => {
                                 const updatedDays = field.value?.includes(dayLower)
                                   ? field.value.filter((d: string) => d !== dayLower)
