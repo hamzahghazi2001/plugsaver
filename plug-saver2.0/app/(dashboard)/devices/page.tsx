@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Home, Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
+import { Home, Zap, Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
 import { motion } from "framer-motion"
 
 // New imports for dialogs, forms, tabs and alerts
@@ -1052,75 +1052,102 @@ export default function DevicesPage() {
               </div>
 
             </div>
-
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredDevices.length > 0 ? (
-                filteredDevices.map(
-                  ({ id, icon, name, room, power, isOn, needsRoomAssignment }, index) => {
-                    const Icon = icon;
-                    return (
-                      <motion.div
-                        key={id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                filteredDevices.map(({ id, icon, name, room, power, isOn, needsRoomAssignment }, index) => {
+                  const Icon = icon
+                  return (
+                    <motion.div
+                      key={id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <Card
+                        className={`gradient-card p-0 overflow-hidden transition-all duration-300 hover:shadow-xl group ${needsRoomAssignment ? "border-2 border-yellow-500" : ""
+                          }`}
                       >
-                        <Card
-                          className={`gradient-card p-5 transition-all duration-300 hover:shadow-xl ${isOn ? "" : "bg-white/30"
-                            } ${needsRoomAssignment ? "border-2 border-yellow-500" : ""}`}
+                        {/* Card Header with status indicator */}
+                        <div
+                          className={`p-4 ${isOn ? "bg-white-500/20" : "bg-gray-700/30"} transition-colors duration-300`}
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center ${isOn ? "bg-blue-500/20" : "bg-gray-500/20"
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${isOn ? "bg-blue-500/40" : "bg-gray-600/40"
                                   }`}
                               >
-                                <Icon className={`w-5 h-5 ${isOn ? "text-blue-400" : "text-gray-400"}`} />
+                                <Icon className={`w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`} />
                               </div>
                               <div>
-                                <div className="flex items-center">
-                                  <p className="font-medium">{name}</p>
-                                  {needsRoomAssignment && (
-                                    <Badge
-                                      variant="outline"
-                                      className="ml-2 bg-yellow-500/20 text-yellow-300 border-yellow-500"
-                                    >
-                                      Needs Room
-                                    </Badge>
-                                  )}
+                                <h3 className="font-bold text-lg">{name}</h3>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${isOn ? "bg-green-400 animate-pulse" : "bg-gray-500"}`}
+                                  ></div>
+                                  <p className="text-xs text-black-300">{isOn ? "Active" : "Inactive"}</p>
                                 </div>
-                                <p className="text-sm text-gray-300">{room || "No Room Assigned"}</p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Switch checked={isOn} onCheckedChange={() => toggleDevice(id)} />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setCurrentEditingDevice(devices.find(d => d.id === id)!);
-                                  setEditDeviceDialogOpen(true);
-                                }}
-                                className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                              >
-                                <Settings className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeDevice(id)}
-                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <Switch
+                              checked={isOn}
+                              onCheckedChange={() => toggleDevice(id)}
+                              className={isOn ? "bg-blue-600" : ""}
+                            />
                           </div>
-                          {/* Room Assignment Dropdown */}
-                          {needsRoomAssignment && (
-                            <div className="mt-3 pt-3 border-t border-gray-700/30">
-                              <Select
-                                onValueChange={(value) => assignDeviceToRoom(id, value)}
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="p-4 space-y-3">
+                          {/* Room information */}
+                          <div className="flex items-center gap-2 text-sm">
+                            <Home className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-300">{room || "No Room Assigned"}</span>
+                            {needsRoomAssignment && (
+                              <Badge
+                                variant="outline"
+                                className="ml-auto bg-yellow-500/20 text-yellow-300 border-yellow-500"
                               >
+                                Needs Room
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Power usage */}
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-700/30">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-yellow-400" />
+                              <span className="text-sm">Power Usage</span>
+                            </div>
+                            <span className="text-sm font-medium">{power}</span>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex justify-end gap-1 pt-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setCurrentEditingDevice(devices.find((d) => d.id === id)!)
+                                setEditDeviceDialogOpen(true)
+                              }}
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded-full w-8 h-8 p-0"
+                            >
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDevice(id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-full w-8 h-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          {needsRoomAssignment && (
+                            <div className="mt-2 pt-2 border-t border-gray-700/30">
+                              <Select onValueChange={(value) => assignDeviceToRoom(id, value)}>
                                 <SelectTrigger className="w-full bg-yellow-500/10 border-yellow-500/30">
                                   <SelectValue placeholder="Assign to a room" />
                                 </SelectTrigger>
@@ -1134,17 +1161,12 @@ export default function DevicesPage() {
                               </Select>
                             </div>
                           )}
-                          <div className="mt-3 pt-3 border-t border-gray-700/30">
-                            <div className="flex justify-between items-center">
-                              <p className="text-sm text-gray-300">Power Usage</p>
-                              <p className="text-sm font-medium">{power}</p>
-                            </div>
-                          </div>
-                        </Card>
-                      </motion.div>
-                    );
-                  }
-                )
+
+                        </div>
+                      </Card>
+                    </motion.div>
+                  )
+                })
               ) : (
                 <div className="col-span-full text-center py-8 bg-white/5 rounded-xl border border-white/10">
                   {selectedRoom ? (
@@ -1171,7 +1193,7 @@ export default function DevicesPage() {
                   whileHover={{ scale: 1.05 }}
                 >
                   <Card
-                    className="gradient-card p-5 cursor-pointer transition-all duration-300 border border-dashed border-white/20 hover:shadow-2xl group"
+                    className="gradient-card p-5 h-64 cursor-pointer transition-all duration-300 border border-dashed border-white/20 hover:shadow-2xl group"
                     onClick={() => setAddDeviceDialogOpen(true)}
                   >
                     <div className="flex flex-col items-center justify-center h-full py-8">
@@ -1275,21 +1297,21 @@ export default function DevicesPage() {
                     >
                       <Card
                         className={`gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl ${selectedRoom === room.room_name
-                            ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-900/30 to-blue-800/10"
-                            : "bg-gradient-to-br from-purple-900/20 to-purple-800/10"
+                          ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-900/30 to-blue-800/10"
+                          : "bg-gradient-to-br from-white-900/20 to-white-800/10"
                           }`}
                       >
                         <div className="flex flex-col items-center">
                           <div
                             className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner ${selectedRoom === room.room_name
-                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30"
-                                : "bg-gradient-to-br from-purple-500/20 to-purple-600/20"
+                              ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30"
+                              : "bg-gradient-to-br from-purple-500/20 to-purple-600/20"
                               }`}
                           >
                             <Home
                               className={`w-7 h-7 ${selectedRoom === room.room_name
-                                  ? "text-blue-300"
-                                  : "text-purple-300"
+                                ? "text-blue-300"
+                                : "text-white-300"
                                 }`}
                             />
                           </div>
@@ -1299,10 +1321,10 @@ export default function DevicesPage() {
                               {deviceCount} device{deviceCount !== 1 ? "s" : ""}
                             </Badge>
                             {activeDevices > 0 && (
-  <Badge className="bg-green-500/50 text-white border-green-500/70">
-    {activeDevices} active
-  </Badge>
-)}
+                              <Badge className="bg-green-500/50 text-white border-green-500/70">
+                                {activeDevices} active
+                              </Badge>
+                            )}
 
                           </div>
                           <div className="flex gap-2 w-full justify-center">
