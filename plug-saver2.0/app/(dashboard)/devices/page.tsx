@@ -270,6 +270,44 @@ export default function DevicesPage() {
     },
   })
 
+  // Add this CSS animation for subtle pulse effect
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+    @keyframes pulse-subtle {
+      0% { opacity: 1; }
+      50% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+  `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Add this CSS animation for slow pulse effect
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+    @keyframes pulse-slow {
+      0% { opacity: 0.5; }
+      50% { opacity: 0.3; }
+      100% { opacity: 0.5; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 4s infinite ease-in-out;
+    }
+  `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     const storedUserId = localStorage.getItem("user_id");
     const storedEmail = localStorage.getItem("email");
@@ -845,12 +883,31 @@ export default function DevicesPage() {
         </Alert>
       )}
 
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10 transition-all duration-300"
+        style={{
+          perspective: "1000px",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {/* Glass-like container effect */}
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-xl -z-10 border border-white/10 shadow-xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-20 rounded-xl"></div>
         {/* Energy Consumption Card */}
-        <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative">
-          {/* Decorative background element */}
-          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl"></div>
+        <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative bg-white border-blue-500/20 shadow-lg">
+          {/* Enhanced decorative background elements */}
+          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl animate-pulse-slow"></div>
           <div className="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl"></div>
+          <div className="absolute right-1/4 bottom-0 w-24 h-24 rounded-full bg-cyan-500/5 blur-xl"></div>
+
+          {/* Add a subtle pattern overlay */}
+          <div
+            className="absolute inset-0 opacity-5 mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fillOpacity='1' fillRule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E\")",
+            }}
+          ></div>
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
@@ -885,22 +942,53 @@ export default function DevicesPage() {
                 </div>
               </div>
             </div>
+
           </div>
 
-          {totalConsumption > 0 && (
+          {totalConsumption > 0 ? (
             <div className="mt-6">
-              <div className="flex justify-between mb-1">
-                <p className="text-xs text-gray-400">Usage Level</p>
-                <p className="text-xs font-medium text-blue-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
+              <div className="flex justify-between mb-2">
+                <p className="text-xs text-gray-400 font-medium">Usage Level</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs font-medium text-blue-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
+                  {Math.min(Math.round(totalConsumption / 10), 100) > 70 && (
+                    <span className="text-xs text-yellow-300 bg-yellow-500/20 px-1.5 py-0.5 rounded-full">High</span>
+                  )}
+                </div>
               </div>
-              <div className="h-2.5 bg-gray-700/50 rounded-full overflow-hidden">
+              <div className="h-3 bg-gray-700/50 rounded-full overflow-hidden p-0.5 backdrop-blur-sm border border-white/5">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-in-out"
+                  className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400 rounded-full transition-all duration-500 ease-in-out relative"
                   style={{ width: `${Math.min(totalConsumption / 10, 100)}%` }}
-                />
+                >
+                  <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse-subtle"></div>
+                </div>
+              </div>
+
+              <div className="flex justify-between mt-2 text-xs text-gray-400">
+                <span>0W</span>
+                <span>250W</span>
+                <span>500W</span>
+                <span>750W</span>
+                <span>1000W</span>
               </div>
             </div>
+          ) : (
+            <div className="mt-6 bg-white/5 rounded-xl p-4 border border-white/10 text-center">
+              <p className="text-gray-300 mb-1">No active devices detected</p>
+              <p className="text-xs text-gray-400">Turn on devices to monitor energy consumption</p>
+            </div>
           )}
+          {/* Add a tip section at the bottom */}
+          <div className="mt-4 pt-4 border-t border-white/10 flex items-start gap-2">
+            <div className="bg-blue-500/20 p-1.5 rounded-lg">
+              <Lightbulb className="w-4 h-4 text-blue-300" />
+            </div>
+            <p className="text-xs text-gray-300">
+              <span className="text-blue-300 font-medium">Energy Tip:</span> Devices in standby mode can consume up to 10% of your home's energy. Consider using smart plugs to completely turn off devices when not in use.
+            </p>
+          </div>
+
         </Card>
         <section className="space-y-8 md:col-span-2 lg:col-span-3">
           {/* Devices Section - Updated Layout */}
@@ -1081,8 +1169,9 @@ export default function DevicesPage() {
                   >
                     <div className="flex flex-col items-center gap-3 py-4">
                       <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <Plus className="w-6 h-6 text-blue-400" />
+                        <Plus className="w-6 h-6 text-blue-400 group-hover:rotate-90 transition-transform duration-300" />
                       </div>
+
                       <span className="font-medium">Add New Device</span>
                     </div>
                   </Card>
