@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabaseClient";
 
 // List of all countries
 const countries = [
@@ -44,6 +45,33 @@ export default function RoleSelectionPage() {
   const [username, setUsername] = useState("Username");
   const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(""); // New state for date of birth
+
+  // Fetch user info on component mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (email) {
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('username, country, dob')
+            .eq('email', email)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setUsername(data.username);
+            setCountry(data.country || "");
+            setDateOfBirth(data.dob || "");
+          }
+        } catch (error) {
+          console.error("Error fetching user info:", error);
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, [email]);
 
   // Redirect if email is missing
   useEffect(() => {
@@ -180,8 +208,38 @@ export default function RoleSelectionPage() {
     }
   };
 
-  const handleConfirmProfile = () => {
-    router.push("/devices");
+  const updateUsername = async (newUsername: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ username: newUsername })
+        .eq('email', email);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating username:", error);
+    }
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setUsername(newUsername);
+    updateUsername(newUsername);
+  };
+
+  const handleConfirmProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ country, dob: dateOfBirth })
+        .eq('email', email);
+
+      if (error) throw error;
+
+      router.push("/devices");
+    } catch (err) {
+      alert("An error occurred. Please try again.");
+    }
   };
 
   return (
@@ -443,7 +501,7 @@ export default function RoleSelectionPage() {
               <Input
                 id="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleUsernameChange}
                 className="w-full"
               />
             </div>

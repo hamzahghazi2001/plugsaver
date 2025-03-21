@@ -20,6 +20,8 @@ export default function LoginPage() {
   const [isCodeValid, setIsCodeValid] = useState(false)
   const [email, setEmail] = useState("")
   const [householdCode, setHouseholdCode] = useState("")
+  const [verifyButtonText, setVerifyButtonText] = useState("Verify")
+  const [isVerifying, setIsVerifying] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -84,6 +86,9 @@ export default function LoginPage() {
   };
 
   const handleVerifyClick = async () => {
+    setIsVerifying(true);
+    setVerifyButtonText("Verifying...");
+
     try {
       const response = await fetch("/api/auth/verify_login", {
         method: "POST",
@@ -108,9 +113,15 @@ export default function LoginPage() {
         router.refresh()
       } else {
         setError(data.message || "Verification failed.")
+        alert("Verification failed. Please try again.");
+        setVerifyButtonText("Verify");
       }
     } catch (err) {
       setError("An error occurred. Please try again.")
+      alert("An error occurred. Please try again.");
+      setVerifyButtonText("Verify");
+    } finally {
+      setIsVerifying(false);
     }
   }
 
@@ -233,9 +244,9 @@ export default function LoginPage() {
             <Button
               onClick={handleVerifyClick}
               className="w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg shadow-md transition-all duration-300 mx-auto"
-              disabled={!isCodeValid}
+              disabled={!isCodeValid || isVerifying}
             >
-              Verify
+              {verifyButtonText}
             </Button>
 
             <div className="text-sm text-gray-600 mt-4">
