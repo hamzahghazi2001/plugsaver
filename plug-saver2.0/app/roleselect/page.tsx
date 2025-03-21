@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabaseClient";
 
 // List of all countries
 const countries = [
@@ -42,36 +41,10 @@ export default function RoleSelectionPage() {
   const [isProfileSetup, setIsProfileSetup] = useState(false); // New state for profile setup
   const [loading, setLoading] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [user, setUser] = useState<{ avatar: string | null }>({ avatar: null });
   const [username, setUsername] = useState("Username");
   const [country, setCountry] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState(""); // New state for date of birth
-
-  // Fetch user info on component mount
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (email) {
-        try {
-          const { data, error } = await supabase
-            .from('users')
-            .select('username, country, dob')
-            .eq('email', email)
-            .single();
-
-          if (error) throw error;
-
-          if (data) {
-            setUsername(data.username);
-            setCountry(data.country || "");
-            setDateOfBirth(data.dob || "");
-          }
-        } catch (error) {
-          console.error("Error fetching user info:", error);
-        }
-      }
-    };
-
-    fetchUserInfo();
-  }, [email]);
 
   // Redirect if email is missing
   useEffect(() => {
@@ -196,47 +169,99 @@ export default function RoleSelectionPage() {
     setSelectedRole(null);
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setProfilePicture(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      alert("No file selected.");
+      return;
     }
-  };
-
-  const updateUsername = async (newUsername: string) => {
+  
+    const userId = localStorage.getItem("user_id");
+    if (!userId) {
+      alert("User ID not found. Please log in again.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("user_id", userId); // Ensure user_id is sent as a form field
+  
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ username: newUsername })
-        .eq('email', email);
-
-      if (error) throw error;
+      const response = await fetch("/api/auth/profile_pic", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const result = await response.json();
+      console.log("POST Response:", result);
+  
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+  
+      // Update the local state with the new avatar URL
+      setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
+      alert("Profile picture updated successfully!");
     } catch (error) {
-      console.error("Error updating username:", error);
+      console.error("Error uploading avatar:", error);
+      alert("An error occurred while uploading the avatar.");
     }
   };
 
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUsername = e.target.value;
-    setUsername(newUsername);
-    updateUsername(newUsername);
-  };
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+  
+      try {
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`);
+        const result = await response.json();
+  
+        if (result.success && result.avatar_url) {
+          // Update the local state with the fetched avatar URL
+          setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
+  
+          // Debug: Log the fetched avatar URL
+          console.log("Fetched Avatar URL:", result.avatar_url);
+        } else {
+          console.error("Error fetching profile picture:", result);
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error);
+      }
+    };
+  
+    fetchProfilePicture();
+  }, []);
 
   const handleConfirmProfile = async () => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ country, dob: dateOfBirth })
-        .eq('email', email);
-
-      if (error) throw error;
-
-      router.push("/devices");
+      const response = await fetch("/api/auth/setup_profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: localStorage.getItem("user_id"), // Assuming you store user_id in localStorage
+          username,
+          date_of_birth: dateOfBirth,
+          country,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        // Store the profile information in localStorage
+        localStorage.setItem("username", username);
+        localStorage.setItem("date_of_birth", dateOfBirth);
+        localStorage.setItem("country", country);
+  
+        // Redirect to the next page
+        router.push("/devices");
+      } else {
+        alert(data.message || "Failed to setup profile.");
+      }
     } catch (err) {
       alert("An error occurred. Please try again.");
     }
@@ -479,7 +504,7 @@ export default function RoleSelectionPage() {
             {/* Profile Picture */}
             <div className="flex flex-col items-center gap-4 mb-6">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={profilePicture || "/placeholder.svg"} />
+                <AvatarImage src= {`${user.avatar}`}  />
                 <AvatarFallback>{username[0]}</AvatarFallback>
               </Avatar>
 
@@ -501,7 +526,7 @@ export default function RoleSelectionPage() {
               <Input
                 id="username"
                 value={username}
-                onChange={handleUsernameChange}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full"
               />
             </div>
