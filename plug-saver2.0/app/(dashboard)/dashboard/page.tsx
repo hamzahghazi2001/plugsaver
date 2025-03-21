@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Zap, Wind, DollarSign, Moon, Sun } from "lucide-react"
+import { RefreshCw, Zap, Wind, DollarSign, Moon, Sun, Download } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -74,6 +74,17 @@ const DashboardPage = () => {
     setIsDarkMode((prev) => !prev)
   }
 
+  const handleDownload = (data: any, fileName: string) => {
+    const jsonString = JSON.stringify(data, null, 2)
+    const blob = new Blob([jsonString], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className={`min-h-screen p-6 md:p-10 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="flex justify-between items-center mb-6">
@@ -103,7 +114,12 @@ const DashboardPage = () => {
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-          <h2 className="font-medium mb-4">Energy Consumption</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-medium">Energy Consumption</h2>
+            <Button size="icon" variant="ghost" onClick={() => handleDownload(energyData?.[period], "energy_consumption.json")}>
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={energyData ? energyData[period] : []}>
@@ -119,7 +135,12 @@ const DashboardPage = () => {
         </Card>
 
         <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-          <h2 className="font-medium mb-4">Rooms Consumption</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-medium">Rooms Consumption</h2>
+            <Button size="icon" variant="ghost" onClick={() => handleDownload(roomsData, "rooms_consumption.json")}>
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -145,7 +166,12 @@ const DashboardPage = () => {
         </Card>
 
         <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-          <h2 className="font-medium mb-4">Device Category Usage</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-medium">Device Category Usage</h2>
+            <Button size="icon" variant="ghost" onClick={() => handleDownload(applianceData, "device_category_usage.json")}>
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
           <div className="h-64 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={applianceData || []}>
