@@ -644,12 +644,54 @@ async def update_permissions(request: UpdatePermissionsRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@app.get("/json-energy-consumption/{household_code}")
-async def get_energy_consumption(household_code: str):
-    while True:
-        result = await json_energy_consumption(household_code)
-        print(result)  # You can replace this with any other action you want to perform with the result
-        await asyncio.sleep(10)  # Sleep for 10 seconds before running again
+@app.get("/json-energy-consumption")
+async def get_energy_consumption(household_code: str = Query(...)):
+    # Define the result with proper Python syntax
+    result = {
+        "day": [{"name": "Mon", "value": 10}, {"name": "Tue", "value": 20}],
+        "week": [{"name": "Week 1", "value": 50}, {"name": "Week 2", "value": 75}],
+        "month": [{"name": "Jan", "value": 200}, {"name": "Feb", "value": 180}],
+        "year": [{"name": "2023", "value": 2400}, {"name": "2024", "value": 2600}],
+    }
+    print(result)  # Print the result to the console for debugging
+    return JSONResponse(content={"success": True, "data": result}) # You can replace this with any other action you want to perform with the result
+    #await asyncio.sleep(10)  # Sleep for 10 seconds before running again
+
+
+@app.get("/room_consumption")
+async def get_room_consumption(household_code: str = Query(...)):
+    # Define the result with proper Python syntax
+    result = [
+      { "name": "Living Room", "value": 40 },
+      { "name": "Kitchen", "value": 30 },
+      { "name": "Bedroom", "value": 30 },
+    ]
+    print(result)  # Print the result to the console for debugging
+    return JSONResponse(content={"success": True, "data": result})
+
+@app.get("/device_category")
+async def get_device_category(household_code: str = Query(...)):
+    # Define the result with proper Python syntax
+    result = [
+      { "name": "Air Conditioner", "usage": 120 },
+      { "name": "Refrigerator", "usage": 80 },
+      { "name": "Washer", "usage": 50 },
+    ]
+    print(result)  # Print the result to the console for debugging
+    return JSONResponse(content={"success": True, "data": result})
+
+# New endpoint for efficiency score and other metrics
+@app.get("/efficiency_metrics")
+async def get_efficiency_metrics(household_code: str = Query(...)):
+    result = {
+        "efficiencyScore": 85,  # Example efficiency score
+        "electricityUsage": 350,  # Example electricity usage in kWh
+        "peakPowerUsage": 60,  # Example peak power usage in kW
+        "carbonFootprint": 45,  # Example carbon footprint in kg CO2
+        "costSavings": 120,  # Example cost savings in dollars
+    }
+    print(result)  # Print the result to the console for debugging
+    return JSONResponse(content={"success": True, "data": result})
     
 '''@app.get("/start-live-consumption")
 async def start_live_consumption(household_code: str = Query(...)):
