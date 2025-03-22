@@ -1,9 +1,39 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
+
+// UI & Icons
 import { Button } from "@/components/ui/button"
-import { User, Settings, LogOut, Home, BarChartIcon as ChartBar, Lightbulb, User2, Tv, Computer, Fan, RefreshCw, Smartphone, Zap, Sofa, Utensils, Bed, Briefcase, Calendar, TrendingDown, TrendingUp, DollarSign, BarChart3, Bell, Award, Clock, Sparkles } from 'lucide-react'
+import {
+  User,
+  Settings,
+  LogOut,
+  Home,
+  BarChartIcon as ChartBar,
+  Lightbulb,
+  User2,
+  Tv,
+  Computer,
+  Fan,
+  RefreshCw,
+  Smartphone,
+  Zap,
+  Sofa,
+  Utensils,
+  Bed,
+  Briefcase,
+  Calendar,
+  TrendingDown,
+  TrendingUp,
+  DollarSign,
+  BarChart3,
+  Bell,
+  Award,
+  Clock,
+  Sparkles,
+} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +42,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
 import { Progress } from "@/components/ui/progress"
 
+// -----------------------------------------------------------------
+// 1) PLACEHOLDER DATA FOR BACKEND INTEGRATION
+// -----------------------------------------------------------------
+
+// Tips fetched from backend (example placeholders)
 // Energy saving tips data
 const energySavingTips = [
   {
@@ -40,80 +73,72 @@ const energySavingTips = [
   },
 ]
 
-// Top active devices data
+// Devices from backend (example placeholders)
 const topActiveDevices = [
-  { name: "Smart TV", power: "120W", usage: "2.09 kWh", icon: Tv, active: true },
-  { name: "Desktop PC", power: "350W", usage: "7.19 kWh", icon: Computer, active: true },
-  { name: "Ceiling Fan", power: "60W", usage: "0.62 kWh", icon: Fan, active: false },
+  { name: "Placeholder Device A", power: "0W", usage: "0 kWh", icon: Tv, active: true },
+  { name: "Placeholder Device B", power: "0W", usage: "0 kWh", icon: Computer, active: false },
+  { name: "Placeholder Device C", power: "0W", usage: "0 kWh", icon: Fan, active: true },
+  { name: "Placeholder Device C", power: "0W", usage: "0 kWh", icon: Fan, active: true },
 ]
 
-// Top active rooms data
+// Rooms from backend (example placeholders)
 const topActiveRooms = [
-  { name: "Living Room", usage: "9.28 kWh", icon: Sofa, devices: 5 },
-  { name: "Kitchen", usage: "7.45 kWh", icon: Utensils, devices: 4 },
-  { name: "Bedroom", usage: "3.12 kWh", icon: Bed, devices: 3 },
-  { name: "Office", usage: "8.76 kWh", icon: Briefcase, devices: 2 },
+  { name: "Placeholder Room 1", usage: "0 kWh", icon: Sofa, devices: 0 },
+  { name: "Placeholder Room 2", usage: "0 kWh", icon: Utensils, devices: 0 },
+  { name: "Placeholder Room 3", usage: "0 kWh", icon: Bed, devices: 0 },
+  { name: "Placeholder Room 4", usage: "0 kWh", icon: Briefcase, devices: 0 },
 ]
 
-// Quick actions data
-const quickActions = [
-  { name: "Schedule", icon: Calendar, color: "bg-blue-500/20", iconColor: "text-blue-400" },
-  { name: "Reports", icon: BarChart3, color: "bg-green-500/20", iconColor: "text-green-400" },
-  { name: "Alerts", icon: Bell, color: "bg-yellow-500/20", iconColor: "text-yellow-400" },
-  { name: "Rewards", icon: Award, color: "bg-purple-500/20", iconColor: "text-purple-400" },
-]
-
-// Energy usage comparison data
+// Comparison data (example placeholders)
 const usageComparison = [
-  { period: "Today", current: 4.2, previous: 5.1, change: -17.6 },
-  { period: "This Week", current: 28.5, previous: 32.3, change: -11.8 },
-  { period: "This Month", current: 98.7, previous: 105.2, change: -6.2 },
+  { period: "Today", current: 0.0, previous: 0.0, change: 0 },
+  { period: "This Week", current: 0.0, previous: 0.0, change: 0 },
+  { period: "This Month", current: 0.0, previous: 0.0, change: 0 },
 ]
 
-// Recent activity data
+// Recent activity from backend (not used in this snippet, but provided as placeholders)
 const recentActivity = [
   {
-    event: "Smart TV turned on",
-    time: "10 minutes ago",
+    event: "Placeholder event 1",
+    time: "0 minutes ago",
     icon: Tv,
     color: "text-blue-400",
   },
   {
-    event: "AC temperature adjusted",
-    time: "25 minutes ago",
+    event: "Placeholder event 2",
+    time: "0 minutes ago",
     icon: Settings,
     color: "text-green-400",
   },
-  {
-    event: "Kitchen lights turned off",
-    time: "1 hour ago",
-    icon: Lightbulb,
-    color: "text-yellow-400",
-  },
-  {
-    event: "Weekly report generated",
-    time: "3 hours ago",
-    icon: BarChart3,
-    color: "text-purple-400",
-  },
 ]
+
+// -----------------------------------------------------------------
+// 2) MAIN COMPONENT
+// -----------------------------------------------------------------
 
 export default function HomePage() {
   const router = useRouter()
+
+  // Example usage data from backend
   const [currentUsage, setCurrentUsage] = useState({
-    amount: "20.34",
-    kwh: "39.8",
-    budgetUsed: 65, // percentage
-    budgetGoal: "100",
+    amount: "0.00",      // e.g. "20.34"
+    kwh: "0.00",         // e.g. "39.8"
+    budgetUsed: 0,       // e.g. 65 (percentage)
+    budgetGoal: "0",     // e.g. "100"
   })
 
+  // Current tip index for rotating tips
   const [currentTip, setCurrentTip] = useState(0)
-  const [liveWattage, setLiveWattage] = useState(342)
+
+  // Simulated “live wattage” for demonstration
+  const [liveWattage, setLiveWattage] = useState(0)
+
+  // Determine screen sizes for responsiveness
   const [isMobile, setIsMobile] = useState(true)
   const [isTablet, setIsTablet] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
 
-  // Check if the device is mobile, tablet, or desktop
+  // Watch for screen-size changes
   useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth
@@ -121,44 +146,46 @@ export default function HomePage() {
       setIsTablet(width >= 768 && width < 1024)
       setIsDesktop(width >= 1024)
     }
-
     checkScreenSize()
     window.addEventListener("resize", checkScreenSize)
-
-    return () => {
-      window.removeEventListener("resize", checkScreenSize)
-    }
+    return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  // Simulate live energy tracking
+  // Simulate live wattage (you’d replace this with real-time data from your backend)
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveWattage((prev) => {
+        // Here you can simulate changes or fetch new data from your backend
+        // For now, we just do a small random change
         const change = Math.floor(Math.random() * 20) - 10
-        return Math.max(300, Math.min(400, prev + change))
+        let next = prev + change
+        // Constrain it between 0 and 400 for placeholder
+        if (next < 0) next = 0
+        if (next > 400) next = 400
+        return next
       })
     }, 3000)
-
     return () => clearInterval(interval)
   }, [])
 
-  // Rotate through tips
+  // Rotate the displayed tip every 10 seconds (placeholder logic)
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTip((prev) => (prev + 1) % energySavingTips.length)
     }, 10000)
-
     return () => clearInterval(interval)
   }, [])
 
+  // Example logout handler
   const handleLogout = async () => {
+    // In real scenario, you’d call your logout endpoint
     await fetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-blue-800 overflow-x-hidden">
-      {/* Decorative elements */}
+      {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-[10%] w-72 h-72 bg-blue-200/20 dark:bg-blue-400/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-40 left-[5%] w-96 h-96 bg-cyan-200/20 dark:bg-cyan-400/10 rounded-full blur-3xl"></div>
@@ -175,18 +202,32 @@ export default function HomePage() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-blue-200">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-xs text-gray-500 dark:text-blue-200">
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Plug Saver</h1>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-blue-800/50 px-3 py-1.5 rounded-full border border-gray-200 dark:border-blue-700/50">
-               
+                {/* Placeholder for notifications or other short info */}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50">
-                    <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-8 h-8 rounded-full" />
+                  <Button
+                    variant="ghost"
+                    className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50"
+                  >
+                    <img
+                      src="/placeholder.svg?height=40&width=40"
+                      alt="User"
+                      className="w-8 h-8 rounded-full"
+                    />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
@@ -217,26 +258,36 @@ export default function HomePage() {
           <div className="mb-8">
             <div className="flex flex-col md:flex-row gap-6">
               {/* Current usage card */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Current Usage</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Current Usage
+                  </h2>
                   <div className="flex items-center gap-2 bg-gray-100 dark:bg-blue-700/30 px-2 py-1 rounded-full">
                     <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <Clock className="w-4 h-4 text-gray-500 dark:text-blue-300" />
                     <p className="text-xs text-green-600 dark:text-green-300">Live {liveWattage}W</p>
-                  
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-6 mb-6">
+                  {/* Circular progress ring for budgetUsed */}
                   <div className="relative w-24 h-24">
                     <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0,0,0,0.1)" className="dark:stroke-white/10" strokeWidth="8" />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.1)"
+                        className="dark:stroke-white/10"
+                        strokeWidth="8"
+                      />
                       <circle
                         cx="50"
                         cy="50"
@@ -245,7 +296,9 @@ export default function HomePage() {
                         stroke="url(#circleGradient)"
                         strokeWidth="8"
                         strokeDasharray="283"
-                        strokeDashoffset={283 - (283 * currentUsage.budgetUsed) / 100}
+                        strokeDashoffset={
+                          283 - (283 * currentUsage.budgetUsed) / 100
+                        }
                         strokeLinecap="round"
                       />
                       <defs>
@@ -256,27 +309,35 @@ export default function HomePage() {
                       </defs>
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentUsage.budgetUsed}%</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {currentUsage.budgetUsed}%
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-blue-300">of budget</p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="mb-2">
                       <p className="text-sm text-gray-500 dark:text-blue-300">Current Cost</p>
-                      <p className="text-3xl font-bold text-gray-900 dark:text-white">AED {currentUsage.amount}</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                        AED {currentUsage.amount}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-blue-300">Energy Used</p>
-                      <p className="text-xl font-semibold text-gray-900 dark:text-white">{currentUsage.kwh} kWh</p>
+                      <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {currentUsage.kwh} kWh
+                      </p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-500 dark:text-blue-300">Budget Progress</span>
-                    <span className="text-gray-500 dark:text-blue-300">AED {currentUsage.amount} / {currentUsage.budgetGoal}</span>
+                    <span className="text-gray-500 dark:text-blue-300">
+                      AED {currentUsage.amount} / {currentUsage.budgetGoal}
+                    </span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden">
                     <motion.div
@@ -288,15 +349,17 @@ export default function HomePage() {
                   </div>
                 </div>
               </motion.div>
-              
+
               {/* Energy comparison card */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Energy Comparison</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Energy Comparison
+                </h2>
                 <div className="space-y-4">
                   {usageComparison.map((item, index) => (
                     <div key={index} className="space-y-1">
@@ -304,9 +367,15 @@ export default function HomePage() {
                         <span className="text-gray-500 dark:text-blue-300">{item.period}</span>
                         <div className="flex items-center gap-1">
                           <span className="text-gray-900 dark:text-white">{item.current} kWh</span>
-                          <span className={item.change < 0 ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
-                            {item.change < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                          </span>
+                          {item.change < 0 ? (
+                            <span className="text-green-500 dark:text-green-400">
+                              <TrendingDown className="w-3 h-3 inline" />
+                            </span>
+                          ) : (
+                            <span className="text-red-500 dark:text-red-400">
+                              <TrendingUp className="w-3 h-3 inline" />
+                            </span>
+                          )}
                         </div>
                       </div>
                       <Progress
@@ -314,8 +383,16 @@ export default function HomePage() {
                         className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
                       />
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-blue-400">Previous: {item.previous} kWh</span>
-                        <span className={item.change < 0 ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
+                        <span className="text-gray-500 dark:text-blue-400">
+                          Previous: {item.previous} kWh
+                        </span>
+                        <span
+                          className={
+                            item.change < 0
+                              ? "text-green-500 dark:text-green-400"
+                              : "text-red-500 dark:text-red-400"
+                          }
+                        >
                           {item.change > 0 ? "+" : ""}
                           {item.change}%
                         </span>
@@ -324,15 +401,17 @@ export default function HomePage() {
                   ))}
                 </div>
               </motion.div>
-              
+
               {/* Savings summary card */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Expenditure Summary</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Expenditure Summary
+                </h2>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-400 dark:to-emerald-600 flex items-center justify-center">
@@ -340,42 +419,46 @@ export default function HomePage() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-blue-300">Expenditure Savings</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">AED 87.50</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">AED 0.00</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full">
                     <TrendingUp className="w-4 h-4" />
-                    <span>15%</span>
+                    <span>0%</span>
                   </div>
                 </div>
+
                 <div className="space-y-3">
+                  {/* Electricity */}
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-500 dark:text-blue-300">Electricity</span>
-                      <span className="text-gray-900 dark:text-white">AED 45.20</span>
+                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
                     </div>
                     <Progress
-                      value={52}
+                      value={0}
                       className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
                     />
                   </div>
+                  {/* Water */}
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-500 dark:text-blue-300">Water</span>
-                      <span className="text-gray-900 dark:text-white">AED 22.80</span>
+                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
                     </div>
                     <Progress
-                      value={26}
+                      value={0}
                       className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
                     />
                   </div>
+                  {/* Gas */}
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-500 dark:text-blue-300">Gas</span>
-                      <span className="text-gray-900 dark:text-white">AED 19.50</span>
+                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
                     </div>
                     <Progress
-                      value={22}
+                      value={0}
                       className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
                     />
                   </div>
@@ -384,48 +467,66 @@ export default function HomePage() {
             </div>
           </div>
 
- 
-
           {/* Active devices and rooms */}
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Active devices */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
                 className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Devices</h2>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Top Active Devices
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50"
+                  >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="space-y-3">
                   {topActiveDevices.map((device, index) => (
-                    <motion.div 
+                    <motion.div
                       key={index}
                       whileHover={{ x: 5 }}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
-                        device.active 
-                          ? "bg-blue-50 border-blue-200 dark:bg-blue-700/30 dark:border-blue-600/50" 
+                        device.active
+                          ? "bg-blue-50 border-blue-200 dark:bg-blue-700/30 dark:border-blue-600/50"
                           : "bg-gray-50 border-gray-200 dark:bg-blue-800/30 dark:border-blue-700/30"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          device.active ? "bg-blue-100 dark:bg-blue-600/50" : "bg-gray-100 dark:bg-blue-800/50"
-                        }`}>
-                          <device.icon className={`w-5 h-5 ${device.active ? "text-blue-500 dark:text-blue-300" : "text-gray-400 dark:text-blue-400"}`} />
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            device.active ? "bg-blue-100 dark:bg-blue-600/50" : "bg-gray-100 dark:bg-blue-800/50"
+                          }`}
+                        >
+                          <device.icon
+                            className={`w-5 h-5 ${
+                              device.active
+                                ? "text-blue-500 dark:text-blue-300"
+                                : "text-gray-400 dark:text-blue-400"
+                            }`}
+                          />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{device.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-blue-300">{device.power}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {device.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-blue-300">
+                            {device.power}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{device.usage}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {device.usage}
+                        </p>
                         <p className="text-xs text-gray-500 dark:text-blue-300">
                           {device.active ? "Active" : "Inactive"}
                         </p>
@@ -434,23 +535,29 @@ export default function HomePage() {
                   ))}
                 </div>
               </motion.div>
-              
+
               {/* Active rooms */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
                 className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Rooms</h2>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Top Active Rooms
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50"
+                  >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {topActiveRooms.map((room, index) => (
-                    <motion.div 
+                    <motion.div
                       key={index}
                       whileHover={{ y: -5 }}
                       className="bg-gray-50 dark:bg-blue-800/30 p-4 rounded-lg border border-gray-200 dark:border-blue-700/30 flex flex-col items-center"
@@ -458,9 +565,13 @@ export default function HomePage() {
                       <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-blue-700/30 flex items-center justify-center mb-2">
                         <room.icon className="w-6 h-6 text-gray-500 dark:text-blue-300" />
                       </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{room.name}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {room.name}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-blue-300">{room.usage}</p>
-                      <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">{room.devices} devices</p>
+                      <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">
+                        {room.devices} devices
+                      </p>
                     </motion.div>
                   ))}
                 </div>
@@ -469,21 +580,23 @@ export default function HomePage() {
           </div>
 
           {/* Energy saving tips */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
             className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl mb-20 md:mb-8"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Energy Saving Tips</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Energy Saving Tips
+              </h2>
               <div className="flex gap-1">
                 {energySavingTips.map((_, i) => (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     className={`w-2 h-2 rounded-full ${
                       i === currentTip ? "bg-blue-500 dark:bg-blue-400" : "bg-gray-200 dark:bg-blue-800/80"
-                    }`} 
+                    }`}
                   />
                 ))}
               </div>
@@ -498,15 +611,24 @@ export default function HomePage() {
             >
               <div className="flex items-start gap-4">
                 <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">{energySavingTips[currentTip].title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-blue-200">{energySavingTips[currentTip].description}</p>
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">
+                    {energySavingTips[currentTip].title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-blue-200">
+                    {energySavingTips[currentTip].description}
+                  </p>
                 </div>
                 <div className="w-16 h-16 flex-shrink-0 bg-blue-50 dark:bg-gradient-to-br dark:from-blue-500/30 dark:to-cyan-500/30 rounded-lg flex items-center justify-center">
-                  {React.createElement(energySavingTips[currentTip].icon, { className: "w-8 h-8 text-blue-500 dark:text-cyan-300" })}
+                  {React.createElement(energySavingTips[currentTip].icon, {
+                    className: "w-8 h-8 text-blue-500 dark:text-cyan-300",
+                  })}
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white">
+                <Button
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white"
+                >
                   <Sparkles className="w-4 h-4 mr-1" /> Apply Tip
                 </Button>
               </div>
@@ -533,8 +655,8 @@ export default function HomePage() {
             <button
               key={label}
               className={`flex flex-col items-center gap-1 transition-all duration-200 ${
-                active 
-                  ? "text-blue-500 dark:text-blue-400 scale-110" 
+                active
+                  ? "text-blue-500 dark:text-blue-400 scale-110"
                   : "text-gray-500 dark:text-blue-300/70 hover:text-gray-700 dark:hover:text-blue-200"
               }`}
             >
@@ -547,5 +669,5 @@ export default function HomePage() {
         </div>
       </motion.nav>
     </div>
-  );
+  )
 }
