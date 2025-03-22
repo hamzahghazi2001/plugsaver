@@ -128,13 +128,16 @@ async def create_household_endpoint(request: CreateHouseholdRequest):
     result = create_household(request.email, request.household_code)
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["message"])
+    asyncio.create_task(calculate_live_consumption(request.household_code))
     return {"success": True, "household_code": result["household_code"]}
+
 
 @app.post("/join_household")
 async def join_household_endpoint(request: JoinHouseholdRequest):
     result = join_household(request.email, request.household_code)
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["message"])
+    asyncio.create_task(calculate_live_consumption(request.household_code))
     return {"success": True, "message": result["message"]}
 
 @app.get("/user_email")
@@ -268,6 +271,7 @@ async def get_household_code(email: str = Query(...)):
     try:
         result = supabase.from_("users").select("household_code").eq("email", email).execute()
         if result.data:
+            asyncio.create_task(calculate_live_consumption(result.data[0]["household_code"]))
             return {"success": True, "household_code": result.data[0]["household_code"], "message": "success."}
         else:
             return {"success": False, "message": "User not found."}
@@ -366,7 +370,7 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
         print(f"Error toggling device: {str(e)}")  # Debug log
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")   
 
-calculate_live_consumption("288LTIO") 
+
 
 class EditDeviceRequest(BaseModel):
     device_id: int
@@ -568,18 +572,20 @@ async def get_household_users(household_code: str = Query(...)):
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
     
-class EnergyConsumptionRequest(BaseModel):
-    household_code: str
-
-@app.post("/start-live-consumption")
-async def start_live_consumption(request: EnergyConsumptionRequest):
-    household_code = request.household_code
-    if not household_code:
-        raise HTTPException(status_code=400, detail="Household code is required")
+#calculate_live_consumption("288LTIO") 
     
-    # Start the live consumption calculation
-    asyncio.create_task(calculate_live_consumption(household_code))
-    return {"message": "Live consumption calculation started"}
+# class EnergyConsumptionRequest(BaseModel):
+#     household_code: str
+
+# @app.post("/start-live-consumption")
+# async def start_live_consumption(request: EnergyConsumptionRequest):
+#     household_code = request.household_code
+#     if not household_code:
+#         raise HTTPException(status_code=400, detail="Household code is required")
+    
+#     # Start the live consumption calculation
+#     asyncio.create_task(calculate_live_consumption(household_code))
+#     return {"message": "Live consumption calculation started"}
                  
 # def test_signup():
 #     email = "e@example.com"
