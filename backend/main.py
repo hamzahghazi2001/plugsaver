@@ -572,20 +572,14 @@ async def get_household_users(household_code: str = Query(...)):
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
     
-#calculate_live_consumption("288LTIO") 
-    
-# class EnergyConsumptionRequest(BaseModel):
-#     household_code: str
+'''@app.get("/start-live-consumption")
+async def start_live_consumption(household_code: str = Query(...)):
+    if not household_code:
+        raise HTTPException(status_code=400, detail="Household code is required")
+    # Start the live consumption calculation
+    asyncio.create_task(calculate_live_consumption(household_code))
+    return {"message": "Live consumption calculation started"}'''
 
-# @app.post("/start-live-consumption")
-# async def start_live_consumption(request: EnergyConsumptionRequest):
-#     household_code = request.household_code
-#     if not household_code:
-#         raise HTTPException(status_code=400, detail="Household code is required")
-    
-#     # Start the live consumption calculation
-#     asyncio.create_task(calculate_live_consumption(household_code))
-#     return {"message": "Live consumption calculation started"}
                  
 # def test_signup():
 #     email = "e@example.com"
