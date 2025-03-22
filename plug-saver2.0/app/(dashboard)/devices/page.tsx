@@ -893,7 +893,7 @@ export default function DevicesPage() {
         }}
       >
         {/* Glass-like container effect */}
-        <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-xl -z-10 border border-white/10 shadow-xl"></div>
+        {/* <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-xl -z-10 border border-white/10 shadow-xl"></div> */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-20 rounded-xl"></div>
         {/* Energy Consumption Card */}
         <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative bg-white border-blue-500/20 shadow-lg">
