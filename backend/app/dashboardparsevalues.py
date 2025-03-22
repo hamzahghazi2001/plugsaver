@@ -53,5 +53,4 @@ async def json_energy_consumption(household_code):
         }
 
         # Need help with this part
-        print(result)
-        await asyncio.sleep(10)  # Run every 10 seconds
+        return result

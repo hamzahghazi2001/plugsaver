@@ -7,6 +7,7 @@ from app.devicecreation import add_device, get_device_categories, insert_default
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from app.algo import calculate_live_consumption
+from app.dashboardparsevalues import json_energy_consumption
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -299,10 +300,9 @@ async def get_room_by_id(room_id: str = Query(...)):
 
 
 
+
 class AssignRoomRequest(BaseModel):
     room_id: int
-
-
 
 @app.put("/api/auth/devices/{device_id}")
 async def assign_device_to_room(device_id: int, request: AssignRoomRequest):
@@ -643,6 +643,13 @@ async def update_permissions(request: UpdatePermissionsRequest):
         return {"success": True, "message": "Permissions updated successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/json-energy-consumption/{household_code}")
+async def get_energy_consumption(household_code: str):
+    while True:
+        result = await json_energy_consumption(household_code)
+        print(result)  # You can replace this with any other action you want to perform with the result
+        await asyncio.sleep(10)  # Sleep for 10 seconds before running again
     
 '''@app.get("/start-live-consumption")
 async def start_live_consumption(household_code: str = Query(...)):
