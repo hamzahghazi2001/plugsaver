@@ -1,14 +1,8 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import {
   User,
   Info,
@@ -24,20 +18,31 @@ import {
   Camera,
   LogOut,
   CheckCircle,
+  Mail,
+  Phone,
+  UserPlus,
+  FileQuestion,
   Settings,
-  Search,
-  ArrowLeft,
-  Laptop,
-  Smartphone,
-  Globe,
-  Palette,
-  List,
-  Clock,
-  Lock,
-  RefreshCw,
-  Zap,
 } from "lucide-react"
 import { motion } from "framer-motion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { createClient } from "@supabase/supabase-js"
 
 // Initialize Supabase client
@@ -46,98 +51,8 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY2Z2eHdyY3Vud3Nydnd3amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTIzNzIsImV4cCI6MjA1MzU2ODM3Mn0.fgT2LL7dlx7VR185WABZCtK8ZdF4rpdOIy-crGpp6tU"
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Define the settings categories with icons and descriptions
-const settingsCategories = [
-  {
-    id: "profile",
-    title: "Profile",
-    icon: User,
-    description: "Account, picture, personal info",
-    color: "bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300",
-  },
-  {
-    id: "system",
-    title: "System",
-    icon: Laptop,
-    description: "Display, notifications, power",
-    color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300",
-  },
-  {
-    id: "devices",
-    title: "Devices",
-    icon: Smartphone,
-    description: "Connected devices, sensors",
-    color: "bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300",
-  },
-  {
-    id: "network",
-    title: "Network & Internet",
-    icon: Globe,
-    description: "Wi-Fi, energy data sharing",
-    color: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/50 dark:text-cyan-300",
-  },
-  {
-    id: "personalization",
-    title: "Personalization",
-    icon: Palette,
-    description: "Theme, colors, dashboard layout",
-    color: "bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300",
-  },
-  {
-    id: "apps",
-    title: "Apps",
-    icon: List,
-    description: "Default apps, optional features",
-    color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-300",
-  },
-  {
-    id: "accounts",
-    title: "Accounts",
-    icon: Users,
-    description: "Household members, permissions",
-    color: "bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-300",
-  },
-  {
-    id: "time",
-    title: "Time & Language",
-    icon: Clock,
-    description: "Region, date, language",
-    color: "bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-300",
-  },
-  {
-    id: "energy",
-    title: "Energy",
-    icon: Zap,
-    description: "Usage, savings, goals",
-    color: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300",
-  },
-  {
-    id: "accessibility",
-    title: "Accessibility",
-    icon: Accessibility,
-    description: "High contrast, text size",
-    color: "bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300",
-  },
-  {
-    id: "privacy",
-    title: "Privacy & Security",
-    icon: Lock,
-    description: "Data sharing, permissions",
-    color: "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300",
-  },
-  {
-    id: "update",
-    title: "Updates",
-    icon: RefreshCw,
-    description: "App updates, firmware",
-    color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300",
-  },
-]
-
 export default function SettingsPage() {
   const router = useRouter()
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
 
   // State for various settings
   const [user, setUser] = useState({
@@ -156,51 +71,139 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Dark mode state
+  // Dark mode, high contrast, and large text states
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("darkMode") === "true"
     }
     return false
   })
-
-  // Apply dark mode class to the document element
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
+  const [isHighContrast, setIsHighContrast] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("highContrast") === "true"
     }
+    return false
+  })
+  const [isLargeText, setIsLargeText] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("largeText") === "true"
+    }
+    return false
+  })
+
+  // Apply dark mode, high contrast, and large text classes to the document element
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode)
+    document.documentElement.classList.toggle("high-contrast", isHighContrast)
+    document.documentElement.classList.toggle("large-text", isLargeText)
     localStorage.setItem("darkMode", isDarkMode.toString())
-  }, [isDarkMode])
+    localStorage.setItem("highContrast", isHighContrast.toString())
+    localStorage.setItem("largeText", isLargeText.toString())
+  }, [isDarkMode, isHighContrast, isLargeText])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev)
   }
 
-  // Add a useEffect hook to detect screen size
+  // Toggle high contrast
+  const toggleHighContrast = () => {
+    setIsHighContrast((prev) => !prev)
+  }
+
+  // Toggle large text
+  const toggleLargeText = () => {
+    setIsLargeText((prev) => !prev)
+  }
+
+  // Fetch household code from localStorage on mount
   useEffect(() => {
-    const handleResize = () => {
-      // Prevent scrolling on desktop
-      if (window.innerWidth >= 1024) {
-        document.body.style.overflow = "hidden"
-      } else {
-        document.body.style.overflow = "auto"
+    const householdCode = localStorage.getItem("household_code")
+    if (householdCode) {
+      setHouseholdCode(householdCode)
+    }
+  }, [])
+
+  useEffect(() => {
+    const fetchHouseholdUsers = async () => {
+      const household_code = localStorage.getItem("household_code")
+      const user_id = localStorage.getItem("user_id")
+
+      if (!household_code || !user_id) {
+        setError("Household code or user ID not found in localStorage")
+        setLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/auth/get_householdusers?household_code=${household_code}`)
+        const data = await response.json()
+
+        if (data.success) {
+          // Find the current user (manager or member)
+          const currentUser = data.users.find((user: any) => user.user_id.toString() === user_id.toString())
+
+          if (currentUser) {
+            // Set the current user's details
+            setUser((prev) => ({
+              ...prev,
+              username: currentUser.name || prev.username,
+              email: currentUser.email || prev.email,
+              country: currentUser.country || prev.country,
+              birthdate: currentUser.dob || prev.birthdate,
+              role: currentUser.role || prev.role,
+            }))
+
+            // Set the list of all household members (including the manager)
+            setUsers(data.users)
+          } else {
+            setError("Current user not found in household")
+          }
+        } else {
+          setError(data.message || "Failed to fetch household users")
+        }
+      } catch (error) {
+        console.error("Error fetching household users:", error)
+        setError("An error occurred while fetching household users")
+      } finally {
+        setLoading(false)
       }
     }
 
-    // Initial call
-    handleResize()
+    fetchHouseholdUsers()
+  }, [])
 
-    // Add event listener
-    window.addEventListener("resize", handleResize)
+  // Fetch username, country, email, and household code from localStorage on mount
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const user_id = localStorage.getItem("user_id") // Get user_id from localStorage
+      if (!user_id) {
+        console.error("User ID not found in localStorage")
+        return
+      }
 
-    // Cleanup
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      document.body.style.overflow = "auto"
+      try {
+        const response = await fetch(`/api/auth/get_user_details?user_id=${user_id}`)
+        const data = await response.json()
+
+        if (data.success) {
+          // Update the user state with fetched details
+          setUser((prev) => ({
+            ...prev,
+            username: data.user.name || prev.username,
+            email: data.user.email || prev.email,
+            country: data.user.country || prev.country,
+            birthdate: data.user.dob || prev.birthdate,
+          }))
+        } else {
+          console.error("Failed to fetch user details:", data.message)
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error)
+      }
     }
+
+    fetchUserDetails()
   }, [])
 
   // States for different dialog modals
@@ -219,16 +222,15 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     dataSharing: {
       usageData: true,
-      locationData: false,
+      locationData: true, // Location data switch turned on by default
       marketingEmails: true,
     },
     security: {
-      twoFactorAuth: false,
+      twoFactorAuth: true, // 2FA is always enabled
       rememberDevice: true,
       passwordExpiry: "90days",
     },
     notifications: {
-      appNotifications: true,
       emailNotifications: true,
       smsNotifications: false,
       usageAlerts: true,
@@ -246,7 +248,6 @@ export default function SettingsPage() {
       autoSaving: true,
       smartScheduling: true,
       guestAccess: false,
-      name: "My Home",
       size: "medium",
       rooms: 4,
     },
@@ -281,6 +282,71 @@ export default function SettingsPage() {
     router.push("/login")
   }
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      alert("No file selected.")
+      return
+    }
+
+    const userId = localStorage.getItem("user_id")
+    if (!userId) {
+      alert("User ID not found. Please log in again.")
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("user_id", userId) // Ensure user_id is sent as a form field
+
+    try {
+      const response = await fetch("/api/auth/profile_pic", {
+        method: "POST",
+        body: formData,
+      })
+
+      const result = await response.json()
+      console.log("POST Response:", result)
+
+      if (!result.success) {
+        throw new Error(result.message)
+      }
+
+      // Update the local state with the new avatar URL
+      setUser((prev) => ({ ...prev, avatar: result.avatar_url }))
+      alert("Profile picture updated successfully!")
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      alert("An error occurred while uploading the avatar.")
+    }
+  }
+
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem("user_id")
+      if (!userId) return
+
+      try {
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`)
+        const result = await response.json()
+
+        if (result.success && result.avatar_url) {
+          // Update the local state with the fetched avatar URL
+          setUser((prev) => ({ ...prev, avatar: result.avatar_url }))
+
+          // Debug: Log the fetched avatar URL
+          console.log("Fetched Avatar URL:", result.avatar_url)
+        } else {
+          console.error("Error fetching profile picture:", result)
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
+
   // Handle toggle changes
   const handleToggleChange = (category: string, setting: string, value: boolean) => {
     setSettings({
@@ -292,1306 +358,1168 @@ export default function SettingsPage() {
     })
   }
 
-  // Filter categories based on search query
-  const filteredCategories = searchQuery
-    ? settingsCategories.filter(
-        (category) =>
-          category.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          category.description.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    : settingsCategories
+  // Get appropriate component based on screen size
+  const SettingsItem = ({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) => (
+    <motion.button
+      whileHover={{ x: 4 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-6 h-6 flex items-center justify-center text-purple-400">
+          <Icon className="w-5 h-5" />
+        </div>
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <ChevronRight className="w-5 h-5 text-gray-400" />
+    </motion.button>
+  )
 
-  // Determine if we're on mobile
-  const [isMobile, setIsMobile] = useState(false)
+  // Profile settings content
+  const ProfilePictureContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="text-center mb-4">
+          Upload a new profile picture from your device
+        </DialogDescription>
+      ) : (
+        <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
+          Upload a new profile picture from your device
+        </p>
+      )}
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
+      <div className="flex flex-col items-center gap-4 mb-6">
+        <Avatar className="w-24 h-24">
+          <AvatarImage src={`${user.avatar}`} />
+          <AvatarFallback>{user.username[0]}</AvatarFallback>
+        </Avatar>
 
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
+        <Label
+          htmlFor="avatar-upload"
+          className="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full flex items-center gap-2"
+        >
+          <Camera className="w-4 h-4" />
+          <span>Upload Photo</span>
+          <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        </Label>
+      </div>
+    </>
+  )
 
-    return () => {
-      window.removeEventListener("resize", checkMobile)
-    }
-  }, [])
+  const PersonalInfoContent = ({ inDialog = true }) => {
+    // Comprehensive list of all countries
+    const countries = [
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+      "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
+      "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+      "Fiji", "Finland", "France",
+      "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+      "Haiti", "Holy See", "Honduras", "Hungary",
+      "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+      "Jamaica", "Japan", "Jordan",
+      "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+      "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
+      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+      "Oman",
+      "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+      "Qatar",
+      "Romania", "Russia", "Rwanda",
+      "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+      "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+      "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan",
+      "Vanuatu", "Venezuela", "Vietnam",
+      "Yemen",
+      "Zambia", "Zimbabwe",
+    ]
 
-  // If on mobile, use the existing mobile layout
-  if (isMobile) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-        {/* Mobile View */}
-        <div>
-          {/* Header */}
-          <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-transparent pb-10 rounded-b-[40px]">
-            <div className="max-w-md mx-auto p-6">
-              <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Update your personal information</p>
+        )}
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.username[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="font-medium dark:text-white">{user.username}</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
-                    <p className="font-medium text-sm mt-1 dark:text-gray-300">{user.role}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={user.username}
+              onChange={(e) => setUser({ ...user, username: e.target.value })}
+            />
           </div>
 
-          {/* Settings Content */}
-          <div className="max-w-md mx-auto p-6 -mt-5">
-            <div className="space-y-8">
-              {/* Profile Section */}
-              <section>
-                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-2">Profile</h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("profilePicture")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Profile Picture</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("personalInfo")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Info className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Personal Information</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("dataSharing")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Share2 className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Data Sharing Preferences</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-              </section>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={user.email}
+              readOnly
+              className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
+            />
+          </div>
 
-              {/* Account and App Section */}
-              <section>
-                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-2">Account and App</h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("security")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Shield className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Security and Privacy</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("notifications")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Bell className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Notifications</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("members")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Users className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Members</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("accessibility")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Accessibility className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Accessibility</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("support")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <HelpCircle className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Support</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("household")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <Home className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Household</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                  <button
-                    className="w-full flex items-center justify-between p-3 rounded-md hover:bg-purple-50/10"
-                    onClick={() => openDialog("dashboard")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 flex items-center justify-center text-purple-400">
-                        <LayoutDashboard className="w-5 h-5" />
-                      </div>
-                      <span className="text-sm font-medium">Dashboard</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-              </section>
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Select
+              value={user.country}
+              onValueChange={(value) => setUser({ ...user, country: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your country" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto">
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Logout Button */}
-              <Button
-                variant="outline"
-                className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-900/30"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-              </Button>
+          <div className="space-y-2">
+            <Label htmlFor="birthdate">Birthdate</Label>
+            <Input
+              id="birthdate"
+              type="date"
+              value={user.birthdate}
+              onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const DataSharingContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Control how your data is used and shared</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Control how your data is used and shared</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Usage Data</Label>
+            <p className="text-sm text-gray-400">Share energy usage data to improve services</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.usageData}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "usageData", checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Location Data</Label>
+            <p className="text-sm text-gray-400">Allow access to your location data</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.locationData}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "locationData", checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Marketing Emails</Label>
+            <p className="text-sm text-gray-400">Receive promotional offers and updates</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.marketingEmails}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "marketingEmails", checked)}
+          />
+        </div>
+
+        <div>
+          <div className="pt-5 border-t" />
+          <h4 className="text-sm font-medium mb-3">Account Deletion</h4>
+          <Button variant="destructive" className="w-full">
+            Request Account Deletion
+          </Button>
+        </div>
+      </div>
+    </>
+  )
+
+  const SecurityContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Manage your security preferences and account protection</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your security preferences and account protection</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Two-Factor Authentication</Label>
+            <p className="text-sm text-gray-400">Add an extra layer of security</p>
+          </div>
+          <span className="text-sm text-green-500">Enabled</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Remember Device</Label>
+            <p className="text-sm text-gray-400">Stay logged in on this device</p>
+          </div>
+          <Switch
+            checked={settings.security.rememberDevice}
+            onCheckedChange={(checked) => handleToggleChange("security", "rememberDevice", checked)}
+          />
+        </div>
+
+        <div className="pt-5 border-t">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => router.push("/changepassword")}
+          >
+            Change Password
+          </Button>
+        </div>
+      </div>
+    </>
+  )
+
+  const NotificationsContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your notification preferences</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your notification preferences</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="text-base">Notification Channels</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-purple-500" />
+                <span className="text-sm">Email Notifications</span>
+              </div>
+              <Switch
+                checked={settings.notifications.emailNotifications}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "emailNotifications", checked)}
+              />
             </div>
           </div>
         </div>
 
-        {/* Dialogs for mobile view */}
-        <Dialog open={activeDialog !== null} onOpenChange={(open) => !open && setActiveDialog(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {activeDialog === "profilePicture" && "Profile Picture"}
-                {activeDialog === "personalInfo" && "Personal Information"}
-                {activeDialog === "dataSharing" && "Data Sharing Preferences"}
-                {activeDialog === "security" && "Security and Privacy"}
-                {activeDialog === "notifications" && "Notifications"}
-                {activeDialog === "members" && "Members"}
-                {activeDialog === "accessibility" && "Accessibility"}
-                {activeDialog === "support" && "Support"}
-                {activeDialog === "household" && "Household"}
-                {activeDialog === "dashboard" && "Dashboard"}
-              </DialogTitle>
-            </DialogHeader>
-            {/* Dialog content would go here */}
-            <DialogFooter>
-              {saveSuccess && (
-                <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
-                  <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
-                  <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
-                </p>
-              )}
-              <Button onClick={handleSave}>{activeDialog === "support" ? "Close" : "Save Changes"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="space-y-2">
+          <Label className="text-base">Alert Types</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Usage Alerts</span>
+              <Switch
+                checked={settings.notifications.usageAlerts}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "usageAlerts", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Savings Goals</span>
+              <Switch
+                checked={settings.notifications.savingsGoals}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "savingsGoals", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Tips & Tricks</span>
+              <Switch
+                checked={settings.notifications.tipsAndTricks}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "tipsAndTricks", checked)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Quiet Hours</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="quiet-start" className="text-sm">
+                Start Time
+              </Label>
+              <Input id="quiet-start" type="time" defaultValue="22:00" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="quiet-end" className="text-sm">
+                End Time
+              </Label>
+              <Input id="quiet-end" type="time" defaultValue="07:00" />
+            </div>
+          </div>
+        </div>
       </div>
+    </>
+  )
+
+  const MembersContent = ({ inDialog = true }) => {
+    const loggedInUserId = localStorage.getItem("user_id")
+    const isManager = user.role === "manager"
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage household members and permissions</p>
+        )}
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback>{user.username[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">{user.username} (You)</p>
+                <p className="text-xs text-gray-500">{user.role}</p>
+              </div>
+            </div>
+          </div>
+
+          {users.length > 0 ? (
+            users
+              .filter((member) => member.user_id.toString() !== loggedInUserId)
+              .map((member) => (
+                <div
+                  key={member.user_id}
+                  className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{member.name}</p>
+                      <p className="text-xs text-gray-500">{member.role}</p>
+                    </div>
+                  </div>
+                  {isManager && (
+                    <Button variant="ghost" size="sm" onClick={() => setManageMemberDialogOpen(true)}>
+                      Manage
+                    </Button>
+                  )}
+                </div>
+              ))
+          ) : (
+            <p className="text-sm text-gray-500">No other members found.</p>
+          )}
+
+          {isManager && (
+            <Button className="w-full flex items-center justify-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span>Invite New Member</span>
+            </Button>
+          )}
+
+          {isManager && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-base">Pending Invitations</Label>
+              <div className="text-sm p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <p className="font-medium">sarah@example.com</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500">Sent 2 days ago</p>
+                  <Button variant="link" size="sm" className="h-auto p-0">
+                    Resend
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
     )
   }
 
-  // Desktop Windows-style layout
-  return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {selectedCategory ? (
-        // Detailed category view with sidebar (similar to second image)
-        <div className="flex h-screen">
-          {/* Sidebar */}
-          <div className="w-64 h-full bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-            {/* User info */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
+  const MemberPermissionsContent = () => (
+    <>
+      <DialogDescription className="mb-4">Manage permissions for Anna Mohamed</DialogDescription>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Control</Label>
+            <p className="text-sm text-gray-500">Allow the user to turn on/off the device.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.control}
+            onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, control: checked })}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Configure</Label>
+            <p className="text-sm text-gray-500">Allow the user to add, delete, and edit devices.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.configure}
+            onCheckedChange={(checked) =>
+              setManageMemberPermissions({ ...manageMemberPermissions, configure: checked })
+            }
+          />
+        </div>
+      </div>
+    </>
+  )
+
+  const AccessibilityContent = ({ inDialog = true }) => {
+    const handleThemeChange = (value: string) => {
+      if (value === "light") {
+        setIsDarkMode(false)
+      } else if (value === "dark") {
+        setIsDarkMode(true)
+      }
+    }
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Customize your accessibility preferences</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your accessibility preferences</p>
+        )}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">High Contrast</Label>
+              <p className="text-sm text-gray-400">Increase color contrast</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.highContrast}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Large Text</Label>
+              <p className="text-sm text-gray-400">Increase text size</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.largeText}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>App Theme</Label>
+            <RadioGroup
+              defaultValue={settings.accessibility.theme}
+              onValueChange={(value) => {
+                setSettings({
+                  ...settings,
+                  accessibility: {
+                    ...settings.accessibility,
+                    theme: value,
+                  },
+                })
+                handleThemeChange(value)
+              }}
+              className="flex gap-3"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="theme-light" />
+                <Label htmlFor="theme-light">Light</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="theme-dark" />
+                <Label htmlFor="theme-dark">Dark</Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  const SupportContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Get help and support</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
+      )}
+      <Tabs defaultValue="contact" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="contact">Contact</TabsTrigger>
+          <TabsTrigger value="faq">FAQ</TabsTrigger>
+        </TabsList>
+        <TabsContent value="contact" className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="support-subject">Subject</Label>
+            <Select defaultValue="technical">
+              <SelectTrigger>
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="technical">Technical Issue</SelectItem>
+                <SelectItem value="billing">Billing Question</SelectItem>
+                <SelectItem value="feature">Feature Request</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="support-message">Message</Label>
+            <Textarea id="support-message" placeholder="Describe your issue..." className="min-h-[120px]" />
+          </div>
+          <Button className="w-full">Submit Ticket</Button>
+          <div className="pt-4 space-y-3">
+            <p className="text-sm font-medium">Or contact us directly:</p>
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-purple-500" />
+              <a href="mailto:support@plugsaver.com" className="text-sm text-purple-500">
+                support@plugsaver.com
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-purple-500" />
+              <a href="tel:+97180012345" className="text-sm text-purple-500">
+                +971 800 12345
+              </a>
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="faq" className="space-y-4 pt-4">
+          <div className="space-y-3">
+            {[
+              {
+                q: "How is my energy usage calculated?",
+                a: "Your energy usage is calculated based on real-time data from your connected devices and smart meters.",
+              },
+              {
+                q: "Can I connect devices from different manufacturers?",
+                a: "Yes, Plug Saver supports a wide range of smart devices from various manufacturers.",
+              },
+              {
+                q: "How accurate are the cost estimates?",
+                a: "Our cost estimates are highly accurate as they use real-time electricity rates from your utility provider.",
+              },
+              {
+                q: "How do I reset my password?",
+                a: "You can reset your password by clicking on 'Forgot Password' on the login screen.",
+              },
+            ].map((item, i) => (
+              <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <p className="font-medium text-sm">{item.q}</p>
+                <p className="text-xs text-gray-500 mt-1">{item.a}</p>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" className="w-full">
+            View All FAQs
+          </Button>
+        </TabsContent>
+        <TabsContent value="tutorials" className="space-y-4 pt-4">
+          <div className="space-y-3">
+            {[
+              { title: "Getting Started with Plug Saver", duration: "5 min" },
+              { title: "Connecting Smart Devices", duration: "8 min" },
+              { title: "Understanding Your Dashboard", duration: "6 min" },
+              { title: "Setting Energy-Saving Goals", duration: "4 min" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-md flex items-center justify-center text-purple-500">
+                  <FileQuestion className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{item.title}</p>
+                  <p className="text-xs text-gray-500">{item.duration} video tutorial</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" className="w-full">
+            View All Tutorials
+          </Button>
+        </TabsContent>
+      </Tabs>
+    </>
+  )
+
+  const HouseholdContent = ({ inDialog = true }) => {
+    const copyHouseholdCode = () => {
+      if (householdCode) {
+        navigator.clipboard.writeText(householdCode).then(() => {
+          alert("Household code copied to clipboard!")
+        })
+      }
+    }
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your household settings</p>
+        )}
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="household-code">Household Code</Label>
+            <div className="relative">
+              <Input
+                id="household-code"
+                value={householdCode || "No household code found"}
+                readOnly
+                className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed pr-10"
+              />
               <button
-                onClick={() => setSelectedCategory(null)}
-                className="mr-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                onClick={copyHouseholdCode}
+                className="absolute inset-y-0 right-0 flex items-center px-3 bg-gray-100 hover:bg-gray-200 rounded-r-md"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
               </button>
-              <span className="font-semibold">Settings</span>
             </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Auto-Saving Mode</Label>
+              <p className="text-sm text-gray-400">Automatically optimize energy usage</p>
+            </div>
+            <Switch
+              checked={settings.household.autoSaving}
+              onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Smart Scheduling</Label>
+              <p className="text-sm text-gray-400">Enable device scheduling based on habits</p>
+            </div>
+            <Switch
+              checked={settings.household.smartScheduling}
+              onCheckedChange={(checked) => handleToggleChange("household", "smartScheduling", checked)}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
 
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
+  const DashboardContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your dashboard and widgets</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your dashboard and widgets</p>
+      )}
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="text-base">Dashboard Layout</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="border-2 border-purple-500 rounded-md p-2 flex flex-col items-center gap-1 bg-purple-50/10">
+              <div className="grid grid-cols-2 gap-1 w-full">
+                <div className="aspect-video bg-purple-200/20 rounded"></div>
+                <div className="aspect-video bg-purple-200/20 rounded"></div>
+                <div className="aspect-video bg-purple-200/20 rounded col-span-2"></div>
+              </div>
+              <span className="text-xs font-medium">Standard</span>
+            </button>
+            <button className="border-2 border-transparent hover:border-purple-500 rounded-md p-2 flex flex-col items-center gap-1">
+              <div className="grid grid-cols-3 gap-1 w-full">
+                <div className="aspect-video bg-purple-200/20 rounded"></div>
+                <div className="aspect-video bg-purple-200/20 rounded"></div>
+                <div className="aspect-video bg-purple-200/20 rounded"></div>
+                <div className="aspect-video bg-purple-200/20 rounded col-span-3"></div>
+              </div>
+              <span className="text-xs font-medium">Compact</span>
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <Label className="text-base">Visible Widgets</Label>
+          <div className="space-y-2">
+            {[
+              { id: "energy-usage", label: "Energy Usage", enabled: true },
+              { id: "active-devices", label: "Active Devices", enabled: true },
+              { id: "savings-chart", label: "Savings Chart", enabled: true },
+              { id: "energy-tips", label: "Energy Saving Tips", enabled: true },
+              { id: "carbon-footprint", label: "Carbon Footprint", enabled: true },
+            ].map((widget) => (
+              <div
+                key={widget.id}
+                className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded-md"
+              >
+                <span className="text-sm">{widget.label}</span>
+                <Switch defaultChecked={widget.enabled} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-base">Default Time Period</Label>
+          <RadioGroup defaultValue="week" className="flex gap-3">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="day" id="period-day" />
+              <Label htmlFor="period-day">Day</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="week" id="period-week" />
+              <Label htmlFor="period-week">Week</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="month" id="period-month" />
+              <Label htmlFor="period-month">Month</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="year" id="period-year" />
+              <Label htmlFor="period-year">Year</Label>
+            </div>
+          </RadioGroup>
+        </div>
+      </div>
+    </>
+  )
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Updated Header Section */}
+      <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:to-purple-900/30 pb-16 relative overflow-hidden min-h-[200px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm"
+              onClick={toggleDarkMode}
+            >
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </Button>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="relative group">
+                <Avatar className="w-20 h-20 md:w-24 md:h-24 border-4 border-purple-100 dark:border-purple-900 shadow-md">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback>{user.username[0]}</AvatarFallback>
+                  <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-xl">
+                    {user.username[0]}
+                  </AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="font-medium">{user.username}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Local Account</div>
+                <div
+                  className="absolute inset-0 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={() => openDialog("profilePicture")}
+                >
+                  <Camera className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="text-center md:text-left">
+                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-xl md:text-2xl">{user.username}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
+                <div className="flex items-center justify-center md:justify-start mt-2 gap-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                    {user.role}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {user.country}
+                  </span>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Search */}
-            <div className="p-4">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input placeholder="Find a setting" className="pl-8 bg-gray-200 dark:bg-gray-700 border-0" />
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="p-2">
-              <div className="space-y-1">
-                {/* Profile Section */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Profile
+      {/* Updated Settings Content Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 lg:-mt-24 pb-16">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-8 border border-purple-100 dark:border-purple-900/50 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 transform transition-all duration-300 hover:shadow-2xl overflow-hidden">
+          {/* Decorative Background Elements */}
+          <div className="absolute -top-4 -left-4 w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
+          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 dark:from-purple-900/10 dark:via-transparent dark:to-purple-900/10 rounded-full blur-3xl -z-10"></div>
+          <div className="md:grid md:grid-cols-12 md:divide-x dark:divide-gray-700">
+            {/* Sidebar for desktop */}
+            <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-gray-50 dark:bg-gray-900/50">
+              <nav className="py-6 px-4">
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
+                      Profile
+                    </h3>
+                    <div className="space-y-1">
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "profilePicture"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("profilePicture")}
+                      >
+                        <User className="w-5 h-5 text-purple-500" />
+                        <span>Profile Picture</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "personalInfo"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("personalInfo")}
+                      >
+                        <Info className="w-5 h-5 text-purple-500" />
+                        <span>Personal Information</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "dataSharing"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("dataSharing")}
+                      >
+                        <Share2 className="w-5 h-5 text-purple-500" />
+                        <span>Data Sharing</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
+                      Account & App
+                    </h3>
+                    <div className="space-y-1">
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "security"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("security")}
+                      >
+                        <Shield className="w-5 h-5 text-purple-500" />
+                        <span>Security</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "notifications"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("notifications")}
+                      >
+                        <Bell className="w-5 h-5 text-purple-500" />
+                        <span>Notifications</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "members"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("members")}
+                      >
+                        <Users className="w-5 h-5 text-purple-500" />
+                        <span>Members</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "accessibility"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("accessibility")}
+                      >
+                        <Accessibility className="w-5 h-5 text-purple-500" />
+                        <span>Accessibility</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "support"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("support")}
+                      >
+                        <HelpCircle className="w-5 h-5 text-purple-500" />
+                        <span>Support</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "household"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("household")}
+                      >
+                        <Home className="w-5 h-5 text-purple-500" />
+                        <span>Household</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "dashboard"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("dashboard")}
+                      >
+                        <LayoutDashboard className="w-5 h-5 text-purple-500" />
+                        <span>Dashboard</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "profilePicture"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("profilePicture")}
-                >
-                  <User className="h-5 w-5" />
-                  <span>Profile Picture</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "personalInfo"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("personalInfo")}
-                >
-                  <Info className="h-5 w-5" />
-                  <span>Personal Information</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "dataSharing"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("dataSharing")}
-                >
-                  <Share2 className="h-5 w-5" />
-                  <span>Data Sharing Preferences</span>
-                </button>
-
-                {/* Account and App Section */}
-                <div className="mt-4 px-2 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Account and App
-                </div>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "security"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("security")}
-                >
-                  <Shield className="h-5 w-5" />
-                  <span>Security and Privacy</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "notifications"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("notifications")}
-                >
-                  <Bell className="h-5 w-5" />
-                  <span>Notifications</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "members"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("members")}
-                >
-                  <Users className="h-5 w-5" />
-                  <span>Members</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "accessibility"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("accessibility")}
-                >
-                  <Accessibility className="h-5 w-5" />
-                  <span>Accessibility</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "support"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("support")}
-                >
-                  <HelpCircle className="h-5 w-5" />
-                  <span>Support</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "household"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("household")}
-                >
-                  <Home className="h-5 w-5" />
-                  <span>Household</span>
-                </button>
-                <button
-                  className={`w-full flex items-center space-x-3 px-2 py-2 rounded-md ${
-                    selectedCategory === "dashboard"
-                      ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                  onClick={() => setSelectedCategory("dashboard")}
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  <span>Dashboard</span>
-                </button>
-
-                {/* Logout */}
-                <div className="mt-4 px-2">
+                <div className="mt-8 px-3">
                   <Button
                     variant="outline"
-                    className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-900/30"
+                    className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Log Out
                   </Button>
                 </div>
-              </div>
-            </nav>
-          </div>
-
-          {/* Main content */}
-          <div className="flex-1 overflow-y-auto">
-            {/* Category header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h1 className="text-2xl font-semibold dark:text-white">
-                {selectedCategory === "profilePicture" && "Profile Picture"}
-                {selectedCategory === "personalInfo" && "Personal Information"}
-                {selectedCategory === "dataSharing" && "Data Sharing Preferences"}
-                {selectedCategory === "security" && "Security and Privacy"}
-                {selectedCategory === "notifications" && "Notifications"}
-                {selectedCategory === "members" && "Members"}
-                {selectedCategory === "accessibility" && "Accessibility"}
-                {selectedCategory === "support" && "Support"}
-                {selectedCategory === "household" && "Household"}
-                {selectedCategory === "dashboard" && "Dashboard"}
-                {![
-                  "profilePicture",
-                  "personalInfo",
-                  "dataSharing",
-                  "security",
-                  "notifications",
-                  "members",
-                  "accessibility",
-                  "support",
-                  "household",
-                  "dashboard",
-                ].includes(selectedCategory || "") && "Settings"}
-              </h1>
+              </nav>
             </div>
 
-            {/* Category content */}
-            <div className="p-6">
-              {selectedCategory === "profilePicture" && (
-                <div className="space-y-6">
-                  {/* Profile picture section */}
-                  <div className="flex items-center space-x-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <div className="relative">
-                      <Avatar className="h-24 w-24">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback className="text-2xl">{user.username[0]}</AvatarFallback>
-                      </Avatar>
-                      <button className="absolute bottom-0 right-0 bg-purple-500 text-white p-1 rounded-full">
-                        <Camera className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-medium">{user.username}</h2>
-                      <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
-                      <Button variant="outline" className="mt-2">
-                        Change picture
-                      </Button>
-                    </div>
-                  </div>
-                  <Button onClick={handleSave}>Save Changes</Button>
+            {/* Mobile view */}
+            <div className="md:hidden p-6 space-y-8">
+              <section>
+                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
+                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
+                    <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </span>
+                  Profile
+                </h2>
+                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                  <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
+                  <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
+                  <SettingsItem icon={Share2} label="Data Sharing Preferences" onClick={() => openDialog("dataSharing")} />
                 </div>
-              )}
-
-              {selectedCategory === "personalInfo" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Personal Information</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <Input
-                        id="username"
-                        value={user.username}
-                        onChange={(e) => setUser({ ...user, username: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={user.email}
-                        readOnly
-                        className="bg-gray-100 cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="country">Country</Label>
-                      <Select value={user.country} onValueChange={(value) => setUser({ ...user, country: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
-                          <SelectItem value="United States">United States</SelectItem>
-                          <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="birthdate">Birthdate</Label>
-                      <Input
-                        id="birthdate"
-                        type="date"
-                        value={user.birthdate}
-                        onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
+              </section>
+              <section>
+                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
+                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
+                    <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </span>
+                  Account and App
+                </h2>
+                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                  <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
+                  <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
+                  <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
+                  <SettingsItem icon={Accessibility} label="Accessibility" onClick={() => openDialog("accessibility")} />
+                  <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
+                  <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
+                  <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
                 </div>
-              )}
-
-              {selectedCategory === "dataSharing" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Data Sharing Preferences</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Usage Data</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Share energy usage data to improve services
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.dataSharing.usageData}
-                        onCheckedChange={(checked) => handleToggleChange("dataSharing", "usageData", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Location Data</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Allow access to your location data</p>
-                      </div>
-                      <Switch
-                        checked={settings.dataSharing.locationData}
-                        onCheckedChange={(checked) => handleToggleChange("dataSharing", "locationData", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Marketing Emails</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Receive promotional offers and updates
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.dataSharing.marketingEmails}
-                        onCheckedChange={(checked) => handleToggleChange("dataSharing", "marketingEmails", checked)}
-                      />
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {selectedCategory === "security" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Security and Privacy</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Two-Factor Authentication</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Add an extra layer of security to your account
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.security.twoFactorAuth}
-                        onCheckedChange={(checked) => handleToggleChange("security", "twoFactorAuth", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Remember Device</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Stay logged in on this device</p>
-                      </div>
-                      <Switch
-                        checked={settings.security.rememberDevice}
-                        onCheckedChange={(checked) => handleToggleChange("security", "rememberDevice", checked)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="passwordExpiry">Password Expiry</Label>
-                      <Select
-                        value={settings.security.passwordExpiry}
-                        onValueChange={(value) =>
-                          setSettings({
-                            ...settings,
-                            security: {
-                              ...settings.security,
-                              passwordExpiry: value,
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select password expiry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="30days">30 days</SelectItem>
-                          <SelectItem value="60days">60 days</SelectItem>
-                          <SelectItem value="90days">90 days</SelectItem>
-                          <SelectItem value="never">Never</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {selectedCategory === "notifications" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Notifications</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">App Notifications</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Receive notifications in the app</p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.appNotifications}
-                        onCheckedChange={(checked) => handleToggleChange("notifications", "appNotifications", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Email Notifications</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Receive notifications via email</p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.emailNotifications}
-                        onCheckedChange={(checked) =>
-                          handleToggleChange("notifications", "emailNotifications", checked)
-                        }
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">SMS Notifications</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Receive notifications via SMS</p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.smsNotifications}
-                        onCheckedChange={(checked) => handleToggleChange("notifications", "smsNotifications", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Usage Alerts</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Get notified about unusual energy usage
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.usageAlerts}
-                        onCheckedChange={(checked) => handleToggleChange("notifications", "usageAlerts", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Savings Goals</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Get notified about your savings goals
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.savingsGoals}
-                        onCheckedChange={(checked) => handleToggleChange("notifications", "savingsGoals", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Tips and Tricks</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Receive energy-saving tips and tricks
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.notifications.tipsAndTricks}
-                        onCheckedChange={(checked) => handleToggleChange("notifications", "tipsAndTricks", checked)}
-                      />
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {selectedCategory === "members" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Household Members</h2>
-                  <div className="space-y-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>{user.username[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.username} (You)</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Household Manager</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sample household members */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                          <AvatarFallback>JD</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">Jane Doe</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Member</div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => setManageMemberDialogOpen(true)}>
-                        Manage
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                          <AvatarFallback>JS</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">John Smith</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">Member</div>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => setManageMemberDialogOpen(true)}>
-                        Manage
-                      </Button>
-                    </div>
-
-                    <Button className="w-full">Add New Member</Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-base font-medium">Household Code</h3>
-                    <div className="flex items-center space-x-2">
-                      <Input value="ABC123" readOnly className="bg-gray-100 dark:bg-gray-800" />
-                      <Button variant="outline">Copy</Button>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Share this code with others to join your household
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {selectedCategory === "accessibility" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Accessibility</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">High Contrast</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Increase contrast for better visibility
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.accessibility.highContrast}
-                        onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Large Text</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Increase text size for better readability
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.accessibility.largeText}
-                        onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Screen Reader</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Optimize for screen readers</p>
-                      </div>
-                      <Switch
-                        checked={settings.accessibility.screenReader}
-                        onCheckedChange={(checked) => handleToggleChange("accessibility", "screenReader", checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Reduce Motion</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Minimize animations and motion effects
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.accessibility.reduceMotion}
-                        onCheckedChange={(checked) => handleToggleChange("accessibility", "reduceMotion", checked)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="theme">Theme</Label>
-                      <Select
-                        value={settings.accessibility.theme}
-                        onValueChange={(value) =>
-                          setSettings({
-                            ...settings,
-                            accessibility: {
-                              ...settings.accessibility,
-                              theme: value,
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select theme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                          <SelectItem value="system">System</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {selectedCategory === "support" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Support</h2>
-                  <div className="space-y-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <div className="space-y-2">
-                      <h3 className="text-base font-medium">Contact Support</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Need help? Contact our support team.</p>
-                      <Button variant="outline">Contact Support</Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="text-base font-medium">FAQs</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Find answers to common questions.</p>
-                      <Button variant="outline">View FAQs</Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="text-base font-medium">User Guide</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Learn how to use the app.</p>
-                      <Button variant="outline">View User Guide</Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedCategory === "household" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Household</h2>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="householdName">Household Name</Label>
-                      <Input
-                        id="householdName"
-                        value={settings.household.name}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            household: {
-                              ...settings.household,
-                              name: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="householdSize">Household Size</Label>
-                      <Select
-                        value={settings.household.size}
-                        onValueChange={(value) =>
-                          setSettings({
-                            ...settings,
-                            household: {
-                              ...settings.household,
-                              size: value,
-                            },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select household size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Small (1-2 people)</SelectItem>
-                          <SelectItem value="medium">Medium (3-4 people)</SelectItem>
-                          <SelectItem value="large">Large (5+ people)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="rooms">Number of Rooms</Label>
-                      <Input
-                        id="rooms"
-                        type="number"
-                        value={settings.household.rooms}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            household: {
-                              ...settings.household,
-                              rooms: Number.parseInt(e.target.value),
-                            },
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Auto-Saving Mode</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Automatically optimize energy usage</p>
-                      </div>
-                      <Switch
-                        checked={settings.household.autoSaving}
-                        onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Smart Scheduling</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Schedule devices based on usage patterns
-                        </p>
-                      </div>
-                      <Switch
-                        checked={settings.household.smartScheduling}
-                        onCheckedChange={(checked) => handleToggleChange("household", "smartScheduling", checked)}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Guest Access</Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Allow guests to control devices</p>
-                      </div>
-                      <Switch
-                        checked={settings.household.guestAccess}
-                        onCheckedChange={(checked) => handleToggleChange("household", "guestAccess", checked)}
-                      />
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {selectedCategory === "dashboard" && (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-medium">Dashboard</h2>
-                  <div className="space-y-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <div className="space-y-2">
-                      <h3 className="text-base font-medium">Dashboard Layout</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Customize your dashboard layout</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" className="flex flex-col items-center justify-center p-4 h-auto">
-                          <LayoutDashboard className="h-8 w-8 mb-2" />
-                          <span>Grid</span>
-                        </Button>
-                        <Button variant="outline" className="flex flex-col items-center justify-center p-4 h-auto">
-                          <List className="h-8 w-8 mb-2" />
-                          <span>List</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="text-base font-medium">Widget Visibility</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Choose which widgets to display on your dashboard
-                      </p>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Energy Usage</Label>
-                          <Switch checked={true} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Device Status</Label>
-                          <Switch checked={true} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Savings</Label>
-                          <Switch checked={true} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Tips</Label>
-                          <Switch checked={false} />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Weather</Label>
-                          <Switch checked={true} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="mt-4" onClick={handleSave}>
-                    Save changes
-                  </Button>
-                </div>
-              )}
-
-              {/* Default content for other categories */}
-              {![
-                "profilePicture",
-                "personalInfo",
-                "dataSharing",
-                "security",
-                "notifications",
-                "members",
-                "accessibility",
-                "support",
-                "household",
-                "dashboard",
-              ].includes(selectedCategory || "") && (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center">
-                    <Settings className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <h2 className="text-xl font-medium text-gray-500 dark:text-gray-400">Settings content</h2>
-                    <p className="text-gray-400 dark:text-gray-500 mt-2">This settings section is under development</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Main settings dashboard with grid (similar to first image)
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-          <div className="max-w-5xl mx-auto p-6">
-            {/* Header */}
-            <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-              <div className="w-full p-4 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-bold dark:text-white">Settings</h1>
-                </div>
-                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-lg">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.username[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="hidden md:block">
-                    <h2 className="font-medium dark:text-white">{user.username}</h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Search bar */}
-            <div className="relative mb-8 max-w-md mx-auto">
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Find a setting"
-                className="pl-10 h-10 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Settings grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {/* Profile Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("profilePicture")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300 flex items-center justify-center mb-4">
-                    <User className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Profile</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    Account, picture, personal info
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Security Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("security")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300 flex items-center justify-center mb-4">
-                    <Shield className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Security</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    Privacy, data, account security
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Notifications Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("notifications")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 flex items-center justify-center mb-4">
-                    <Bell className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Notifications</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Alerts, reminders, messages</p>
-                </div>
-              </motion.div>
-
-              {/* Members Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("members")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-300 flex items-center justify-center mb-4">
-                    <Users className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Members</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Household members, permissions</p>
-                </div>
-              </motion.div>
-
-              {/* Accessibility Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("accessibility")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-teal-100 text-teal-600 dark:bg-teal-900/50 dark:text-teal-300 flex items-center justify-center mb-4">
-                    <Accessibility className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Accessibility</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">High contrast, text size</p>
-                </div>
-              </motion.div>
-
-              {/* Support Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("support")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-cyan-100 text-cyan-600 dark:bg-cyan-900/50 dark:text-cyan-300 flex items-center justify-center mb-4">
-                    <HelpCircle className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Support</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Help, FAQs, contact us</p>
-                </div>
-              </motion.div>
-
-              {/* Household Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("household")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300 flex items-center justify-center mb-4">
-                    <Home className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Household</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Home settings, rooms, devices</p>
-                </div>
-              </motion.div>
-
-              {/* Dashboard Section */}
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("dashboard")}
-              >
-                <div className="flex flex-col items-center p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                  <div className="w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 flex items-center justify-center mb-4">
-                    <LayoutDashboard className="h-8 w-8" />
-                  </div>
-                  <h2 className="text-lg font-medium mb-1">Dashboard</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Layout, widgets, customization</p>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Logout Button */}
-            <div className="max-w-md mx-auto mt-8">
+              </section>
               <Button
                 variant="outline"
-                className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-900/30"
+                className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Log Out
               </Button>
             </div>
+
+            {/* Main content area for desktop */}
+            <div className="hidden md:block md:col-span-9 lg:col-span-9 p-8">
+              {activeDialog === null ? (
+                <div className="text-center py-16">
+                  <div className="mx-auto w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
+                    <Settings className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Settings Dashboard</h2>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                    Select a settings category from the sidebar to customize your Plug Saver experience.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                    {[
+                      { icon: User, label: "Profile", dialog: "profilePicture" },
+                      { icon: Shield, label: "Security", dialog: "security" },
+                      { icon: Bell, label: "Notifications", dialog: "notifications" },
+                      { icon: Users, label: "Members", dialog: "members" },
+                      { icon: Home, label: "Household", dialog: "household" },
+                      { icon: LayoutDashboard, label: "Dashboard", dialog: "dashboard" },
+                    ].map((item) => (
+                      <button
+                        key={item.dialog}
+                        className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        onClick={() => openDialog(item.dialog)}
+                      >
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
+                          <item.icon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {activeDialog === "profilePicture" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Picture</h2>
+                      <ProfilePictureContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "personalInfo" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Personal Information
+                      </h2>
+                      <PersonalInfoContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "dataSharing" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Data Sharing Preferences
+                      </h2>
+                      <DataSharingContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "security" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Security and Privacy
+                      </h2>
+                      <SecurityContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "notifications" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Notifications</h2>
+                      <NotificationsContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "members" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Members</h2>
+                      <MembersContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "accessibility" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Accessibility</h2>
+                      <AccessibilityContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "support" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Support</h2>
+                      <SupportContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Close</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "household" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Household</h2>
+                      <HouseholdContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "dashboard" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h2>
+                      <DashboardContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Manage Member Dialog */}
-      <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Manage Member Permissions</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium">Jane Doe</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Member</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Control Devices</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Allow member to control devices</p>
-                </div>
-                <Switch
-                  checked={manageMemberPermissions.control}
-                  onCheckedChange={(checked) =>
-                    setManageMemberPermissions({
-                      ...manageMemberPermissions,
-                      control: checked,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Configure Settings</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Allow member to configure device settings</p>
-                </div>
-                <Switch
-                  checked={manageMemberPermissions.configure}
-                  onCheckedChange={(checked) =>
-                    setManageMemberPermissions({
-                      ...manageMemberPermissions,
-                      configure: checked,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
-                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
-                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </div>
 
       {/* Dialogs for mobile view */}
-      <Dialog open={activeDialog !== null} onOpenChange={(open) => !open && setActiveDialog(null)}>
+      <Dialog
+        open={activeDialog !== null && window.innerWidth < 768}
+        onOpenChange={(open) => !open && setActiveDialog(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
@@ -1607,19 +1535,79 @@ export default function SettingsPage() {
               {activeDialog === "dashboard" && "Dashboard"}
             </DialogTitle>
           </DialogHeader>
-          {/* Dialog content would go here */}
+          {activeDialog === "profilePicture" && <ProfilePictureContent />}
+          {activeDialog === "personalInfo" && <PersonalInfoContent />}
+          {activeDialog === "dataSharing" && <DataSharingContent />}
+          {activeDialog === "security" && <SecurityContent />}
+          {activeDialog === "notifications" && <NotificationsContent />}
+          {activeDialog === "members" && <MembersContent />}
+          {activeDialog === "accessibility" && <AccessibilityContent />}
+          {activeDialog === "support" && <SupportContent />}
+          {activeDialog === "household" && <HouseholdContent />}
+          {activeDialog === "dashboard" && <DashboardContent />}
           <DialogFooter>
             {saveSuccess && (
-              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
-                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
-                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
+              <p className="text-green-500 flex items-center text-sm">
+                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
               </p>
             )}
             <Button onClick={handleSave}>{activeDialog === "support" ? "Close" : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Member Permissions Dialog */}
+      <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Permissions</DialogTitle>
+          </DialogHeader>
+          {MemberPermissionsContent()}
+          <DialogFooter>
+            {saveSuccess && (
+              <p className="text-green-500 flex items-center text-sm">
+                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+              </p>
+            )}
+            <Button onClick={handleSave}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mobile Sheets (alternative to dialogs for smaller screens) */}
+      {Object.entries({
+        profilePicture: { title: "Profile Picture", content: ProfilePictureContent },
+        personalInfo: { title: "Personal Information", content: PersonalInfoContent },
+        dataSharing: { title: "Data Sharing Preferences", content: DataSharingContent },
+        security: { title: "Security and Privacy", content: SecurityContent },
+        notifications: { title: "Notifications", content: NotificationsContent },
+        members: { title: "Members", content: MembersContent },
+        accessibility: { title: "Accessibility", content: AccessibilityContent },
+        support: { title: "Support", content: SupportContent },
+        household: { title: "Household", content: HouseholdContent },
+        dashboard: { title: "Dashboard", content: DashboardContent },
+      }).map(([key, { title, content: Content }]) => (
+        <Sheet key={key} open={activeSheet === key} onOpenChange={(open) => !open && setActiveSheet(null)}>
+          <SheetContent className="sm:max-w-none md:hidden">
+            <SheetHeader>
+              <SheetTitle>{title}</SheetTitle>
+            </SheetHeader>
+            <div className="py-4">
+              <Content />
+            </div>
+            <SheetFooter>
+              {saveSuccess && (
+                <p className="text-green-500 flex items-center text-sm">
+                  <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                </p>
+              )}
+              <Button onClick={handleSave} className="w-full">
+                Save Changes
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      ))}
     </div>
   )
 }
-
