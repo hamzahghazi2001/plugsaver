@@ -49,8 +49,6 @@ async def json_energy_consumption(household_code):
             "day": day_consumption,
             "week": week_consumption,
             "month": month_consumption,
-            "year": year_consumption
-        }
-
-        # Need help with this part
+            "year": year_consumption}
+        print(result)
         return result
