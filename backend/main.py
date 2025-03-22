@@ -299,8 +299,6 @@ async def get_room_by_id(room_id: str = Query(...)):
         )
 
 
-
-
 class AssignRoomRequest(BaseModel):
     room_id: int
 
