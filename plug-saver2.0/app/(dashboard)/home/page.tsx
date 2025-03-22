@@ -25,7 +25,6 @@ import {
   Bed,
   Briefcase,
   DollarSign,
-  Clock,
   Sparkles,
 } from "lucide-react"
 import {
@@ -206,10 +205,7 @@ export default function HomePage() {
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Plug Saver</h1>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-blue-800/50 px-3 py-1.5 rounded-full border border-gray-200 dark:border-blue-700/50">
-                {/* Placeholder for notifications or other short info */}
-              </div>
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -262,7 +258,6 @@ export default function HomePage() {
                   </div>
                   <div className="flex items-center gap-3 bg-gray-100 dark:bg-blue-700/30 px-3 py-2 rounded-full self-start md:self-auto">
                     <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <Clock className="w-4 h-4 text-gray-500 dark:text-blue-300" />
                     <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
                   </div>
                 </div>
