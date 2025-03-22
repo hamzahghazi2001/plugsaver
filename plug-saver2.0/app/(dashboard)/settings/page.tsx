@@ -71,28 +71,58 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Dark mode state
+  // Dark mode, high contrast, and large text states
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("darkMode") === "true"
     }
     return false
   })
-
-  // Apply dark mode class to the document element
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
+  const [isHighContrast, setIsHighContrast] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("highContrast") === "true"
     }
+    return false
+  })
+  const [isLargeText, setIsLargeText] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("largeText") === "true"
+    }
+    return false
+  })
+
+  // Apply dark mode, high contrast, and large text classes to the document element
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode)
+    document.documentElement.classList.toggle("high-contrast", isHighContrast)
+    document.documentElement.classList.toggle("large-text", isLargeText)
     localStorage.setItem("darkMode", isDarkMode.toString())
-  }, [isDarkMode])
+    localStorage.setItem("highContrast", isHighContrast.toString())
+    localStorage.setItem("largeText", isLargeText.toString())
+  }, [isDarkMode, isHighContrast, isLargeText])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev)
   }
+
+  // Toggle high contrast
+  const toggleHighContrast = () => {
+    setIsHighContrast((prev) => !prev)
+  }
+
+  // Toggle large text
+  const toggleLargeText = () => {
+    setIsLargeText((prev) => !prev)
+  }
+
+  // Fetch household code from localStorage on mount
+  useEffect(() => {
+    const householdCode = localStorage.getItem("household_code")
+    if (householdCode) {
+      setHouseholdCode(householdCode)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchHouseholdUsers = async () => {
@@ -192,16 +222,15 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     dataSharing: {
       usageData: true,
-      locationData: false,
+      locationData: true, // Location data switch turned on by default
       marketingEmails: true,
     },
     security: {
-      twoFactorAuth: false,
+      twoFactorAuth: true, // 2FA is always enabled
       rememberDevice: true,
       passwordExpiry: "90days",
     },
     notifications: {
-      appNotifications: true,
       emailNotifications: true,
       smsNotifications: false,
       usageAlerts: true,
@@ -219,7 +248,6 @@ export default function SettingsPage() {
       autoSaving: true,
       smartScheduling: true,
       guestAccess: false,
-      name: "My Home",
       size: "medium",
       rooms: 4,
     },
@@ -353,11 +381,11 @@ export default function SettingsPage() {
     <>
       {inDialog ? (
         <DialogDescription className="text-center mb-4">
-          Upload a new profile picture or select from our collection
+          Upload a new profile picture from your device
         </DialogDescription>
       ) : (
         <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-          Upload a new profile picture or select from our collection
+          Upload a new profile picture from your device
         </p>
       )}
 
@@ -376,223 +404,36 @@ export default function SettingsPage() {
           <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         </Label>
       </div>
-
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-md overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500"
-            onClick={() => setUser({ ...user, avatar: `/placeholder.svg?height=80&width=80&text=Avatar${i}` })}
-          >
-            <img
-              src={`/placeholder.svg?height=80&width=80&text=Avatar${i}`}
-              alt={`Avatar ${i}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
-      </div>
     </>
   )
 
   const PersonalInfoContent = ({ inDialog = true }) => {
     // Comprehensive list of all countries
     const countries = [
-      "Afghanistan",
-      "Albania",
-      "Algeria",
-      "Andorra",
-      "Angola",
-      "Antigua and Barbuda",
-      "Argentina",
-      "Armenia",
-      "Australia",
-      "Austria",
-      "Azerbaijan",
-      "Bahamas",
-      "Bahrain",
-      "Bangladesh",
-      "Barbados",
-      "Belarus",
-      "Belgium",
-      "Belize",
-      "Benin",
-      "Bhutan",
-      "Bolivia",
-      "Bosnia and Herzegovina",
-      "Botswana",
-      "Brazil",
-      "Brunei",
-      "Bulgaria",
-      "Burkina Faso",
-      "Burundi",
-      "Côte d'Ivoire",
-      "Cabo Verde",
-      "Cambodia",
-      "Cameroon",
-      "Canada",
-      "Central African Republic",
-      "Chad",
-      "Chile",
-      "China",
-      "Colombia",
-      "Comoros",
-      "Congo (Congo-Brazzaville)",
-      "Costa Rica",
-      "Croatia",
-      "Cuba",
-      "Cyprus",
-      "Czechia",
-      "Democratic Republic of the Congo",
-      "Denmark",
-      "Djibouti",
-      "Dominica",
-      "Dominican Republic",
-      "Ecuador",
-      "Egypt",
-      "El Salvador",
-      "Equatorial Guinea",
-      "Eritrea",
-      "Estonia",
-      "Eswatini",
-      "Ethiopia",
-      "Fiji",
-      "Finland",
-      "France",
-      "Gabon",
-      "Gambia",
-      "Georgia",
-      "Germany",
-      "Ghana",
-      "Greece",
-      "Grenada",
-      "Guatemala",
-      "Guinea",
-      "Guinea-Bissau",
-      "Guyana",
-      "Haiti",
-      "Holy See",
-      "Honduras",
-      "Hungary",
-      "Iceland",
-      "India",
-      "Indonesia",
-      "Iran",
-      "Iraq",
-      "Ireland",
-      "Israel",
-      "Italy",
-      "Jamaica",
-      "Japan",
-      "Jordan",
-      "Kazakhstan",
-      "Kenya",
-      "Kiribati",
-      "Kuwait",
-      "Kyrgyzstan",
-      "Laos",
-      "Latvia",
-      "Lebanon",
-      "Lesotho",
-      "Liberia",
-      "Libya",
-      "Liechtenstein",
-      "Lithuania",
-      "Luxembourg",
-      "Madagascar",
-      "Malawi",
-      "Malaysia",
-      "Maldives",
-      "Mali",
-      "Malta",
-      "Marshall Islands",
-      "Mauritania",
-      "Mauritius",
-      "Mexico",
-      "Micronesia",
-      "Moldova",
-      "Monaco",
-      "Mongolia",
-      "Montenegro",
-      "Morocco",
-      "Mozambique",
-      "Myanmar (Burma)",
-      "Namibia",
-      "Nauru",
-      "Nepal",
-      "Netherlands",
-      "New Zealand",
-      "Nicaragua",
-      "Niger",
-      "Nigeria",
-      "North Korea",
-      "North Macedonia",
-      "Norway",
+      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+      "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
+      "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+      "Fiji", "Finland", "France",
+      "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+      "Haiti", "Holy See", "Honduras", "Hungary",
+      "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+      "Jamaica", "Japan", "Jordan",
+      "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+      "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
+      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
       "Oman",
-      "Pakistan",
-      "Palau",
-      "Palestine State",
-      "Panama",
-      "Papua New Guinea",
-      "Paraguay",
-      "Peru",
-      "Philippines",
-      "Poland",
-      "Portugal",
+      "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
       "Qatar",
-      "Romania",
-      "Russia",
-      "Rwanda",
-      "Saint Kitts and Nevis",
-      "Saint Lucia",
-      "Saint Vincent and the Grenadines",
-      "Samoa",
-      "San Marino",
-      "Sao Tome and Principe",
-      "Saudi Arabia",
-      "Senegal",
-      "Serbia",
-      "Seychelles",
-      "Sierra Leone",
-      "Singapore",
-      "Slovakia",
-      "Slovenia",
-      "Solomon Islands",
-      "Somalia",
-      "South Africa",
-      "South Korea",
-      "South Sudan",
-      "Spain",
-      "Sri Lanka",
-      "Sudan",
-      "Suriname",
-      "Sweden",
-      "Switzerland",
-      "Syria",
-      "Tajikistan",
-      "Tanzania",
-      "Thailand",
-      "Timor-Leste",
-      "Togo",
-      "Tonga",
-      "Trinidad and Tobago",
-      "Tunisia",
-      "Turkey",
-      "Turkmenistan",
-      "Tuvalu",
-      "Uganda",
-      "Ukraine",
-      "United Arab Emirates",
-      "United Kingdom",
-      "United States of America",
-      "Uruguay",
-      "Uzbekistan",
-      "Vanuatu",
-      "Venezuela",
-      "Vietnam",
+      "Romania", "Russia", "Rwanda",
+      "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+      "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+      "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan",
+      "Vanuatu", "Venezuela", "Vietnam",
       "Yemen",
-      "Zambia",
-      "Zimbabwe",
+      "Zambia", "Zimbabwe",
     ]
 
     return (
@@ -620,7 +461,7 @@ export default function SettingsPage() {
               type="email"
               value={user.email}
               readOnly
-              className="bg-gray-100 cursor-not-allowed"
+              className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
             />
           </div>
 
@@ -724,10 +565,7 @@ export default function SettingsPage() {
             <Label className="text-base">Two-Factor Authentication</Label>
             <p className="text-sm text-gray-400">Add an extra layer of security</p>
           </div>
-          <Switch
-            checked={settings.security.twoFactorAuth}
-            onCheckedChange={(checked) => handleToggleChange("security", "twoFactorAuth", checked)}
-          />
+          <span className="text-sm text-green-500">Enabled</span>
         </div>
 
         <div className="flex items-center justify-between">
@@ -742,7 +580,11 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-5 border-t">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => router.push("/changepassword")}
+          >
             Change Password
           </Button>
         </div>
@@ -762,17 +604,6 @@ export default function SettingsPage() {
         <div className="space-y-2">
           <Label className="text-base">Notification Channels</Label>
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-purple-500" />
-                <span className="text-sm">App Notifications</span>
-              </div>
-              <Switch
-                checked={settings.notifications.appNotifications}
-                onCheckedChange={(checked) => handleToggleChange("notifications", "appNotifications", checked)}
-              />
-            </div>
-
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-purple-500" />
@@ -1022,10 +853,9 @@ export default function SettingsPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
       )}
       <Tabs defaultValue="contact" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
         </TabsList>
         <TabsContent value="contact" className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -1138,29 +968,13 @@ export default function SettingsPage() {
         )}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="household-name">Household Name</Label>
-            <Input
-              id="household-name"
-              value={settings.household.name}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  household: {
-                    ...settings.household,
-                    name: e.target.value,
-                  },
-                })
-              }
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="household-code">Household Code</Label>
             <div className="relative">
               <Input
                 id="household-code"
                 value={householdCode || "No household code found"}
                 readOnly
-                className="bg-gray-100 cursor-not-allowed pr-10"
+                className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed pr-10"
               />
               <button
                 onClick={copyHouseholdCode}
