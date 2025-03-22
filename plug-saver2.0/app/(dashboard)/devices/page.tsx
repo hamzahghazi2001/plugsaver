@@ -484,6 +484,9 @@ export default function DevicesPage() {
     }
   }, []);
 
+  const [errorMessages, setErrorMessages] = useState<Record<number, string>>({});
+
+
   // Remove a device
   const removeDevice = async (deviceId: number) => {
     try {
@@ -509,23 +512,38 @@ export default function DevicesPage() {
           }),
         });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();  
+
+      if (!response.ok || !data.sucess) {
+        setErrorMessages((prev) => ({
+          ...prev,
+          [deviceId]: data.message || "Failed to delete device.",
+        }));
+        return;
+       
       }
 
-      const data = await response.json();
+
       console.log("Backend response:", data);
 
       if (data.success) {
         // Remove the device from our devices state
         setDevices(devices.filter((device) => device.id !== deviceId));
+        setErrorMessages((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[deviceId]; // Remove the error message for this device
+          return newErrors;
+        });
       } else {
         console.error("Failed to remove device:", data.message);
         setError(data.message);
       }
     } catch (error) {
       console.error("Error removing device:", error);
-      setError("An error occurred while removing the device");
+      setErrorMessages((prev) => ({
+        ...prev,
+        [deviceId]: "An error occurred while deleting the device.",
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -621,31 +639,25 @@ export default function DevicesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower, householdCode }), // Include power in the request
+        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower, householdCode, userId }), // Include power in the request
       });
-
-      if (!response.ok) {
-        // Revert the optimistic update if the request fails
-        setDevices(
-          devices.map((d) =>
-            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
-          )
-        );
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const data = await response.json();
 
-      if (!data.success) {
+      if (!response.ok || !data.success) {
         // Revert the optimistic update if the request fails
         setDevices(
           devices.map((d) =>
             d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
           )
         );
-        console.error("Failed to toggle device:", data.message);
-        setError(data.message);
+        setErrorMessages((prev) => ({
+          ...prev,
+          [deviceId]: data.message || "Failed to delete device.",
+        }));
+        return;
       }
+
+
     } catch (error) {
       console.error("Error toggling device:", error);
       setError("An error occurred while toggling the device");
@@ -674,16 +686,19 @@ export default function DevicesPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          userId: userId,
           room_name: roomName,
           household_code: householdCode,
         }),
       });
+      const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok || !data.success) {
+        setError(data.detail || "Failed to add room.");
+        return;
       }
 
-      const data = await response.json();
+
       console.log("Backend response:", data);
 
       if (data.success) {
@@ -742,15 +757,27 @@ export default function DevicesPage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        setErrorMessages((prev) => ({
+          ...prev,
+          [roomId]: data.detail || "Failed to delete room.",
+        }));
+        return;
+        return;
       }
 
-      const data = await response.json();
+
 
       if (data.success) {
         // Remove the room from our rooms state
         setRooms(rooms.filter((r) => r.room_id !== roomId));
+        setErrorMessages((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[roomId]; // Remove the error message for this room
+          return newErrors;
+        });
 
         // Update localStorage
         localStorage.setItem(
@@ -775,7 +802,10 @@ export default function DevicesPage() {
       }
     } catch (error) {
       console.error("Error deleting room:", error);
-      setError("An error occurred while deleting the room");
+      setErrorMessages((prev) => ({
+        ...prev,
+        [roomId]: "An error occurred while deleting the device.",
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -1097,6 +1127,8 @@ export default function DevicesPage() {
                           </div>
                         </div>
 
+
+
                         {/* Card Body */}
                         <div className="p-4 space-y-3">
                           {/* Room information */}
@@ -1128,8 +1160,8 @@ export default function DevicesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setCurrentEditingDevice(devices.find((d) => d.id === id)!)
-                                setEditDeviceDialogOpen(true)
+                                setCurrentEditingDevice(devices.find((d) => d.id === id)!);
+                                setEditDeviceDialogOpen(true);
                               }}
                               className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded-full w-8 h-8 p-0"
                             >
@@ -1144,6 +1176,12 @@ export default function DevicesPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
+
+                          {errorMessages[id] && (
+                            <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mt-2 text-sm">
+                              {errorMessages[id]}
+                            </div>
+                          )}
 
                           {needsRoomAssignment && (
                             <div className="mt-2 pt-2 border-t border-gray-700/30">
@@ -1265,6 +1303,12 @@ export default function DevicesPage() {
                           required
                         />
                       </div>
+                      {error && (
+                        <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 text-sm">
+                          {error}
+                        </div>
+                      )}
+
                       <Button type="submit" className="w-full">
                         Add Room
                       </Button>
@@ -1377,6 +1421,12 @@ export default function DevicesPage() {
                             </AlertDialog>
                           </div>
                         </div>
+
+                        {errorMessages[room.room_id] && (
+                            <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mt-2 text-sm">
+                              {errorMessages[room.room_id]}
+                            </div>
+                          )}
                       </Card>
                     </motion.div>
                   );
@@ -1706,11 +1756,14 @@ function AddDeviceDialog({
         body: JSON.stringify(deviceData),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setError(result.detail || "Failed to add device");
+        return;
       }
 
-      const result = await response.json();
+
       console.log(result.device_id);
 
       if (result.success) {
@@ -1743,7 +1796,7 @@ function AddDeviceDialog({
         form.reset();
         if (setIsEditMode) setIsEditMode(false);
       } else {
-        setError(result.message || "Failed to add device");
+        setError(result.detail || "Failed to add device");
       }
     } catch (error) {
       console.error("Error adding device:", error);
@@ -2298,6 +2351,8 @@ function EditDeviceDialog({
   onDeviceUpdated: (device: Device) => void
 }) {
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<number | null>(null);
+  const [householdCode, setHouseholdCode] = useState<string | null>(null)
 
   const deviceId = device?.id;
 
@@ -2310,6 +2365,20 @@ function EditDeviceDialog({
       days: device?.schedule?.days || ([] as string[]),
     },
   })
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id");
+    if (storedUserId) {
+      setUserId(Number(storedUserId)); // Convert the string to a number
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedHouseholdCode = localStorage.getItem("household_code");
+    if (storedHouseholdCode) {
+      setHouseholdCode(storedHouseholdCode);
+    }
+  }, []);
 
   // Update form values when device changes
   useEffect(() => {
@@ -2348,6 +2417,8 @@ function EditDeviceDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          householdCode: householdCode,
+          userId: userId,
           device_id: deviceId,
           consumptionLimit: data.consumptionLimit,
           active_time_start: data.startTime,
@@ -2361,12 +2432,14 @@ function EditDeviceDialog({
           },
         }),
       })
+      const result = await response.json()
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      if (!response.ok || !result.success) {
+        setError(result.detail || "Failed to update device")
+        return
       }
 
-      const result = await response.json()
+
 
       if (result.success) {
         // Update the device in the UI

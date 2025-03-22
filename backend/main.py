@@ -222,6 +222,7 @@ async def update_device_endpoint(device_id: str, device: dict):
     return {"success": result["success"], "device": result.get("device"), "message": result.get("message")}
 
 class AddRoomRequest(BaseModel):
+    userId: int
     household_code: str
     room_name: str
 
@@ -229,7 +230,7 @@ class AddRoomRequest(BaseModel):
 async def add_room_endpoint(request: AddRoomRequest):
     print("Received payload:", request.dict())
     try:
-        result = add_room(request.household_code, request.room_name)
+        result = add_room(request.userId,request.household_code, request.room_name)
         print("Result from add_room function:", result)
         if not result["success"]:
             raise HTTPException(status_code=400, detail=result["message"])
@@ -329,11 +330,20 @@ class ToggleDeviceRequest(BaseModel):
     isOn: bool
     power: str  # The current power value (e.g., "144W" or "0W")
     householdCode : str
+    userId : int
 
 @app.post("/toggle-device")
 async def toggle_device_endpoint(request: ToggleDeviceRequest):
     try:
-        print(f"Received request: deviceId={request.deviceId}, isOn={request.isOn}, power={request.power}")  # Debug log
+        print(f"Received request: deviceId={request.deviceId}, isOn={request.isOn}, power={request.power}, householdCode={request.householdCode}")  # Debug log
+
+        # Fetch the user's permissions from the database
+        permission_result = supabase.from_("householdpermissions").select("*").eq("household_code", request.householdCode).eq("user_id", request.userId).execute()
+        
+        # Check if the user has the 'can_control' permission
+        if not permission_result.data or not permission_result.data[0].get("can_control"):
+            print("Permission denied: User does not have 'can_control' permission")  # Debug log
+            return {"success": False, "message":"Permission denied: You do not have permission to control devices."}
 
         # Fetch the device from the database
         device_result = supabase.from_("devices").select("*").eq("device_id", request.deviceId).execute()
@@ -353,26 +363,24 @@ async def toggle_device_endpoint(request: ToggleDeviceRequest):
         # Update the device in the database
         update_result = supabase.from_("devices").update(update_data).eq("device_id", request.deviceId).execute()
         
-        
         # Check if the update was successful
         if not update_result.data:
             print("Failed to update device state")  # Debug log
             raise HTTPException(status_code=500, detail="Failed to update device state")
 
         print("Device state toggled successfully")  # Debug log
-        print(request.householdCode)
         return {"success": True, "message": "Device state toggled successfully", "isOn": request.isOn, "power": request.power}
     except HTTPException as http_err:
-        # Re-raise HTTP exceptions (e.g., 404, 500)
+        # Re-raise HTTP exceptions (e.g., 403, 404, 500)
         raise http_err
     except Exception as e:
         # Log the full error for debugging
         print(f"Error toggling device: {str(e)}")  # Debug log
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")   
-
-
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 class EditDeviceRequest(BaseModel):
+    householdCode : str
+    userId: int
     device_id: int
     consumptionLimit: int
     schedule: Dict[str, Any]
@@ -386,11 +394,22 @@ async def edit_device_endpoint(request: EditDeviceRequest):
     try:
         print("Received request to update device:", request.dict())
 
-        # Validate device_id
+        # Step 1: Check if the user has 'can_configure' permission
+        permission_response = supabase.table("householdpermissions") \
+            .select("can_configure") \
+            .eq("user_id", request.userId) \
+            .eq("household_code", request.householdCode) \
+            .execute()
+
+        if not permission_response.data or not permission_response.data[0].get("can_configure"):
+            print("Permission denied: User does not have 'can_configure' permission")  # Debug log
+            raise HTTPException(status_code=403, detail="Permission denied: You do not have permission to edit devices.")
+
+        # Step 2: Validate device_id
         if not request.device_id:
             raise HTTPException(status_code=400, detail="Device ID is required.")
 
-        # Prepare the update data
+        # Step 3: Prepare the update data
         update_data = {}
         if request.consumptionLimit is not None:
             update_data["consumptionLimit"] = request.consumptionLimit
@@ -403,7 +422,7 @@ async def edit_device_endpoint(request: EditDeviceRequest):
         if request.schedule is not None:
             update_data["schedule"] = request.schedule
 
-        # Update the device in Supabase
+        # Step 4: Update the device in Supabase
         response = (
             supabase.table("devices")
             .update(update_data)
@@ -417,6 +436,9 @@ async def edit_device_endpoint(request: EditDeviceRequest):
         print("Device updated successfully:", response.data)
         return {"success": True, "message": "Device updated successfully."}
 
+    except HTTPException as http_err:
+        # Re-raise HTTP exceptions (e.g., 403, 404, 500)
+        raise http_err
     except Exception as e:
         print("Error updating device:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -571,6 +593,56 @@ async def get_household_users(household_code: str = Query(...)):
             status_code=500,
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
+    
+class UpdatePermissionsRequest(BaseModel):
+    memberId: int
+    managerId: int
+    householdCode: str
+    canControl: bool
+    canConfigure: bool
+
+@app.post("/update_permissions")
+async def update_permissions(request: UpdatePermissionsRequest):
+    try:
+        # Fetch all devices in the household
+        devices_response = supabase.table("devices").select("device_id").eq("household_code", request.householdCode).execute()
+        devices = devices_response.data
+
+        if not devices:
+            raise HTTPException(status_code=404, detail="No devices found for the given household code.")
+
+        # Update permissions for each device
+        for device in devices:
+            # Check if the permission already exists
+            permission_response = supabase.table("householdpermissions").select("*").eq("household_code", request.householdCode).eq("device_id", device["device_id"]).eq("manager_id", request.managerId).eq("user_id", request.memberId).execute()
+            room_id=supabase.from_("devices").select("room_id").eq("device_id", device["device_id"]).execute().data[0]["room_id"]
+            if permission_response.data:
+                # Update existing permission
+                update_response = supabase.table("householdpermissions").update({
+                    "can_control": request.canControl,
+                    "can_configure": request.canConfigure
+                }).eq("permission_id", permission_response.data[0]["permission_id"]).execute()
+
+                if not update_response.data:
+                    raise HTTPException(status_code=500, detail=f"Failed to update permission for device {device['device_id']}.")
+            else:
+                # Insert new permission
+                insert_response = supabase.table("householdpermissions").insert({
+                    "household_code": request.householdCode,
+                    "device_id": device["device_id"],
+                    "room_id": room_id,
+                    "can_control": request.canControl,
+                    "can_configure": request.canConfigure,
+                    "manager_id": request.managerId,
+                    "user_id": request.memberId
+                }).execute()
+
+                if not insert_response.data:
+                    raise HTTPException(status_code=500, detail=f"Failed to insert permission for device {device['device_id']}.")
+
+        return {"success": True, "message": "Permissions updated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 '''@app.get("/start-live-consumption")
 async def start_live_consumption(household_code: str = Query(...)):

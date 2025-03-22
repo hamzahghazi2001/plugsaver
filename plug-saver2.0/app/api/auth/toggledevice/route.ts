@@ -4,7 +4,7 @@ export async function POST(req: NextRequest) {
   try {
     // Parse the request body to get deviceId, isOn, and power
     const body = await req.json();
-    const { deviceId, isOn, power, householdCode } = body;
+    const { deviceId, isOn, power, householdCode, userId } = body;
 
     console.log("Received request body:", body); // Debug log
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ deviceId, isOn, power, householdCode}), // Forward deviceId, isOn, and power
+      body: JSON.stringify({ deviceId, isOn, power, householdCode, userId}), // Forward deviceId, isOn, and power
     });
 
     console.log("Backend response status:", response.status); // Debug log
