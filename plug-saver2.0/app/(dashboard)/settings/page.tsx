@@ -71,58 +71,28 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Dark mode, high contrast, and large text states
+  // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("darkMode") === "true"
     }
     return false
   })
-  const [isHighContrast, setIsHighContrast] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("highContrast") === "true"
-    }
-    return false
-  })
-  const [isLargeText, setIsLargeText] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("largeText") === "true"
-    }
-    return false
-  })
 
-  // Apply dark mode, high contrast, and large text classes to the document element
+  // Apply dark mode class to the document element
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDarkMode)
-    document.documentElement.classList.toggle("high-contrast", isHighContrast)
-    document.documentElement.classList.toggle("large-text", isLargeText)
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
     localStorage.setItem("darkMode", isDarkMode.toString())
-    localStorage.setItem("highContrast", isHighContrast.toString())
-    localStorage.setItem("largeText", isLargeText.toString())
-  }, [isDarkMode, isHighContrast, isLargeText])
+  }, [isDarkMode])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev)
   }
-
-  // Toggle high contrast
-  const toggleHighContrast = () => {
-    setIsHighContrast((prev) => !prev)
-  }
-
-  // Toggle large text
-  const toggleLargeText = () => {
-    setIsLargeText((prev) => !prev)
-  }
-
-  // Fetch household code from localStorage on mount
-  useEffect(() => {
-    const householdCode = localStorage.getItem("household_code")
-    if (householdCode) {
-      setHouseholdCode(householdCode)
-    }
-  }, [])
 
   useEffect(() => {
     const fetchHouseholdUsers = async () => {
@@ -206,6 +176,31 @@ export default function SettingsPage() {
     fetchUserDetails()
   }, [])
 
+  // Add a useEffect hook to detect screen size
+  // Add this after the existing useEffect hooks
+  useEffect(() => {
+    const handleResize = () => {
+      // Prevent scrolling on desktop
+      if (window.innerWidth >= 1024) {
+        document.body.style.overflow = "hidden"
+      } else {
+        document.body.style.overflow = "auto"
+      }
+    }
+
+    // Initial call
+    handleResize()
+
+    // Add event listener
+    window.addEventListener("resize", handleResize)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      document.body.style.overflow = "auto"
+    }
+  }, [])
+
   // States for different dialog modals
   const [activeDialog, setActiveDialog] = useState<string | null>(null)
   const [activeSheet, setActiveSheet] = useState<string | null>(null)
@@ -222,15 +217,16 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     dataSharing: {
       usageData: true,
-      locationData: true, // Location data switch turned on by default
+      locationData: false,
       marketingEmails: true,
     },
     security: {
-      twoFactorAuth: true, // 2FA is always enabled
+      twoFactorAuth: false,
       rememberDevice: true,
       passwordExpiry: "90days",
     },
     notifications: {
+      appNotifications: true,
       emailNotifications: true,
       smsNotifications: false,
       usageAlerts: true,
@@ -248,6 +244,7 @@ export default function SettingsPage() {
       autoSaving: true,
       smartScheduling: true,
       guestAccess: false,
+      name: "My Home",
       size: "medium",
       rooms: 4,
     },
@@ -381,11 +378,11 @@ export default function SettingsPage() {
     <>
       {inDialog ? (
         <DialogDescription className="text-center mb-4">
-          Upload a new profile picture from your device
+          Upload a new profile picture or select from our collection
         </DialogDescription>
       ) : (
         <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
-          Upload a new profile picture from your device
+          Upload a new profile picture or select from our collection
         </p>
       )}
 
@@ -404,36 +401,223 @@ export default function SettingsPage() {
           <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         </Label>
       </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div
+            key={i}
+            className="aspect-square rounded-md overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500"
+            onClick={() => setUser({ ...user, avatar: `/placeholder.svg?height=80&width=80&text=Avatar${i}` })}
+          >
+            <img
+              src={`/placeholder.svg?height=80&width=80&text=Avatar${i}`}
+              alt={`Avatar ${i}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+      </div>
     </>
   )
 
   const PersonalInfoContent = ({ inDialog = true }) => {
     // Comprehensive list of all countries
     const countries = [
-      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
-      "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
-      "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
-      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
-      "Fiji", "Finland", "France",
-      "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
-      "Haiti", "Holy See", "Honduras", "Hungary",
-      "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-      "Jamaica", "Japan", "Jordan",
-      "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
-      "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
-      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
-      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+      "Afghanistan",
+      "Albania",
+      "Algeria",
+      "Andorra",
+      "Angola",
+      "Antigua and Barbuda",
+      "Argentina",
+      "Armenia",
+      "Australia",
+      "Austria",
+      "Azerbaijan",
+      "Bahamas",
+      "Bahrain",
+      "Bangladesh",
+      "Barbados",
+      "Belarus",
+      "Belgium",
+      "Belize",
+      "Benin",
+      "Bhutan",
+      "Bolivia",
+      "Bosnia and Herzegovina",
+      "Botswana",
+      "Brazil",
+      "Brunei",
+      "Bulgaria",
+      "Burkina Faso",
+      "Burundi",
+      "Côte d'Ivoire",
+      "Cabo Verde",
+      "Cambodia",
+      "Cameroon",
+      "Canada",
+      "Central African Republic",
+      "Chad",
+      "Chile",
+      "China",
+      "Colombia",
+      "Comoros",
+      "Congo (Congo-Brazzaville)",
+      "Costa Rica",
+      "Croatia",
+      "Cuba",
+      "Cyprus",
+      "Czechia",
+      "Democratic Republic of the Congo",
+      "Denmark",
+      "Djibouti",
+      "Dominica",
+      "Dominican Republic",
+      "Ecuador",
+      "Egypt",
+      "El Salvador",
+      "Equatorial Guinea",
+      "Eritrea",
+      "Estonia",
+      "Eswatini",
+      "Ethiopia",
+      "Fiji",
+      "Finland",
+      "France",
+      "Gabon",
+      "Gambia",
+      "Georgia",
+      "Germany",
+      "Ghana",
+      "Greece",
+      "Grenada",
+      "Guatemala",
+      "Guinea",
+      "Guinea-Bissau",
+      "Guyana",
+      "Haiti",
+      "Holy See",
+      "Honduras",
+      "Hungary",
+      "Iceland",
+      "India",
+      "Indonesia",
+      "Iran",
+      "Iraq",
+      "Ireland",
+      "Israel",
+      "Italy",
+      "Jamaica",
+      "Japan",
+      "Jordan",
+      "Kazakhstan",
+      "Kenya",
+      "Kiribati",
+      "Kuwait",
+      "Kyrgyzstan",
+      "Laos",
+      "Latvia",
+      "Lebanon",
+      "Lesotho",
+      "Liberia",
+      "Libya",
+      "Liechtenstein",
+      "Lithuania",
+      "Luxembourg",
+      "Madagascar",
+      "Malawi",
+      "Malaysia",
+      "Maldives",
+      "Mali",
+      "Malta",
+      "Marshall Islands",
+      "Mauritania",
+      "Mauritius",
+      "Mexico",
+      "Micronesia",
+      "Moldova",
+      "Monaco",
+      "Mongolia",
+      "Montenegro",
+      "Morocco",
+      "Mozambique",
+      "Myanmar (Burma)",
+      "Namibia",
+      "Nauru",
+      "Nepal",
+      "Netherlands",
+      "New Zealand",
+      "Nicaragua",
+      "Niger",
+      "Nigeria",
+      "North Korea",
+      "North Macedonia",
+      "Norway",
       "Oman",
-      "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+      "Pakistan",
+      "Palau",
+      "Palestine State",
+      "Panama",
+      "Papua New Guinea",
+      "Paraguay",
+      "Peru",
+      "Philippines",
+      "Poland",
+      "Portugal",
       "Qatar",
-      "Romania", "Russia", "Rwanda",
-      "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
-      "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
-      "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan",
-      "Vanuatu", "Venezuela", "Vietnam",
+      "Romania",
+      "Russia",
+      "Rwanda",
+      "Saint Kitts and Nevis",
+      "Saint Lucia",
+      "Saint Vincent and the Grenadines",
+      "Samoa",
+      "San Marino",
+      "Sao Tome and Principe",
+      "Saudi Arabia",
+      "Senegal",
+      "Serbia",
+      "Seychelles",
+      "Sierra Leone",
+      "Singapore",
+      "Slovakia",
+      "Slovenia",
+      "Solomon Islands",
+      "Somalia",
+      "South Africa",
+      "South Korea",
+      "South Sudan",
+      "Spain",
+      "Sri Lanka",
+      "Sudan",
+      "Suriname",
+      "Sweden",
+      "Switzerland",
+      "Syria",
+      "Tajikistan",
+      "Tanzania",
+      "Thailand",
+      "Timor-Leste",
+      "Togo",
+      "Tonga",
+      "Trinidad and Tobago",
+      "Tunisia",
+      "Turkey",
+      "Turkmenistan",
+      "Tuvalu",
+      "Uganda",
+      "Ukraine",
+      "United Arab Emirates",
+      "United Kingdom",
+      "United States of America",
+      "Uruguay",
+      "Uzbekistan",
+      "Vanuatu",
+      "Venezuela",
+      "Vietnam",
       "Yemen",
-      "Zambia", "Zimbabwe",
+      "Zambia",
+      "Zimbabwe",
     ]
 
     return (
@@ -456,21 +640,12 @@ export default function SettingsPage() {
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={user.email}
-              readOnly
-              className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
-            />
+            <Input id="email" type="email" value={user.email} readOnly className="bg-gray-100 cursor-not-allowed" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
-            <Select
-              value={user.country}
-              onValueChange={(value) => setUser({ ...user, country: value })}
-            >
+            <Select value={user.country} onValueChange={(value) => setUser({ ...user, country: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your country" />
               </SelectTrigger>
@@ -565,7 +740,10 @@ export default function SettingsPage() {
             <Label className="text-base">Two-Factor Authentication</Label>
             <p className="text-sm text-gray-400">Add an extra layer of security</p>
           </div>
-          <span className="text-sm text-green-500">Enabled</span>
+          <Switch
+            checked={settings.security.twoFactorAuth}
+            onCheckedChange={(checked) => handleToggleChange("security", "twoFactorAuth", checked)}
+          />
         </div>
 
         <div className="flex items-center justify-between">
@@ -580,11 +758,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-5 border-t">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push("/changepassword")}
-          >
+          <Button variant="outline" className="w-full">
             Change Password
           </Button>
         </div>
@@ -604,6 +778,17 @@ export default function SettingsPage() {
         <div className="space-y-2">
           <Label className="text-base">Notification Channels</Label>
           <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-purple-500" />
+                <span className="text-sm">App Notifications</span>
+              </div>
+              <Switch
+                checked={settings.notifications.appNotifications}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "appNotifications", checked)}
+              />
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-purple-500" />
@@ -853,9 +1038,10 @@ export default function SettingsPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
       )}
       <Tabs defaultValue="contact" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="faq">FAQ</TabsTrigger>
+          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
         </TabsList>
         <TabsContent value="contact" className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -968,20 +1154,47 @@ export default function SettingsPage() {
         )}
         <div className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="household-name">Household Name</Label>
+            <Input
+              id="household-name"
+              value={settings.household.name}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  household: {
+                    ...settings.household,
+                    name: e.target.value,
+                  },
+                })
+              }
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="household-code">Household Code</Label>
             <div className="relative">
               <Input
                 id="household-code"
                 value={householdCode || "No household code found"}
                 readOnly
-                className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed pr-10"
+                className="bg-gray-100 cursor-not-allowed pr-10"
               />
               <button
                 onClick={copyHouseholdCode}
                 className="absolute inset-y-0 right-0 flex items-center px-3 bg-gray-100 hover:bg-gray-200 rounded-r-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
               </button>
             </div>
@@ -1086,430 +1299,525 @@ export default function SettingsPage() {
     </>
   )
 
+  // Replace the return statement with this responsive version
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Updated Header Section */}
-      <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:to-purple-900/30 pb-16 relative overflow-hidden min-h-[200px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm"
-              onClick={toggleDarkMode}
-            >
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
-            </Button>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="relative group">
-                <Avatar className="w-20 h-20 md:w-24 md:h-24 border-4 border-purple-100 dark:border-purple-900 shadow-md">
+      {/* Mobile View */}
+      <div className="md:hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-transparent pb-10 rounded-b-[40px]">
+          <div className="max-w-md mx-auto p-6">
+            <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-xl">
-                    {user.username[0]}
-                  </AvatarFallback>
+                  <AvatarFallback>{user.username[0]}</AvatarFallback>
                 </Avatar>
-                <div
-                  className="absolute inset-0 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  onClick={() => openDialog("profilePicture")}
-                >
-                  <Camera className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="text-center md:text-left">
-                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-xl md:text-2xl">{user.username}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
-                <div className="flex items-center justify-center md:justify-start mt-2 gap-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                    {user.role}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {user.country}
-                  </span>
+                <div>
+                  <h2 className="font-medium dark:text-white">{user.username}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
+                  <p className="font-medium text-sm mt-1 dark:text-gray-300">{user.role}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Settings Content */}
+        <div className="max-w-md mx-auto p-6 -mt-5">
+          <div className="space-y-8">
+            {/* Profile Section */}
+            <section>
+              <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-2">Profile</h2>
+              <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
+                <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
+                <SettingsItem
+                  icon={Share2}
+                  label="Data Sharing Preferences"
+                  onClick={() => openDialog("dataSharing")}
+                />
+              </div>
+            </section>
+
+            {/* Account and App Section */}
+            <section>
+              <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-2">Account and App</h2>
+              <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
+                <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
+                <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
+                <SettingsItem icon={Accessibility} label="Accessibility" onClick={() => openDialog("accessibility")} />
+                <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
+                <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
+                <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
+              </div>
+            </section>
+
+            {/* Logout Button */}
+            <Button
+              variant="outline"
+              className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-900/30"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Updated Settings Content Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 lg:-mt-24 pb-16">
-        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-8 border border-purple-100 dark:border-purple-900/50 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 transform transition-all duration-300 hover:shadow-2xl overflow-hidden">
-          {/* Decorative Background Elements */}
-          <div className="absolute -top-4 -left-4 w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
-          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 dark:from-purple-900/10 dark:via-transparent dark:to-purple-900/10 rounded-full blur-3xl -z-10"></div>
-          <div className="md:grid md:grid-cols-12 md:divide-x dark:divide-gray-700">
-            {/* Sidebar for desktop */}
-            <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-gray-50 dark:bg-gray-900/50">
-              <nav className="py-6 px-4">
-                <div className="space-y-8">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
-                      Profile
-                    </h3>
-                    <div className="space-y-1">
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "profilePicture"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("profilePicture")}
-                      >
-                        <User className="w-5 h-5 text-purple-500" />
-                        <span>Profile Picture</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "personalInfo"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("personalInfo")}
-                      >
-                        <Info className="w-5 h-5 text-purple-500" />
-                        <span>Personal Information</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "dataSharing"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("dataSharing")}
-                      >
-                        <Share2 className="w-5 h-5 text-purple-500" />
-                        <span>Data Sharing</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
-                      Account & App
-                    </h3>
-                    <div className="space-y-1">
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "security"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("security")}
-                      >
-                        <Shield className="w-5 h-5 text-purple-500" />
-                        <span>Security</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "notifications"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("notifications")}
-                      >
-                        <Bell className="w-5 h-5 text-purple-500" />
-                        <span>Notifications</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "members"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("members")}
-                      >
-                        <Users className="w-5 h-5 text-purple-500" />
-                        <span>Members</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "accessibility"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("accessibility")}
-                      >
-                        <Accessibility className="w-5 h-5 text-purple-500" />
-                        <span>Accessibility</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "support"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("support")}
-                      >
-                        <HelpCircle className="w-5 h-5 text-purple-500" />
-                        <span>Support</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "household"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("household")}
-                      >
-                        <Home className="w-5 h-5 text-purple-500" />
-                        <span>Household</span>
-                      </button>
-                      <button
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
-                          activeDialog === "dashboard"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                        onClick={() => openDialog("dashboard")}
-                      >
-                        <LayoutDashboard className="w-5 h-5 text-purple-500" />
-                        <span>Dashboard</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-8 px-3">
-                  <Button
-                    variant="outline"
-                    className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log Out
-                  </Button>
-                </div>
-              </nav>
-            </div>
-
-            {/* Mobile view */}
-            <div className="md:hidden p-6 space-y-8">
-              <section>
-                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
-                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
-                    <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </span>
-                  Profile
-                </h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
-                  <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
-                  <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
-                  <SettingsItem icon={Share2} label="Data Sharing Preferences" onClick={() => openDialog("dataSharing")} />
-                </div>
-              </section>
-              <section>
-                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
-                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
-                    <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </span>
-                  Account and App
-                </h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
-                  <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
-                  <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
-                  <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
-                  <SettingsItem icon={Accessibility} label="Accessibility" onClick={() => openDialog("accessibility")} />
-                  <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
-                  <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
-                  <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
-                </div>
-              </section>
+      {/* Desktop View - Keep the original layout */}
+      <div className="hidden md:block">
+        {/* Updated Header Section */}
+        <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:to-purple-900/30 pb-16 relative overflow-hidden min-h-[200px]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 relative z-10">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
               <Button
                 variant="outline"
-                className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
-                onClick={handleLogout}
+                size="sm"
+                className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm"
+                onClick={toggleDarkMode}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
+                {isDarkMode ? "Light Mode" : "Dark Mode"}
               </Button>
             </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="relative group">
+                  <Avatar className="w-20 h-20 md:w-24 md:h-24 border-4 border-purple-100 dark:border-purple-900 shadow-md">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-xl">
+                      {user.username[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
+                    className="absolute inset-0 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    onClick={() => openDialog("profilePicture")}
+                  >
+                    <Camera className="w-6 h-6" />
+                  </div>
+                </div>
+                <div className="text-center md:text-left">
+                  <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-xl md:text-2xl">
+                    {user.username}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
+                  <div className="flex items-center justify-center md:justify-start mt-2 gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                      {user.role}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      {user.country}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            {/* Main content area for desktop */}
-            <div className="hidden md:block md:col-span-9 lg:col-span-9 p-8">
-              {activeDialog === null ? (
-                <div className="text-center py-16">
-                  <div className="mx-auto w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
-                    <Settings className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+        {/* Updated Settings Content Container - Refined Version */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 lg:-mt-24 pb-16">
+          <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 md:p-8 mb-8 border border-purple-100/70 dark:border-purple-900/30 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 transform transition-all duration-500 hover:shadow-2xl overflow-hidden group">
+            {/* Enhanced Decorative Background Elements */}
+            <div className="absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br from-purple-200 to-purple-100/50 dark:from-purple-800/40 dark:to-purple-900/20 rounded-full blur-xl opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-110"></div>
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-tl from-purple-200 to-purple-100/50 dark:from-purple-800/40 dark:to-purple-900/20 rounded-full blur-xl opacity-70 group-hover:opacity-90 transition-all duration-700 group-hover:scale-110"></div>
+            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 dark:from-purple-900/10 dark:via-transparent dark:to-purple-900/10 rounded-full blur-3xl -z-10"></div>
+
+            {/* Subtle Animated Accent */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-400 dark:via-purple-600 to-transparent opacity-30 dark:opacity-40"></div>
+
+            {/* Subtle Corner Accents */}
+            <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-purple-200 dark:border-purple-700 rounded-tl-md opacity-60"></div>
+            <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-purple-200 dark:border-purple-700 rounded-tr-md opacity-60"></div>
+            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-purple-200 dark:border-purple-700 rounded-bl-md opacity-60"></div>
+            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-purple-200 dark:border-purple-700 rounded-br-md opacity-60"></div>
+
+            <div className="md:grid md:grid-cols-12 md:divide-x dark:divide-gray-700/50 relative z-10">
+              {/* Sidebar for desktop */}
+              <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-gray-50/80 dark:bg-gray-900/40 -m-6 md:-m-8 p-6 md:p-8 rounded-l-xl backdrop-blur-sm">
+                <nav className="py-2">
+                  <div className="space-y-8">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3 flex items-center">
+                        <span className="w-8 border-t border-gray-300 dark:border-gray-600 mr-2"></span>
+                        Profile
+                      </h3>
+                      <div className="space-y-1">
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "profilePicture"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("profilePicture")}
+                        >
+                          <User
+                            className={`w-5 h-5 ${activeDialog === "profilePicture" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Profile Picture</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "personalInfo"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("personalInfo")}
+                        >
+                          <Info
+                            className={`w-5 h-5 ${activeDialog === "personalInfo" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Personal Information</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "dataSharing"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("dataSharing")}
+                        >
+                          <Share2
+                            className={`w-5 h-5 ${activeDialog === "dataSharing" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Data Sharing</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3 flex items-center">
+                        <span className="w-8 border-t border-gray-300 dark:border-gray-600 mr-2"></span>
+                        Account & App
+                      </h3>
+                      <div className="space-y-1">
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "security"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("security")}
+                        >
+                          <Shield
+                            className={`w-5 h-5 ${activeDialog === "security" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Security</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "notifications"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("notifications")}
+                        >
+                          <Bell
+                            className={`w-5 h-5 ${activeDialog === "notifications" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Notifications</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "members"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("members")}
+                        >
+                          <Users
+                            className={`w-5 h-5 ${activeDialog === "members" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Members</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "accessibility"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("accessibility")}
+                        >
+                          <Accessibility
+                            className={`w-5 h-5 ${activeDialog === "accessibility" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Accessibility</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "support"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("support")}
+                        >
+                          <HelpCircle
+                            className={`w-5 h-5 ${activeDialog === "support" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Support</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "household"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("household")}
+                        >
+                          <Home
+                            className={`w-5 h-5 ${activeDialog === "household" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Household</span>
+                        </button>
+                        <button
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                            activeDialog === "dashboard"
+                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900/50 dark:text-purple-100 shadow-sm"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                          }`}
+                          onClick={() => openDialog("dashboard")}
+                        >
+                          <LayoutDashboard
+                            className={`w-5 h-5 ${activeDialog === "dashboard" ? "text-purple-600 dark:text-purple-300" : "text-purple-500 dark:text-purple-400"}`}
+                          />
+                          <span>Dashboard</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Settings Dashboard</h2>
-                  <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
-                    Select a settings category from the sidebar to customize your Plug Saver experience.
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                    {[
-                      { icon: User, label: "Profile", dialog: "profilePicture" },
-                      { icon: Shield, label: "Security", dialog: "security" },
-                      { icon: Bell, label: "Notifications", dialog: "notifications" },
-                      { icon: Users, label: "Members", dialog: "members" },
-                      { icon: Home, label: "Household", dialog: "household" },
-                      { icon: LayoutDashboard, label: "Dashboard", dialog: "dashboard" },
-                    ].map((item) => (
-                      <button
-                        key={item.dialog}
-                        className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        onClick={() => openDialog(item.dialog)}
-                      >
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
-                          <item.icon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <div className="mt-8 px-3">
+                    <Button
+                      variant="outline"
+                      className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900/70 dark:text-red-400 dark:hover:bg-red-900/30 transition-all duration-300"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log Out
+                    </Button>
+                  </div>
+                </nav>
+              </div>
+
+              {/* Main content area for desktop */}
+              <div className="hidden md:block md:col-span-9 lg:col-span-9 p-8">
+                {activeDialog === null ? (
+                  <div className="text-center py-16">
+                    <div className="mx-auto w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
+                      <Settings className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Settings Dashboard</h2>
+                    <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                      Select a settings category from the sidebar to customize your Plug Saver experience.
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                      {[
+                        { icon: User, label: "Profile", dialog: "profilePicture" },
+                        { icon: Shield, label: "Security", dialog: "security" },
+                        { icon: Bell, label: "Notifications", dialog: "notifications" },
+                        { icon: Users, label: "Members", dialog: "members" },
+                        { icon: Home, label: "Household", dialog: "household" },
+                        { icon: LayoutDashboard, label: "Dashboard", dialog: "dashboard" },
+                      ].map((item) => (
+                        <button
+                          key={item.dialog}
+                          className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                          onClick={() => openDialog(item.dialog)}
+                        >
+                          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
+                            <item.icon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {activeDialog === "profilePicture" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                          Profile Picture
+                        </h2>
+                        <ProfilePictureContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
                         </div>
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
-                      </button>
-                    ))}
+                      </div>
+                    )}
+                    {activeDialog === "personalInfo" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                          Personal Information
+                        </h2>
+                        <PersonalInfoContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "dataSharing" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                          Data Sharing Preferences
+                        </h2>
+                        <DataSharingContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "security" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                          Security and Privacy
+                        </h2>
+                        <SecurityContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "notifications" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Notifications</h2>
+                        <NotificationsContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "members" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Members</h2>
+                        <MembersContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "accessibility" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Accessibility</h2>
+                        <AccessibilityContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "support" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Support</h2>
+                        <SupportContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Close</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "household" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Household</h2>
+                        <HouseholdContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
+                    {activeDialog === "dashboard" && (
+                      <div>
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h2>
+                        <DashboardContent inDialog={false} />
+                        <div className="mt-8 flex justify-end">
+                          {saveSuccess && (
+                            <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                              <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                              <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">
+                                Saved successfully
+                              </span>
+                            </p>
+                          )}
+                          <Button onClick={handleSave}>Save Changes</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div>
-                  {activeDialog === "profilePicture" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Picture</h2>
-                      <ProfilePictureContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "personalInfo" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                        Personal Information
-                      </h2>
-                      <PersonalInfoContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "dataSharing" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                        Data Sharing Preferences
-                      </h2>
-                      <DataSharingContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "security" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
-                        Security and Privacy
-                      </h2>
-                      <SecurityContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "notifications" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Notifications</h2>
-                      <NotificationsContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "members" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Members</h2>
-                      <MembersContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "accessibility" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Accessibility</h2>
-                      <AccessibilityContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "support" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Support</h2>
-                      <SupportContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Close</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "household" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Household</h2>
-                      <HouseholdContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                  {activeDialog === "dashboard" && (
-                    <div>
-                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h2>
-                      <DashboardContent inDialog={false} />
-                      <div className="mt-8 flex justify-end">
-                        {saveSuccess && (
-                          <p className="text-green-500 flex items-center text-sm mr-4">
-                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                          </p>
-                        )}
-                        <Button onClick={handleSave}>Save Changes</Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1547,8 +1855,9 @@ export default function SettingsPage() {
           {activeDialog === "dashboard" && <DashboardContent />}
           <DialogFooter>
             {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
               </p>
             )}
             <Button onClick={handleSave}>{activeDialog === "support" ? "Close" : "Save Changes"}</Button>
@@ -1565,8 +1874,9 @@ export default function SettingsPage() {
           {MemberPermissionsContent()}
           <DialogFooter>
             {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
               </p>
             )}
             <Button onClick={handleSave}>Save Changes</Button>
@@ -1586,8 +1896,8 @@ export default function SettingsPage() {
         support: { title: "Support", content: SupportContent },
         household: { title: "Household", content: HouseholdContent },
         dashboard: { title: "Dashboard", content: DashboardContent },
-      }).map(([key, { title, content: Content }]) => (
-        <Sheet key={key} open={activeSheet === key} onOpenChange={(open) => !open && setActiveSheet(null)}>
+      }).map(([, { title, content: Content }]) => (
+        <Sheet key={title} open={false} onOpenChange={() => {}}>
           <SheetContent className="sm:max-w-none md:hidden">
             <SheetHeader>
               <SheetTitle>{title}</SheetTitle>
@@ -1597,8 +1907,9 @@ export default function SettingsPage() {
             </div>
             <SheetFooter>
               {saveSuccess && (
-                <p className="text-green-500 flex items-center text-sm">
-                  <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                  <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                  <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
                 </p>
               )}
               <Button onClick={handleSave} className="w-full">
@@ -1611,3 +1922,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+
