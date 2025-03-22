@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
@@ -7,8 +9,18 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import {
   User,
   Info,
@@ -24,6 +36,10 @@ import {
   Camera,
   LogOut,
   CheckCircle,
+  Mail,
+  Phone,
+  UserPlus,
+  FileQuestion,
   Settings,
   Search,
   ArrowLeft,
@@ -153,9 +169,24 @@ export default function SettingsPage() {
   })
 
   // State for household code
-  const [householdCode, setHouseholdCode] = useState<string | null>(null)
-  const [users, setUsers] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [householdCode, setHouseholdCode] = useState<string | null>("HOUSE1234")
+  const [users, setUsers] = useState<any[]>([
+    {
+      user_id: 1,
+      name: "Anna Mohamed",
+      email: "anna@example.com",
+      role: "Member",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      user_id: 2,
+      name: "Ahmed Hassan",
+      email: "ahmed@example.com",
+      role: "Member",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  ])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Dark mode state
@@ -212,6 +243,7 @@ export default function SettingsPage() {
 
   // State for managing member permissions dialog
   const [manageMemberDialogOpen, setManageMemberDialogOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<any | null>(null)
   const [manageMemberPermissions, setManageMemberPermissions] = useState({
     control: false,
     configure: false,
@@ -277,9 +309,35 @@ export default function SettingsPage() {
     }, 1500)
   }
 
+  // Handle avatar upload
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Create a URL for the selected image
+    const imageUrl = URL.createObjectURL(file)
+
+    // Update user avatar
+    setUser({
+      ...user,
+      avatar: imageUrl,
+    })
+
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 1500)
+  }
+
+  // Handle updating personal info
+  const handleUpdatePersonalInfo = () => {
+    // In a real app, this would call an API to update the user's information
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 1500)
+  }
+
   // Handle logout
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" })
+    // In a real app, this would call an API to log the user out
+    await new Promise((resolve) => setTimeout(resolve, 500))
     router.push("/login")
   }
 
@@ -291,6 +349,16 @@ export default function SettingsPage() {
         ...settings[category as keyof typeof settings],
         [setting]: value,
       },
+    })
+  }
+
+  // Handle member permissions
+  const handleManageMember = (member: any) => {
+    setSelectedMember(member)
+    setManageMemberDialogOpen(true)
+    setManageMemberPermissions({
+      control: false,
+      configure: false,
     })
   }
 
@@ -318,6 +386,1193 @@ export default function SettingsPage() {
       window.removeEventListener("resize", checkMobile)
     }
   }, [])
+
+  // Profile Picture content component
+  const ProfilePictureContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="text-center mb-4">
+          Upload a new profile picture or select from our collection
+        </DialogDescription>
+      ) : (
+        <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
+          Upload a new profile picture or select from our collection
+        </p>
+      )}
+
+      <div className="flex flex-col items-center gap-4 mb-6">
+        <Avatar className="w-24 h-24">
+          <AvatarImage src={`${user.avatar}`} />
+          <AvatarFallback>{user.username[0]}</AvatarFallback>
+        </Avatar>
+
+        <Label
+          htmlFor="avatar-upload"
+          className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full flex items-center gap-2"
+        >
+          <Camera className="w-4 h-4" />
+          <span>Upload Photo</span>
+          <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        </Label>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div
+            key={i}
+            className="aspect-square rounded-md overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500"
+            onClick={() => setUser({ ...user, avatar: `/placeholder.svg?height=80&width=80&text=Avatar${i}` })}
+          >
+            <img
+              src={`/placeholder.svg?height=80&width=80&text=Avatar${i}`}
+              alt={`Avatar ${i}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+      </div>
+    </>
+  )
+
+  // Personal Info content component
+  const PersonalInfoContent = ({ inDialog = true }) => {
+    // Comprehensive list of countries
+    const countries = [
+      "Afghanistan",
+      "Albania",
+      "Algeria",
+      "Andorra",
+      "Angola",
+      "Antigua and Barbuda",
+      "Argentina",
+      "Armenia",
+      "Australia",
+      "Austria",
+      "Azerbaijan",
+      "Bahamas",
+      "Bahrain",
+      "Bangladesh",
+      "Barbados",
+      "Belarus",
+      "Belgium",
+      "Belize",
+      "Benin",
+      "Bhutan",
+      "Bolivia",
+      "Bosnia and Herzegovina",
+      "Botswana",
+      "Brazil",
+      "Brunei",
+      "Bulgaria",
+      "Burkina Faso",
+      "Burundi",
+      "Cambodia",
+      "Cameroon",
+      "Canada",
+      "Cape Verde",
+      "Central African Republic",
+      "Chad",
+      "Chile",
+      "China",
+      "Colombia",
+      "Comoros",
+      "Congo",
+      "Costa Rica",
+      "Croatia",
+      "Cuba",
+      "Cyprus",
+      "Czech Republic",
+      "Denmark",
+      "Djibouti",
+      "Dominica",
+      "Dominican Republic",
+      "East Timor",
+      "Ecuador",
+      "Egypt",
+      "El Salvador",
+      "Equatorial Guinea",
+      "Eritrea",
+      "Estonia",
+      "Eswatini",
+      "Ethiopia",
+      "Fiji",
+      "Finland",
+      "France",
+      "Gabon",
+      "Gambia",
+      "Georgia",
+      "Germany",
+      "Ghana",
+      "Greece",
+      "Grenada",
+      "Guatemala",
+      "Guinea",
+      "Guinea-Bissau",
+      "Guyana",
+      "Haiti",
+      "Honduras",
+      "Hungary",
+      "Iceland",
+      "India",
+      "Indonesia",
+      "Iran",
+      "Iraq",
+      "Ireland",
+      "Israel",
+      "Italy",
+      "Ivory Coast",
+      "Jamaica",
+      "Japan",
+      "Jordan",
+      "Kazakhstan",
+      "Kenya",
+      "Kiribati",
+      "Korea, North",
+      "Korea, South",
+      "Kosovo",
+      "Kuwait",
+      "Kyrgyzstan",
+      "Laos",
+      "Latvia",
+      "Lebanon",
+      "Lesotho",
+      "Liberia",
+      "Libya",
+      "Liechtenstein",
+      "Lithuania",
+      "Luxembourg",
+      "Madagascar",
+      "Malawi",
+      "Malaysia",
+      "Maldives",
+      "Mali",
+      "Malta",
+      "Marshall Islands",
+      "Mauritania",
+      "Mauritius",
+      "Mexico",
+      "Micronesia",
+      "Moldova",
+      "Monaco",
+      "Mongolia",
+      "Montenegro",
+      "Morocco",
+      "Mozambique",
+      "Myanmar",
+      "Namibia",
+      "Nauru",
+      "Nepal",
+      "Netherlands",
+      "New Zealand",
+      "Nicaragua",
+      "Niger",
+      "Nigeria",
+      "North Macedonia",
+      "Norway",
+      "Oman",
+      "Pakistan",
+      "Palau",
+      "Palestine",
+      "Panama",
+      "Papua New Guinea",
+      "Paraguay",
+      "Peru",
+      "Philippines",
+      "Poland",
+      "Portugal",
+      "Qatar",
+      "Romania",
+      "Russia",
+      "Rwanda",
+      "Saint Kitts and Nevis",
+      "Saint Lucia",
+      "Saint Vincent and the Grenadines",
+      "Samoa",
+      "San Marino",
+      "Sao Tome and Principe",
+      "Saudi Arabia",
+      "Senegal",
+      "Serbia",
+      "Seychelles",
+      "Sierra Leone",
+      "Singapore",
+      "Slovakia",
+      "Slovenia",
+      "Solomon Islands",
+      "Somalia",
+      "South Africa",
+      "South Sudan",
+      "Spain",
+      "Sri Lanka",
+      "Sudan",
+      "Suriname",
+      "Sweden",
+      "Switzerland",
+      "Syria",
+      "Taiwan",
+      "Tajikistan",
+      "Tanzania",
+      "Thailand",
+      "Togo",
+      "Tonga",
+      "Trinidad and Tobago",
+      "Tunisia",
+      "Turkey",
+      "Turkmenistan",
+      "Tuvalu",
+      "Uganda",
+      "Ukraine",
+      "United Arab Emirates",
+      "United Kingdom",
+      "United States",
+      "Uruguay",
+      "Uzbekistan",
+      "Vanuatu",
+      "Vatican City",
+      "Venezuela",
+      "Vietnam",
+      "Yemen",
+      "Zambia",
+      "Zimbabwe",
+    ]
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Update your personal information</p>
+        )}
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={user.username}
+              onChange={(e) => setUser({ ...user, username: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={user.email}
+              readOnly
+              className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Select value={user.country} onValueChange={(value) => setUser({ ...user, country: value })}>
+              <SelectTrigger id="country">
+                <SelectValue placeholder="Select your country" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto">
+                {countries.map((country) => (
+                  <SelectItem key={country} value={country}>
+                    {country}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="birthdate">Birthdate</Label>
+            <Input
+              id="birthdate"
+              type="date"
+              value={user.birthdate}
+              onChange={(e) => setUser({ ...user, birthdate: e.target.value })}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Data Sharing content component
+  const DataSharingContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Control how your data is used and shared</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Control how your data is used and shared</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Usage Data</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Share energy usage data to improve services</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.usageData}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "usageData", checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Location Data</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Allow access to your location data</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.locationData}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "locationData", checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Marketing Emails</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Receive promotional offers and updates</p>
+          </div>
+          <Switch
+            checked={settings.dataSharing.marketingEmails}
+            onCheckedChange={(checked) => handleToggleChange("dataSharing", "marketingEmails", checked)}
+          />
+        </div>
+
+        <div>
+          <div className="pt-5 border-t" />
+          <h4 className="text-sm font-medium mb-3">Account Deletion</h4>
+          <Button variant="destructive" className="w-full">
+            Request Account Deletion
+          </Button>
+        </div>
+      </div>
+    </>
+  )
+
+  // Security content component
+  const SecurityContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Manage your security preferences and account protection</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your security preferences and account protection</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Two-Factor Authentication</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Add an extra layer of security</p>
+          </div>
+          <Switch
+            checked={settings.security.twoFactorAuth}
+            onCheckedChange={(checked) => handleToggleChange("security", "twoFactorAuth", checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-base">Remember Device</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Stay logged in on this device</p>
+          </div>
+          <Switch
+            checked={settings.security.rememberDevice}
+            onCheckedChange={(checked) => handleToggleChange("security", "rememberDevice", checked)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Password Expiry</Label>
+          <Select
+            value={settings.security.passwordExpiry}
+            onValueChange={(value) =>
+              setSettings({
+                ...settings,
+                security: {
+                  ...settings.security,
+                  passwordExpiry: value,
+                },
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select password expiry" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="30days">30 days</SelectItem>
+              <SelectItem value="60days">60 days</SelectItem>
+              <SelectItem value="90days">90 days</SelectItem>
+              <SelectItem value="never">Never</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="pt-5 border-t">
+          <Button variant="outline" className="w-full">
+            Change Password
+          </Button>
+        </div>
+      </div>
+    </>
+  )
+
+  // Notifications content component
+  const NotificationsContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your notification preferences</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your notification preferences</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="text-base">Notification Channels</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span className="text-sm">App Notifications</span>
+              </div>
+              <Switch
+                checked={settings.notifications.appNotifications}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "appNotifications", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span className="text-sm">Email Notifications</span>
+              </div>
+              <Switch
+                checked={settings.notifications.emailNotifications}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "emailNotifications", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span className="text-sm">SMS Notifications</span>
+              </div>
+              <Switch
+                checked={settings.notifications.smsNotifications}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "smsNotifications", checked)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Alert Types</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Usage Alerts</span>
+              <Switch
+                checked={settings.notifications.usageAlerts}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "usageAlerts", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Savings Goals</span>
+              <Switch
+                checked={settings.notifications.savingsGoals}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "savingsGoals", checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Tips & Tricks</span>
+              <Switch
+                checked={settings.notifications.tipsAndTricks}
+                onCheckedChange={(checked) => handleToggleChange("notifications", "tipsAndTricks", checked)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Quiet Hours</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="quiet-start" className="text-sm">
+                Start Time
+              </Label>
+              <Input id="quiet-start" type="time" defaultValue="22:00" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="quiet-end" className="text-sm">
+                End Time
+              </Label>
+              <Input id="quiet-end" type="time" defaultValue="07:00" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+
+  // Members content component
+  const MembersContent = ({ inDialog = true }) => {
+    const loggedInUserId = 0 // Current user ID
+    const isManager = user.role === "Household Manager"
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage household members and permissions</p>
+        )}
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback>{user.username[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">{user.username} (You)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+              </div>
+            </div>
+          </div>
+
+          {users.length > 0 ? (
+            users
+              .filter((member) => member.user_id.toString() !== loggedInUserId.toString())
+              .map((member) => (
+                <div
+                  key={member.user_id}
+                  className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{member.name?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{member.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{member.role}</p>
+                    </div>
+                  </div>
+                  {isManager && (
+                    <Button variant="ghost" size="sm" onClick={() => handleManageMember(member)}>
+                      Manage
+                    </Button>
+                  )}
+                </div>
+              ))
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No other members found.</p>
+          )}
+
+          {isManager && (
+            <Button className="w-full flex items-center justify-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              <span>Invite New Member</span>
+            </Button>
+          )}
+
+          {isManager && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-base">Pending Invitations</Label>
+              <div className="text-sm p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <p className="font-medium">sarah@example.com</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Sent 2 days ago</p>
+                  <Button variant="link" size="sm" className="h-auto p-0">
+                    Resend
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2 pt-4 border-t">
+            <Label className="text-base">Household Code</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                value={householdCode || "No household code found"}
+                readOnly
+                className="bg-gray-100 dark:bg-gray-800"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (householdCode) {
+                    navigator.clipboard.writeText(householdCode)
+                    alert("Household code copied to clipboard!")
+                  }
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Share this code to invite members to your household
+            </p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Member Permissions content component
+  const MemberPermissionsContent = () => (
+    <>
+      <DialogDescription className="mb-4">Manage permissions for {selectedMember?.name || "Member"}</DialogDescription>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Control</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Allow the user to turn on/off devices.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.control}
+            onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, control: checked })}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-base">Configure</Label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Allow the user to add, delete, and edit devices.</p>
+          </div>
+          <Switch
+            checked={manageMemberPermissions.configure}
+            onCheckedChange={(checked) =>
+              setManageMemberPermissions({ ...manageMemberPermissions, configure: checked })
+            }
+          />
+        </div>
+      </div>
+    </>
+  )
+
+  // Accessibility content component
+  const AccessibilityContent = ({ inDialog = true }) => {
+    const handleThemeChange = (value: string) => {
+      if (value === "light") {
+        setIsDarkMode(false)
+      } else if (value === "dark") {
+        setIsDarkMode(true)
+      }
+    }
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Customize your accessibility preferences</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your accessibility preferences</p>
+        )}
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">High Contrast</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Increase color contrast</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.highContrast}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Large Text</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Increase text size</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.largeText}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Screen Reader</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Compatible with screen readers</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.screenReader}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "screenReader", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Reduce Motion</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Decrease animations and motion effects</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.reduceMotion}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "reduceMotion", checked)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>App Theme</Label>
+            <RadioGroup
+              defaultValue={settings.accessibility.theme}
+              onValueChange={(value) => {
+                setSettings({
+                  ...settings,
+                  accessibility: {
+                    ...settings.accessibility,
+                    theme: value,
+                  },
+                })
+                handleThemeChange(value)
+              }}
+              className="flex gap-3"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="theme-light" />
+                <Label htmlFor="theme-light">Light</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="theme-dark" />
+                <Label htmlFor="theme-dark">Dark</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="system" id="theme-system" />
+                <Label htmlFor="theme-system">System</Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Support content component
+  const SupportContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Get help and support</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
+      )}
+
+      <Tabs defaultValue="contact" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="contact">Contact</TabsTrigger>
+          <TabsTrigger value="faq">FAQ</TabsTrigger>
+          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="contact" className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="support-subject">Subject</Label>
+            <Select defaultValue="technical">
+              <SelectTrigger>
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="technical">Technical Issue</SelectItem>
+                <SelectItem value="billing">Billing Question</SelectItem>
+                <SelectItem value="feature">Feature Request</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="support-message">Message</Label>
+            <Textarea id="support-message" placeholder="Describe your issue..." className="min-h-[120px]" />
+          </div>
+
+          <Button className="w-full">Submit Ticket</Button>
+
+          <div className="pt-4 space-y-3">
+            <p className="text-sm font-medium">Or contact us directly:</p>
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <a href="mailto:support@plugsaver.com" className="text-sm text-blue-500 dark:text-blue-400">
+                support@plugsaver.com
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <a href="tel:+97180012345" className="text-sm text-blue-500 dark:text-blue-400">
+                +971 800 12345
+              </a>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="faq" className="space-y-4 pt-4">
+          <div className="space-y-3">
+            {[
+              {
+                q: "How is my energy usage calculated?",
+                a: "Your energy usage is calculated based on real-time data from your connected devices and smart meters.",
+              },
+              {
+                q: "Can I connect devices from different manufacturers?",
+                a: "Yes, Plug Saver supports a wide range of smart devices from various manufacturers.",
+              },
+              {
+                q: "How accurate are the cost estimates?",
+                a: "Our cost estimates are highly accurate as they use real-time electricity rates from your utility provider.",
+              },
+              {
+                q: "How do I reset my password?",
+                a: "You can reset your password by clicking on 'Forgot Password' on the login screen.",
+              },
+            ].map((item, i) => (
+              <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <p className="font-medium text-sm">{item.q}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.a}</p>
+              </div>
+            ))}
+          </div>
+
+          <Button variant="outline" className="w-full">
+            View All FAQs
+          </Button>
+        </TabsContent>
+
+        <TabsContent value="tutorials" className="space-y-4 pt-4">
+          <div className="space-y-3">
+            {[
+              { title: "Getting Started with Plug Saver", duration: "5 min" },
+              { title: "Connecting Smart Devices", duration: "8 min" },
+              { title: "Understanding Your Dashboard", duration: "6 min" },
+              { title: "Setting Energy-Saving Goals", duration: "4 min" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-md flex items-center justify-center text-blue-500 dark:text-blue-400">
+                  <FileQuestion className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{item.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.duration} video tutorial</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button variant="outline" className="w-full">
+            View All Tutorials
+          </Button>
+        </TabsContent>
+      </Tabs>
+    </>
+  )
+
+  // Household content component
+  const HouseholdContent = ({ inDialog = true }) => {
+    const copyHouseholdCode = () => {
+      if (householdCode) {
+        navigator.clipboard.writeText(householdCode).then(() => {
+          alert("Household code copied to clipboard!")
+        })
+      }
+    }
+
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your household settings</p>
+        )}
+
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="household-name">Household Name</Label>
+            <Input
+              id="household-name"
+              value={settings.household.name}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  household: {
+                    ...settings.household,
+                    name: e.target.value,
+                  },
+                })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="household-code">Household Code</Label>
+            <div className="relative">
+              <Input
+                id="household-code"
+                value={householdCode || "No household code found"}
+                readOnly
+                className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed pr-10"
+              />
+              <button
+                onClick={copyHouseholdCode}
+                className="absolute inset-y-0 right-0 flex items-center px-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-r-md"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-500 dark:text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="household-size">Household Size</Label>
+            <Select
+              value={settings.household.size}
+              onValueChange={(value) =>
+                setSettings({
+                  ...settings,
+                  household: {
+                    ...settings.household,
+                    size: value,
+                  },
+                })
+              }
+            >
+              <SelectTrigger id="household-size">
+                <SelectValue placeholder="Select household size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small (1-2 people)</SelectItem>
+                <SelectItem value="medium">Medium (3-4 people)</SelectItem>
+                <SelectItem value="large">Large (5+ people)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="household-rooms">Number of Rooms</Label>
+            <Input
+              id="household-rooms"
+              type="number"
+              min="1"
+              value={settings.household.rooms}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  household: {
+                    ...settings.household,
+                    rooms: Number.parseInt(e.target.value) || 1,
+                  },
+                })
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Auto-Saving Mode</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Automatically optimize energy usage</p>
+            </div>
+            <Switch
+              checked={settings.household.autoSaving}
+              onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Smart Scheduling</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Enable device scheduling based on habits</p>
+            </div>
+            <Switch
+              checked={settings.household.smartScheduling}
+              onCheckedChange={(checked) => handleToggleChange("household", "smartScheduling", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Guest Access</Label>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Allow temporary access for guests</p>
+            </div>
+            <Switch
+              checked={settings.household.guestAccess}
+              onCheckedChange={(checked) => handleToggleChange("household", "guestAccess", checked)}
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // Dashboard content component
+  const DashboardContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your dashboard and widgets</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your dashboard and widgets</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="text-base">Dashboard Layout</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="border-2 border-blue-500 rounded-md p-2 flex flex-col items-center gap-1 bg-blue-50/10 dark:bg-blue-900/10">
+              <div className="grid grid-cols-2 gap-1 w-full">
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded"></div>
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded"></div>
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded col-span-2"></div>
+              </div>
+              <span className="text-xs font-medium">Standard</span>
+            </button>
+
+            <button className="border-2 border-transparent hover:border-blue-500 rounded-md p-2 flex flex-col items-center gap-1">
+              <div className="grid grid-cols-3 gap-1 w-full">
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded"></div>
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded"></div>
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded"></div>
+                <div className="aspect-video bg-blue-200/20 dark:bg-blue-200/10 rounded col-span-3"></div>
+              </div>
+              <span className="text-xs font-medium">Compact</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-base">Visible Widgets</Label>
+          <div className="space-y-2">
+            {[
+              { id: "energy-usage", label: "Energy Usage", enabled: true },
+              { id: "active-devices", label: "Active Devices", enabled: true },
+              { id: "savings-chart", label: "Savings Chart", enabled: true },
+              { id: "energy-tips", label: "Energy Saving Tips", enabled: true },
+              { id: "carbon-footprint", label: "Carbon Footprint", enabled: true },
+            ].map((widget) => (
+              <div
+                key={widget.id}
+                className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded-md"
+              >
+                <span className="text-sm">{widget.label}</span>
+                <Switch defaultChecked={widget.enabled} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Default Time Period</Label>
+          <RadioGroup defaultValue="week" className="flex gap-3">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="day" id="period-day" />
+              <Label htmlFor="period-day">Day</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="week" id="period-week" />
+              <Label htmlFor="period-week">Week</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="month" id="period-month" />
+              <Label htmlFor="period-month">Month</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="year" id="period-year" />
+              <Label htmlFor="period-year">Year</Label>
+            </div>
+          </RadioGroup>
+        </div>
+      </div>
+    </>
+  )
+
+  // System content component
+  const SystemContent = ({ inDialog = true }) => (
+    <>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Manage system settings</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Manage system settings</p>
+      )}
+
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label className="text-base">Display</Label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Night Light</span>
+              <Switch defaultChecked={false} />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="brightness" className="text-sm">
+                Screen Brightness
+              </Label>
+              <Input id="brightness" type="range" min="0" max="100" defaultValue="80" className="w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Power Mode</Label>
+          <RadioGroup defaultValue="balanced" className="space-y-2">
+            <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+              <RadioGroupItem value="power-save" id="power-save" />
+              <div>
+                <Label htmlFor="power-save" className="font-medium">
+                  Power Saver
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Conserve energy, reduce performance</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+              <RadioGroupItem value="balanced" id="balanced" />
+              <div>
+                <Label htmlFor="balanced" className="font-medium">
+                  Balanced
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Recommended for most situations</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+              <RadioGroupItem value="performance" id="performance" />
+              <div>
+                <Label htmlFor="performance" className="font-medium">
+                  Performance
+                </Label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Maximum capabilities, higher energy use</p>
+              </div>
+            </div>
+          </RadioGroup>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-base">Device Shutdown</Label>
+          <Select defaultValue="30">
+            <SelectTrigger>
+              <SelectValue placeholder="Select shutdown time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="15">15 minutes</SelectItem>
+              <SelectItem value="30">30 minutes</SelectItem>
+              <SelectItem value="60">1 hour</SelectItem>
+              <SelectItem value="120">2 hours</SelectItem>
+              <SelectItem value="never">Never</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Turn off devices after inactivity period</p>
+        </div>
+      </div>
+    </>
+  )
 
   // If on mobile, use the existing mobile layout
   if (isMobile) {
@@ -513,7 +1768,19 @@ export default function SettingsPage() {
                 {activeDialog === "dashboard" && "Dashboard"}
               </DialogTitle>
             </DialogHeader>
-            {/* Dialog content would go here */}
+
+            {/* Dialog content */}
+            {activeDialog === "profilePicture" && <ProfilePictureContent />}
+            {activeDialog === "personalInfo" && <PersonalInfoContent />}
+            {activeDialog === "dataSharing" && <DataSharingContent />}
+            {activeDialog === "security" && <SecurityContent />}
+            {activeDialog === "notifications" && <NotificationsContent />}
+            {activeDialog === "members" && <MembersContent />}
+            {activeDialog === "accessibility" && <AccessibilityContent />}
+            {activeDialog === "support" && <SupportContent />}
+            {activeDialog === "household" && <HouseholdContent />}
+            {activeDialog === "dashboard" && <DashboardContent />}
+
             <DialogFooter>
               {saveSuccess && (
                 <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
@@ -522,6 +1789,25 @@ export default function SettingsPage() {
                 </p>
               )}
               <Button onClick={handleSave}>{activeDialog === "support" ? "Close" : "Save Changes"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Member Permissions Dialog */}
+        <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Manage Permissions</DialogTitle>
+            </DialogHeader>
+            <MemberPermissionsContent />
+            <DialogFooter>
+              {saveSuccess && (
+                <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                  <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                  <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
+                </p>
+              )}
+              <Button onClick={handleSave}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -624,17 +1910,38 @@ export default function SettingsPage() {
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback className="text-2xl">{user.username[0]}</AvatarFallback>
                       </Avatar>
-                      <button className="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full">
+                      <Label
+                        htmlFor="avatar-upload-desktop"
+                        className="absolute bottom-0 right-0 cursor-pointer bg-blue-500 text-white p-1 rounded-full hover:bg-blue-600"
+                      >
                         <Camera className="h-4 w-4" />
-                      </button>
+                        <Input
+                          id="avatar-upload-desktop"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                      </Label>
                     </div>
                     <div>
                       <h2 className="text-xl font-medium">{user.username}</h2>
                       <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
-                      <Button variant="outline" className="mt-2">
+                      <Button
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => document.getElementById("avatar-upload-desktop")?.click()}
+                      >
                         Change picture
                       </Button>
                     </div>
+
+                    {saveSuccess && (
+                      <div className="ml-auto bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 py-1 px-3 rounded-md flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        <span className="text-sm">Saved</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Personal info section */}
@@ -656,7 +1963,7 @@ export default function SettingsPage() {
                           type="email"
                           value={user.email}
                           readOnly
-                          className="bg-gray-100 cursor-not-allowed"
+                          className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
                         />
                       </div>
                       <div className="space-y-2">
@@ -669,6 +1976,9 @@ export default function SettingsPage() {
                             <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
                             <SelectItem value="United States">United States</SelectItem>
                             <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                            <SelectItem value="Canada">Canada</SelectItem>
+                            <SelectItem value="Australia">Australia</SelectItem>
+                            <SelectItem value="Germany">Germany</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -682,7 +1992,9 @@ export default function SettingsPage() {
                         />
                       </div>
                     </div>
-                    <Button className="mt-4">Save changes</Button>
+                    <Button className="mt-4" onClick={handleUpdatePersonalInfo}>
+                      Save changes
+                    </Button>
                   </div>
 
                   {/* Data sharing section */}
@@ -724,7 +2036,6 @@ export default function SettingsPage() {
                         />
                       </div>
                     </div>
-                    <Button className="mt-4">Save changes</Button>
                   </div>
                 </div>
               )}
@@ -886,8 +2197,22 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Add more category content sections as needed */}
-              {!["profile", "network", "energy"].includes(selectedCategory || "") && (
+              {selectedCategory === "accounts" && <MembersContent inDialog={false} />}
+              {selectedCategory === "system" && <SystemContent inDialog={false} />}
+              {selectedCategory === "accessibility" && <AccessibilityContent inDialog={false} />}
+              {selectedCategory === "privacy" && <SecurityContent inDialog={false} />}
+              {selectedCategory === "personalization" && <DashboardContent inDialog={false} />}
+
+              {![
+                "profile",
+                "network",
+                "energy",
+                "accounts",
+                "system",
+                "accessibility",
+                "privacy",
+                "personalization",
+              ].includes(selectedCategory || "") && (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
                     <Settings className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -943,6 +2268,25 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Member Permissions Dialog */}
+      <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Permissions</DialogTitle>
+          </DialogHeader>
+          <MemberPermissionsContent />
+          <DialogFooter>
+            {saveSuccess && (
+              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
+              </p>
+            )}
+            <Button onClick={handleSave}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
