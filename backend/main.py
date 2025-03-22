@@ -7,7 +7,7 @@ from app.devicecreation import add_device, get_device_categories, insert_default
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from app.algo import calculate_live_consumption
-from app.dashboardparsevalues import json_energy_consumption
+from app.dashboardparsevalues import json_energy_consumption, roomjson, devicecatjson
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -297,8 +297,6 @@ async def get_room_by_id(room_id: str = Query(...)):
             status_code=500,
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
-
-
 
 
 class AssignRoomRequest(BaseModel):
@@ -647,12 +645,7 @@ async def update_permissions(request: UpdatePermissionsRequest):
 @app.get("/json-energy-consumption")
 async def get_energy_consumption(household_code: str = Query(...)):
     # Define the result with proper Python syntax
-    result = {
-        "day": [{"name": "Mon", "value": 10}, {"name": "Tue", "value": 20}],
-        "week": [{"name": "Week 1", "value": 50}, {"name": "Week 2", "value": 75}],
-        "month": [{"name": "Jan", "value": 200}, {"name": "Feb", "value": 180}],
-        "year": [{"name": "2023", "value": 2400}, {"name": "2024", "value": 2600}],
-    }
+    result = json_energy_consumption(household_code)
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result}) # You can replace this with any other action you want to perform with the result
     #await asyncio.sleep(10)  # Sleep for 10 seconds before running again
@@ -661,22 +654,14 @@ async def get_energy_consumption(household_code: str = Query(...)):
 @app.get("/room_consumption")
 async def get_room_consumption(household_code: str = Query(...)):
     # Define the result with proper Python syntax
-    result = [
-      { "name": "Living Room", "value": 40 },
-      { "name": "Kitchen", "value": 30 },
-      { "name": "Bedroom", "value": 30 },
-    ]
+    result = roomjson(household_code)
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
 
 @app.get("/device_category")
 async def get_device_category(household_code: str = Query(...)):
     # Define the result with proper Python syntax
-    result = [
-      { "name": "Air Conditioner", "usage": 120 },
-      { "name": "Refrigerator", "usage": 80 },
-      { "name": "Washer", "usage": 50 },
-    ]
+    result = devicecatjson(household_code)
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
 
