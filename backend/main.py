@@ -644,24 +644,19 @@ async def update_permissions(request: UpdatePermissionsRequest):
     
 @app.get("/json-energy-consumption")
 async def get_energy_consumption(household_code: str = Query(...)):
-    # Define the result with proper Python syntax
-    result = json_energy_consumption(household_code)
+    result = await json_energy_consumption(household_code)  # Await the coroutine to get the result
     print(result)  # Print the result to the console for debugging
-    return JSONResponse(content={"success": True, "data": result}) # You can replace this with any other action you want to perform with the result
-    #await asyncio.sleep(10)  # Sleep for 10 seconds before running again
-
+    return JSONResponse(content={"success": True, "data": result})
 
 @app.get("/room_consumption")
 async def get_room_consumption(household_code: str = Query(...)):
-    # Define the result with proper Python syntax
-    result = roomjson(household_code)
+    result = await roomjson(household_code)  # Await the coroutine to get the result
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
 
 @app.get("/device_category")
 async def get_device_category(household_code: str = Query(...)):
-    # Define the result with proper Python syntax
-    result = devicecatjson(household_code)
+    result = await devicecatjson(household_code)  # Await the coroutine to get the result
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
 
