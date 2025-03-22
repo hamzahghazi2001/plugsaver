@@ -2,34 +2,8 @@
 
 import React from "react"
 import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  User,
-  Settings,
-  LogOut,
-  Home,
-  BarChartIcon as ChartBar,
-  Lightbulb,
-  User2,
-  Tv,
-  Computer,
-  Fan,
-  RefreshCw,
-  Smartphone,
-  Zap,
-  Sofa,
-  Utensils,
-  Bed,
-  Briefcase,
-  Calendar,
-  TrendingDown,
-  TrendingUp,
-  DollarSign,
-  BarChart3,
-  Bell,
-  Award,
-} from "lucide-react"
+import { User, Settings, LogOut, Home, BarChartIcon as ChartBar, Lightbulb, User2, Tv, Computer, Fan, RefreshCw, Smartphone, Zap, Sofa, Utensils, Bed, Briefcase, Calendar, TrendingDown, TrendingUp, DollarSign, BarChart3, Bell, Award, Clock, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,193 +157,449 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 lg:p-10" style={{ background: "var(--gradient-home)" }}>
-      <header className="flex justify-between items-center mb-6 md:mb-8">
-        <div>
-          <p className="text-gray-200 text-white">13th Dec, 2024</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Plug Saver</h1>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-10 h-10 rounded-full p-0">
-              <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-10 h-10 rounded-full" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-blue-800 overflow-x-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-[10%] w-72 h-72 bg-blue-200/20 dark:bg-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-40 left-[5%] w-96 h-96 bg-cyan-200/20 dark:bg-cyan-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-full h-64 bg-gradient-to-r from-purple-200/10 via-blue-200/10 to-cyan-200/10 dark:from-purple-500/5 dark:via-blue-500/5 dark:to-cyan-500/5 blur-3xl"></div>
+      </div>
 
-      <div className="md:grid md:grid-cols-12 md:gap-6 lg:gap-8 max-w-7xl mx-auto">
-        {/* Left column for tablet/desktop */}
-        <div className="md:col-span-5 lg:col-span-4 xl:col-span-3">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="relative aspect-square max-w-[240px] mx-auto mb-6 md:mb-8"
-          >
-            <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-3xl"></div>
-            <div className="relative flex items-center justify-center w-full h-full">
-              {/* SVG Circle Progress */}
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="url(#circleGradient)"
-                  strokeWidth="8"
-                  strokeDasharray="283"
-                  strokeDashoffset={283 - (283 * currentUsage.budgetUsed) / 100}
-                  strokeLinecap="round"
-                />
-                <defs>
-                  <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#40e0d0" />
-                    <stop offset="100%" stopColor="#4169e1" />
-                  </linearGradient>
-                </defs>
-              </svg>
-
-              <div className="text-center z-10">
-                <p className="text-sm text-cyan-100 mb-1">CURRENT USAGE</p>
-                <p className="text-4xl font-bold mb-1 text-white">AED {currentUsage.amount}</p>
-                <p className="text-sm text-cyan-100">{currentUsage.kwh} kWh</p>
-                <div className="mt-3 flex items-center justify-center gap-2">
-                  <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  <p className="text-xs text-green-400">Live: {liveWattage}W</p>
-                </div>
+      {/* Main content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="backdrop-blur-sm bg-white/70 dark:bg-blue-900/30 border-b border-gray-200 dark:border-white/10 sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 p-2 rounded-lg">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-blue-200">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Plug Saver</h1>
               </div>
             </div>
-          </motion.div>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-blue-800/50 px-3 py-1.5 rounded-full border border-gray-200 dark:border-blue-700/50">
+                <Clock className="w-4 h-4 text-gray-500 dark:text-blue-300" />
+                <span className="text-xs text-gray-600 dark:text-blue-200">Live: {liveWattage}W</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50">
+                    <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-8 h-8 rounded-full" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
 
-          <Card className="gradient-card mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-sm font-medium">Budget Goal</h2>
-              <span className="text-xs bg-white/10 px-2 py-1 rounded-full">This month</span>
-            </div>
-            <div className="relative h-2 bg-white/10 rounded-full mb-2">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${currentUsage.budgetUsed}%` }}
-                transition={{ duration: 1, delay: 0.5 }}
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
-              />
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>AED {currentUsage.amount}</span>
-              <span>AED {currentUsage.budgetGoal}</span>
-            </div>
-          </Card>
-
-          {/* Quick Actions - Visible on all devices */}
-          <div className="mb-6">
-            <h2 className="text-lg font-medium text-white mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((action, index) => (
-                <Card
-                  key={index}
-                  className="gradient-card p-3 cursor-pointer hover:bg-white/20 transition-all duration-200"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className={`w-10 h-10 rounded-full ${action.color} flex items-center justify-center mb-2`}>
-                      <action.icon className={`w-5 h-5 ${action.iconColor}`} />
-                    </div>
-                    <p className="text-xs font-medium">{action.name}</p>
+        {/* Main content area */}
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Dashboard overview */}
+          <div className="mb-8">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Current usage card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Current Usage</h2>
+                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-blue-700/30 px-2 py-1 rounded-full">
+                    <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    <p className="text-xs text-green-600 dark:text-green-300">Live</p>
                   </div>
-                </Card>
-              ))}
+                </div>
+                
+                <div className="flex items-center gap-6 mb-6">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0,0,0,0.1)" className="dark:stroke-white/10" strokeWidth="8" />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        fill="none"
+                        stroke="url(#circleGradient)"
+                        strokeWidth="8"
+                        strokeDasharray="283"
+                        strokeDashoffset={283 - (283 * currentUsage.budgetUsed) / 100}
+                        strokeLinecap="round"
+                      />
+                      <defs>
+                        <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" className="text-blue-500" stopColor="currentColor" />
+                          <stop offset="100%" className="text-cyan-500" stopColor="currentColor" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{currentUsage.budgetUsed}%</p>
+                      <p className="text-xs text-gray-500 dark:text-blue-300">of budget</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Current Cost</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">AED {currentUsage.amount}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Energy Used</p>
+                      <p className="text-xl font-semibold text-gray-900 dark:text-white">{currentUsage.kwh} kWh</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-500 dark:text-blue-300">Budget Progress</span>
+                    <span className="text-gray-500 dark:text-blue-300">AED {currentUsage.amount} / {currentUsage.budgetGoal}</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${currentUsage.budgetUsed}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-green-400 rounded-full"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Energy comparison card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Energy Comparison</h2>
+                <div className="space-y-4">
+                  {usageComparison.map((item, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500 dark:text-blue-300">{item.period}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-900 dark:text-white">{item.current} kWh</span>
+                          <span className={item.change < 0 ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
+                            {item.change < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                          </span>
+                        </div>
+                      </div>
+                      <Progress
+                        value={100 - Math.abs(item.change)}
+                        className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
+                      />
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500 dark:text-blue-400">Previous: {item.previous} kWh</span>
+                        <span className={item.change < 0 ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
+                          {item.change > 0 ? "+" : ""}
+                          {item.change}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+              
+              {/* Savings summary card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Savings Summary</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-400 dark:to-emerald-600 flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-green-600 dark:text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Monthly Savings</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">AED 87.50</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>15%</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-500 dark:text-blue-300">Electricity</span>
+                      <span className="text-gray-900 dark:text-white">AED 45.20</span>
+                    </div>
+                    <Progress
+                      value={52}
+                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-500 dark:text-blue-300">Water</span>
+                      <span className="text-gray-900 dark:text-white">AED 22.80</span>
+                    </div>
+                    <Progress
+                      value={26}
+                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-500 dark:text-blue-300">Gas</span>
+                      <span className="text-gray-900 dark:text-white">AED 19.50</span>
+                    </div>
+                    <Progress
+                      value={22}
+                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
+                    />
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
 
-          {/* Recent Activity - Visible on all devices */}
-          <Card className="gradient-card mb-6">
-            <h2 className="text-sm font-medium mb-3">Recent Activity</h2>
-            <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <activity.icon className={`w-4 h-4 ${activity.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium">{activity.event}</p>
-                    <p className="text-xs text-gray-400">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Middle column for desktop */}
-        <div className="md:col-span-7 lg:col-span-5 xl:col-span-6">
-          <section className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-white">Top Active Devices</h2>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {topActiveDevices.map((device, index) => (
-                <Card key={index} className="gradient-card p-3 text-center">
-                  <div
-                    className={`mx-auto w-10 h-10 rounded-full flex items-center justify-center mb-2 ${device.active ? "bg-blue-500/20" : "bg-gray-500/20"}`}
+          {/* Quick actions and recent activity */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* Quick actions */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {quickActions.map((action, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-gray-50 hover:bg-gray-100 dark:bg-blue-800/50 dark:hover:bg-blue-700/50 rounded-xl p-4 cursor-pointer transition-all duration-200 border border-gray-200 dark:border-blue-700/30"
                   >
-                    <device.icon className={`w-5 h-5 ${device.active ? "text-blue-400" : "text-gray-400"}`} />
+                    <div className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full ${action.color} flex items-center justify-center mb-2`}>
+                        <action.icon className={`w-6 h-6 ${action.iconColor}`} />
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{action.name}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+            
+            {/* Recent activity */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {recentActivity.map((activity, index) => (
+                  <motion.div 
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                    className="flex items-start gap-3 bg-gray-50 dark:bg-blue-800/30 p-3 rounded-lg border border-gray-200 dark:border-blue-700/30"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-blue-700/30 flex items-center justify-center flex-shrink-0">
+                      <activity.icon className={`w-5 h-5 ${activity.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.event}</p>
+                      <p className="text-xs text-gray-500 dark:text-blue-300">{activity.time}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+            
+            {/* Energy distribution */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+            >
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Energy Distribution</h2>
+              <div className="space-y-3 mb-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                    <span className="text-sm text-gray-900 dark:text-white">Living Room</span>
                   </div>
-                  <p className="text-xs font-medium truncate">{device.name}</p>
-                  <p className="text-xs text-gray-300">{device.usage}</p>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          {/* Top Active Rooms section */}
-          <section className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-white">Top Active Rooms</h2>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {topActiveRooms.map((room, index) => (
-                <Card key={index} className="gradient-card p-3 text-center">
-                  <div className="mx-auto w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
-                    <room.icon className="w-5 h-5 text-blue-400" />
+                  <span className="text-sm text-gray-500 dark:text-blue-300">32%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    <span className="text-sm text-gray-900 dark:text-white">Kitchen</span>
                   </div>
-                  <p className="text-xs font-medium truncate">{room.name}</p>
-                  <p className="text-xs text-gray-300">{room.usage}</p>
-                  <p className="text-xs text-gray-400">{room.devices} devices</p>
-                </Card>
-              ))}
-            </div>
-          </section>
+                  <span className="text-sm text-gray-500 dark:text-blue-300">26%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <span className="text-sm text-gray-900 dark:text-white">Office</span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-blue-300">22%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+                    <span className="text-sm text-gray-900 dark:text-white">Bedroom</span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-blue-300">12%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                    <span className="text-sm text-gray-900 dark:text-white">Other</span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-blue-300">8%</span>
+                </div>
+              </div>
+              <div className="h-6 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden flex">
+                <div className="h-full bg-blue-400" style={{ width: "32%" }}></div>
+                <div className="h-full bg-green-400" style={{ width: "26%" }}></div>
+                <div className="h-full bg-yellow-400" style={{ width: "22%" }}></div>
+                <div className="h-full bg-purple-400" style={{ width: "12%" }}></div>
+                <div className="h-full bg-gray-400" style={{ width: "8%" }}></div>
+              </div>
+            </motion.div>
+          </div>
 
-          <section className="mb-6">
+          {/* Active devices and rooms */}
+          <div className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Active devices */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Devices</h2>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {topActiveDevices.map((device, index) => (
+                    <motion.div 
+                      key={index}
+                      whileHover={{ x: 5 }}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        device.active 
+                          ? "bg-blue-50 border-blue-200 dark:bg-blue-700/30 dark:border-blue-600/50" 
+                          : "bg-gray-50 border-gray-200 dark:bg-blue-800/30 dark:border-blue-700/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          device.active ? "bg-blue-100 dark:bg-blue-600/50" : "bg-gray-100 dark:bg-blue-800/50"
+                        }`}>
+                          <device.icon className={`w-5 h-5 ${device.active ? "text-blue-500 dark:text-blue-300" : "text-gray-400 dark:text-blue-400"}`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{device.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-blue-300">{device.power}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{device.usage}</p>
+                        <p className="text-xs text-gray-500 dark:text-blue-300">
+                          {device.active ? "Active" : "Inactive"}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+              
+              {/* Active rooms */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Rooms</h2>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {topActiveRooms.map((room, index) => (
+                    <motion.div 
+                      key={index}
+                      whileHover={{ y: -5 }}
+                      className="bg-gray-50 dark:bg-blue-800/30 p-4 rounded-lg border border-gray-200 dark:border-blue-700/30 flex flex-col items-center"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-blue-700/30 flex items-center justify-center mb-2">
+                        <room.icon className="w-6 h-6 text-gray-500 dark:text-blue-300" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{room.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-blue-300">{room.usage}</p>
+                      <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">{room.devices} devices</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Energy saving tips */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl mb-20 md:mb-8"
+          >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-white">Energy Saving Tips</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Energy Saving Tips</h2>
               <div className="flex gap-1">
                 {energySavingTips.map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full ${i === currentTip ? "bg-blue-400" : "bg-white/20"}`} />
+                  <div 
+                    key={i} 
+                    className={`w-2 h-2 rounded-full ${
+                      i === currentTip ? "bg-blue-500 dark:bg-blue-400" : "bg-gray-200 dark:bg-blue-800/80"
+                    }`} 
+                  />
                 ))}
               </div>
             </div>
@@ -379,166 +609,58 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
+              className="bg-gray-50 dark:bg-blue-700/20 rounded-xl p-4 border border-gray-200 dark:border-blue-600/30"
             >
-              <Card className="gradient-card">
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-2">{energySavingTips[currentTip].title}</h3>
-                    <p className="text-sm text-gray-300">{energySavingTips[currentTip].description}</p>
-                  </div>
-                  <div className="w-16 h-16 flex-shrink-0 bg-cyan-400/20 rounded-lg flex items-center justify-center">
-                    {React.createElement(energySavingTips[currentTip].icon, { className: "w-8 h-8 text-cyan-300" })}
-                  </div>
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">{energySavingTips[currentTip].title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-blue-200">{energySavingTips[currentTip].description}</p>
                 </div>
-              </Card>
+                <div className="w-16 h-16 flex-shrink-0 bg-blue-50 dark:bg-gradient-to-br dark:from-blue-500/30 dark:to-cyan-500/30 rounded-lg flex items-center justify-center">
+                  {React.createElement(energySavingTips[currentTip].icon, { className: "w-8 h-8 text-blue-500 dark:text-cyan-300" })}
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white">
+                  <Sparkles className="w-4 h-4 mr-1" /> Apply Tip
+                </Button>
+              </div>
             </motion.div>
-          </section>
-        </div>
-
-        {/* Right column - visible on desktop and as full width on mobile */}
-        <div className={`${isDesktop || isTablet ? "hidden lg:block lg:col-span-3 xl:col-span-3" : ""}`}>
-          <Card className="gradient-card mb-6">
-            <h2 className="text-sm font-medium mb-4">Energy Usage Comparison</h2>
-            <div className="space-y-4">
-              {usageComparison.map((item, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>{item.period}</span>
-                    <div className="flex items-center gap-1">
-                      <span>{item.current} kWh</span>
-                      <span className={item.change < 0 ? "text-green-400" : "text-red-400"}>
-                        {item.change < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                      </span>
-                    </div>
-                  </div>
-                  <Progress value={100 - Math.abs(item.change)} className="h-1.5 
-             [&>div]:bg-gradient-to-r 
-             [&>div]:from-blue-500 
-             [&>div]:to-cyan-500" />
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Previous: {item.previous} kWh</span>
-                    <span className={item.change < 0 ? "text-green-400" : "text-red-400"}>
-                      {item.change > 0 ? "+" : ""}
-                      {item.change}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="gradient-card mb-6">
-            <h2 className="text-sm font-medium mb-4">Energy Distribution</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                  <span className="text-xs">Living Room</span>
-                </div>
-                <span className="text-xs">32%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <span className="text-xs">Kitchen</span>
-                </div>
-                <span className="text-xs">26%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <span className="text-xs">Office</span>
-                </div>
-                <span className="text-xs">22%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-400"></div>
-                  <span className="text-xs">Bedroom</span>
-                </div>
-                <span className="text-xs">12%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                  <span className="text-xs">Other</span>
-                </div>
-                <span className="text-xs">8%</span>
-              </div>
-            </div>
-            <div className="mt-4 h-4 bg-gray-700/30 rounded-full overflow-hidden flex">
-              <div className="h-full bg-blue-400" style={{ width: "32%" }}></div>
-              <div className="h-full bg-green-400" style={{ width: "26%" }}></div>
-              <div className="h-full bg-yellow-400" style={{ width: "22%" }}></div>
-              <div className="h-full bg-purple-400" style={{ width: "12%" }}></div>
-              <div className="h-full bg-gray-400" style={{ width: "8%" }}></div>
-            </div>
-          </Card>
-
-          <Card className="gradient-card mb-6">
-            <h2 className="text-sm font-medium mb-4">Savings Summary</h2>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-300">Monthly Savings</p>
-                  <p className="text-lg font-bold">AED 87.50</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-green-400 text-xs">
-                <TrendingUp className="w-3 h-3" />
-                <span>15%</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span>Electricity</span>
-                <span>AED 45.20</span>
-              </div>
-              <Progress value={52} className="h-1.5 
-             [&>div]:bg-gradient-to-r 
-             [&>div]:from-blue-500 
-             [&>div]:to-cyan-500" />
-              <div className="flex justify-between text-xs">
-                <span>Water</span>
-                <span>AED 22.80</span>
-              </div>
-              <Progress value={26} className="h-1.5 
-             [&>div]:bg-gradient-to-r 
-             [&>div]:from-blue-500 
-             [&>div]:to-cyan-500" />
-              <div className="flex justify-between text-xs">
-                <span>Gas</span>
-                <span>AED 19.50</span>
-              </div>
-              <Progress value={22} className="h-1.5 
-             [&>div]:bg-gradient-to-r 
-             [&>div]:from-blue-500 
-             [&>div]:to-cyan-500" />
-            </div>
-          </Card>
+          </motion.div>
         </div>
       </div>
 
       {/* Bottom Navigation - Mobile Only */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-white/10 md:hidden z-50">
+      <motion.nav
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gradient-to-t dark:from-blue-950 dark:to-blue-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-blue-800/50 md:hidden z-50 shadow-lg"
+      >
         <div className="flex justify-around py-3 px-4 max-w-md mx-auto">
           {[
-            { icon: Home, label: "Home" },
-            { icon: ChartBar, label: "Live Now" },
-            { icon: Settings, label: "Summary" },
-            { icon: Lightbulb, label: "Tips" },
-            { icon: User2, label: "Settings" },
-          ].map(({ icon: Icon, label }) => (
-            <button key={label} className="flex flex-col items-center gap-1">
-              <Icon className="w-6 h-6" />
+            { icon: Home, label: "Home", active: true },
+            { icon: ChartBar, label: "Live Now", active: false },
+            { icon: Settings, label: "Summary", active: false },
+            { icon: Lightbulb, label: "Tips", active: false },
+            { icon: User2, label: "Settings", active: false },
+          ].map(({ icon: Icon, label, active }) => (
+            <button
+              key={label}
+              className={`flex flex-col items-center gap-1 transition-all duration-200 ${
+                active 
+                  ? "text-blue-500 dark:text-blue-400 scale-110" 
+                  : "text-gray-500 dark:text-blue-300/70 hover:text-gray-700 dark:hover:text-blue-200"
+              }`}
+            >
+              <div className={`p-1.5 rounded-full ${active ? "bg-blue-50 dark:bg-blue-800/50" : ""}`}>
+                <Icon className="w-5 h-5" />
+              </div>
               <span className="text-xs">{label}</span>
             </button>
           ))}
         </div>
-      </nav>
+      </motion.nav>
     </div>
-  )
+  );
 }
