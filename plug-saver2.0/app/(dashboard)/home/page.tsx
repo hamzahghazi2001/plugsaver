@@ -24,13 +24,7 @@ import {
   Utensils,
   Bed,
   Briefcase,
-  Calendar,
-  TrendingDown,
-  TrendingUp,
   DollarSign,
-  BarChart3,
-  Bell,
-  Award,
   Clock,
   Sparkles,
 } from "lucide-react"
@@ -42,7 +36,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Progress } from "@/components/ui/progress"
 
 // -----------------------------------------------------------------
 // 1) PLACEHOLDER DATA FOR BACKEND INTEGRATION
@@ -121,10 +114,10 @@ export default function HomePage() {
 
   // Example usage data from backend
   const [currentUsage, setCurrentUsage] = useState({
-    amount: "0.00",      // e.g. "20.34"
-    kwh: "0.00",         // e.g. "39.8"
-    budgetUsed: 0,       // e.g. 65 (percentage)
-    budgetGoal: "0",     // e.g. "100"
+    amount: "0.00", // e.g. "20.34"
+    kwh: "0.00", // e.g. "39.8"
+    budgetUsed: 0, // e.g. 65 (percentage)
+    budgetGoal: "0", // e.g. "100"
   })
 
   // Current tip index for rotating tips
@@ -223,11 +216,7 @@ export default function HomePage() {
                     variant="ghost"
                     className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50"
                   >
-                    <img
-                      src="/placeholder.svg?height=40&width=40"
-                      alt="User"
-                      className="w-8 h-8 rounded-full"
-                    />
+                    <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-8 h-8 rounded-full" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
@@ -256,215 +245,147 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Dashboard overview */}
           <div className="mb-8">
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Current usage card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Current Usage
-                  </h2>
-                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-blue-700/30 px-2 py-1 rounded-full">
+            {/* Current usage card - expanded to fill full width */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-full bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl overflow-hidden"
+            >
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 p-2.5 rounded-lg">
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Current Usage</h2>
+                  </div>
+                  <div className="flex items-center gap-3 bg-gray-100 dark:bg-blue-700/30 px-3 py-2 rounded-full self-start md:self-auto">
                     <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <Clock className="w-4 h-4 text-gray-500 dark:text-blue-300" />
-                    <p className="text-xs text-green-600 dark:text-green-300">Live {liveWattage}W</p>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 mb-6">
-                  {/* Circular progress ring for budgetUsed */}
-                  <div className="relative w-24 h-24">
-                    <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="rgba(0,0,0,0.1)"
-                        className="dark:stroke-white/10"
-                        strokeWidth="8"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="none"
-                        stroke="url(#circleGradient)"
-                        strokeWidth="8"
-                        strokeDasharray="283"
-                        strokeDashoffset={
-                          283 - (283 * currentUsage.budgetUsed) / 100
-                        }
-                        strokeLinecap="round"
-                      />
-                      <defs>
-                        <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" className="text-blue-500" stopColor="currentColor" />
-                          <stop offset="100%" className="text-cyan-500" stopColor="currentColor" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {currentUsage.budgetUsed}%
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-blue-300">of budget</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Left column - Circular progress */}
+                  <div className="flex justify-center md:justify-start">
+                    <div className="relative w-36 h-36 md:w-48 md:h-48">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="rgba(0,0,0,0.1)"
+                          className="dark:stroke-white/10"
+                          strokeWidth="8"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="url(#circleGradient)"
+                          strokeWidth="8"
+                          strokeDasharray="283"
+                          strokeDashoffset={283 - (283 * currentUsage.budgetUsed) / 100}
+                          strokeLinecap="round"
+                        />
+                        <defs>
+                          <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" className="text-blue-500" stopColor="currentColor" />
+                            <stop offset="100%" className="text-cyan-500" stopColor="currentColor" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center flex-col">
+                        <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                          {currentUsage.budgetUsed}%
+                        </p>
+                        <p className="text-sm md:text-base text-gray-500 dark:text-blue-300">of budget</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <div className="mb-2">
-                      <p className="text-sm text-gray-500 dark:text-blue-300">Current Cost</p>
-                      <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {/* Middle column - Cost and usage details */}
+                  <div className="flex flex-col justify-center items-center md:items-start space-y-6">
+                    <div className="text-center md:text-left">
+                      <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">Current Cost</p>
+                      <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                         AED {currentUsage.amount}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-blue-300">Energy Used</p>
-                      <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <div className="text-center md:text-left">
+                      <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">Energy Used</p>
+                      <p className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
                         {currentUsage.kwh} kWh
                       </p>
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500 dark:text-blue-300">Budget Progress</span>
-                    <span className="text-gray-500 dark:text-blue-300">
-                      AED {currentUsage.amount} / {currentUsage.budgetGoal}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${currentUsage.budgetUsed}%` }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-green-400 rounded-full"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Energy comparison card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
-              >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Energy Comparison
-                </h2>
-                <div className="space-y-4">
-                  {usageComparison.map((item, index) => (
-                    <div key={index} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-blue-300">{item.period}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-gray-900 dark:text-white">{item.current} kWh</span>
-                          {item.change < 0 ? (
-                            <span className="text-green-500 dark:text-green-400">
-                              <TrendingDown className="w-3 h-3 inline" />
-                            </span>
-                          ) : (
-                            <span className="text-red-500 dark:text-red-400">
-                              <TrendingUp className="w-3 h-3 inline" />
-                            </span>
-                          )}
+                  {/* Right column - Additional stats */}
+                  <div className="flex flex-col justify-center space-y-6">
+                    <div className="bg-gray-50 dark:bg-blue-800/30 p-4 rounded-xl border border-gray-100 dark:border-blue-700/30">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-700/50">
+                          <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                         </div>
+                        <p className="font-medium text-gray-900 dark:text-white">Monthly Budget</p>
                       </div>
-                      <Progress
-                        value={100 - Math.abs(item.change)}
-                        className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
-                      />
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-500 dark:text-blue-400">
-                          Previous: {item.previous} kWh
-                        </span>
-                        <span
-                          className={
-                            item.change < 0
-                              ? "text-green-500 dark:text-green-400"
-                              : "text-red-500 dark:text-red-400"
-                          }
-                        >
-                          {item.change > 0 ? "+" : ""}
-                          {item.change}%
-                        </span>
-                      </div>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white ml-2">
+                        AED {currentUsage.budgetGoal}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
 
-              {/* Savings summary card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-full md:w-1/3 bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
-              >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Expenditure Summary
-                </h2>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-400 dark:to-emerald-600 flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-green-600 dark:text-white" />
-                    </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-blue-300">Expenditure Savings</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">AED 0.00</p>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-500 dark:text-blue-300">Budget Progress</span>
+                        <span className="text-gray-500 dark:text-blue-300">
+                          AED {currentUsage.amount} / {currentUsage.budgetGoal}
+                        </span>
+                      </div>
+                      <div className="h-3 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${currentUsage.budgetUsed}%` }}
+                          transition={{ duration: 1, delay: 0.5 }}
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-green-400 rounded-full"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-full">
-                    <TrendingUp className="w-4 h-4" />
-                    <span>0%</span>
-                  </div>
                 </div>
+              </div>
 
-                <div className="space-y-3">
-                  {/* Electricity */}
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500 dark:text-blue-300">Electricity</span>
-                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
-                    </div>
-                    <Progress
-                      value={0}
-                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
-                    />
+              {/* Bottom stats bar */}
+              <div className="bg-gray-50 dark:bg-blue-900/40 border-t border-gray-100 dark:border-blue-800/30 p-4 md:p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Daily Average</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      AED {(Number.parseFloat(currentUsage.amount) / 30).toFixed(2)}
+                    </p>
                   </div>
-                  {/* Water */}
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500 dark:text-blue-300">Water</span>
-                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
-                    </div>
-                    <Progress
-                      value={0}
-                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
-                    />
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Projected Monthly</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      AED {((Number.parseFloat(currentUsage.amount) * 30) / new Date().getDate()).toFixed(2)}
+                    </p>
                   </div>
-                  {/* Gas */}
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500 dark:text-blue-300">Gas</span>
-                      <span className="text-gray-900 dark:text-white">AED 0.00</span>
-                    </div>
-                    <Progress
-                      value={0}
-                      className="h-2 bg-gray-100 dark:bg-blue-950/50 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-500 dark:[&>div]:from-blue-400 dark:[&>div]:to-green-400"
-                    />
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Active Devices</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {topActiveDevices.filter((d) => d.active).length}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Total Rooms</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{topActiveRooms.length}</p>
                   </div>
                 </div>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           </div>
 
           {/* Active devices and rooms */}
@@ -478,9 +399,7 @@ export default function HomePage() {
                 className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Top Active Devices
-                  </h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Devices</h2>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -508,25 +427,17 @@ export default function HomePage() {
                         >
                           <device.icon
                             className={`w-5 h-5 ${
-                              device.active
-                                ? "text-blue-500 dark:text-blue-300"
-                                : "text-gray-400 dark:text-blue-400"
+                              device.active ? "text-blue-500 dark:text-blue-300" : "text-gray-400 dark:text-blue-400"
                             }`}
                           />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {device.name}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-blue-300">
-                            {device.power}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{device.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-blue-300">{device.power}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {device.usage}
-                        </p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{device.usage}</p>
                         <p className="text-xs text-gray-500 dark:text-blue-300">
                           {device.active ? "Active" : "Inactive"}
                         </p>
@@ -544,9 +455,7 @@ export default function HomePage() {
                 className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Top Active Rooms
-                  </h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Rooms</h2>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -565,13 +474,9 @@ export default function HomePage() {
                       <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-blue-700/30 flex items-center justify-center mb-2">
                         <room.icon className="w-6 h-6 text-gray-500 dark:text-blue-300" />
                       </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {room.name}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{room.name}</p>
                       <p className="text-xs text-gray-500 dark:text-blue-300">{room.usage}</p>
-                      <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">
-                        {room.devices} devices
-                      </p>
+                      <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">{room.devices} devices</p>
                     </motion.div>
                   ))}
                 </div>
@@ -587,9 +492,7 @@ export default function HomePage() {
             className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl mb-20 md:mb-8"
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Energy Saving Tips
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Energy Saving Tips</h2>
               <div className="flex gap-1">
                 {energySavingTips.map((_, i) => (
                   <div
@@ -614,9 +517,7 @@ export default function HomePage() {
                   <h3 className="font-medium text-gray-900 dark:text-white mb-2">
                     {energySavingTips[currentTip].title}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-blue-200">
-                    {energySavingTips[currentTip].description}
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-blue-200">{energySavingTips[currentTip].description}</p>
                 </div>
                 <div className="w-16 h-16 flex-shrink-0 bg-blue-50 dark:bg-gradient-to-br dark:from-blue-500/30 dark:to-cyan-500/30 rounded-lg flex items-center justify-center">
                   {React.createElement(energySavingTips[currentTip].icon, {
@@ -671,3 +572,4 @@ export default function HomePage() {
     </div>
   )
 }
+
