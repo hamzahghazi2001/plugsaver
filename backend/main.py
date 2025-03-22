@@ -15,6 +15,7 @@ from supabase import create_client
 import app.config as config
 from typing import List,Optional, Dict, Any
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
+import asyncio
 
 supabase = create_client(config.SUPABASE_URL, config.SUPABASE_KEY)
 
@@ -566,6 +567,19 @@ async def get_household_users(household_code: str = Query(...)):
             status_code=500,
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
+    
+class EnergyConsumptionRequest(BaseModel):
+    household_code: str
+
+@app.post("/start-live-consumption")
+async def start_live_consumption(request: EnergyConsumptionRequest):
+    household_code = request.household_code
+    if not household_code:
+        raise HTTPException(status_code=400, detail="Household code is required")
+    
+    # Start the live consumption calculation
+    asyncio.create_task(calculate_live_consumption(household_code))
+    return {"message": "Live consumption calculation started"}
                  
 # def test_signup():
 #     email = "e@example.com"
