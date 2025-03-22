@@ -49,7 +49,6 @@ async def json_energy_consumption(household_code):
         "week": week_consumption,
         "month": month_consumption,
         "year": year_consumption}
-    print(result)
     return result
 
 async def roomjson(household_code):
@@ -122,4 +121,3 @@ async def devicecatjson(household_code):
     
     print(result)
     return result
-
