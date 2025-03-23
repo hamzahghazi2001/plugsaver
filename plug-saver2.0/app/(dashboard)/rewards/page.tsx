@@ -17,27 +17,101 @@ type LeaderboardData = Record<LeaderboardType, LeaderboardEntry[]>
 type Badge = { icon: React.ComponentType, name: string, color: string, earned: boolean }
 
 export default function RewardsPage() {
+  const [rewards_id, setRewardsId] = useState<number | null>(null)
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>("household")
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
   const [badges, setBadges] = useState<Badge[] | null>(null)
-  const [userPoints, setUserPoints] = useState<number | null>(null)
+  const [userPoints, setUserPoints] = useState<number>(0)
 
   useEffect(() => {
-    // Fetch data from Supabase
-    fetchData()
-  }, [])
+    const putrewards = async () => {
+      if (rewards_id === null) return
+  
+      try {
+        const response = await fetch("http://localhost:8000/points_and_badges", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ rewards_id }),
+        })
+  
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+  
+        const data = await response.json();
+  
+        console.log("Backend response:", data)
+      } catch (error) {
+        console.error("Error:", error)
+      }
+    }
+  
+    const fetchrewards = async () => {
+      if (rewards_id === null) return null;
+    
+      try {
+        const response = await fetch(`http://localhost:8000/api/auth/get_rewards?rewards_id=${rewards_id}`);
+    
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    
+        const data = await response.json();
+    
+        if (!data.success) {
+          console.error("Backend error:", data.message);
+          return null;
+        }
+    
+        return data;
+      } catch (error) {
+        console.error("Error fetching rewards:", error);
+        return null;
+      }
+    };
+  
+    const putinwebsite = async () => {
+      try {
+        await putrewards();
+        const rewards = await fetchrewards();
+        console.log(rewards);
+    
+        if (rewards && rewards.points !== undefined) {
+          setUserPoints(rewards.points);
+    
+          const householdData = Array.isArray(rewards.household) ? rewards.household : [];
+          const localData = Array.isArray(rewards.local) ? rewards.local : [];
+          const globalData = Array.isArray(rewards.global) ? rewards.global : [];
+    
+          setLeaderboardData({
+            household: householdData,
+            local: localData,
+            global: globalData,
+          });
+        } else {
+          console.error("Invalid rewards data:", rewards);
+        }
+      } catch (error) {
+        console.error("Error in putinwebsite:", error);
+      }
+    };
 
-  const fetchData = async () => {
-    // TODO: Implement the actual fetch logic from Supabase
-    // For now, we'll just set some placeholder data
-    setLeaderboardData({
-      household: [],
-      local: [],
-      global: [],
-    })
-    setBadges([])
-    setUserPoints(null)
-  }
+    const storedUserId = localStorage.getItem("user_id");
+    if (storedUserId) {
+      const userId = parseInt(storedUserId);
+      console.log(userId)
+      if (!isNaN(userId)) {
+        setRewardsId(userId);
+        putinwebsite();  // Pass the userId to putinwebsite
+      } else {
+        console.error("Invalid user ID found in local storage");
+      }
+    } else {
+      console.error("No user ID found in local storage");
+    }
+  }, [rewards_id]);
 
   return (
     <div className="min-h-screen p-6" style={{ background: "var(--gradient-rewards)" }}>
@@ -51,7 +125,7 @@ export default function RewardsPage() {
               Data Structure Required:
               - Number (total points)
             */}
-            <p className="text-3xl font-bold">{userPoints ?? "Loading..."}</p>
+            <p className="text-3xl font-bold">{userPoints}</p>
             <p className="text-sm text-gray-300">Energy Points</p>
           </div>
           <div className="ml-auto">

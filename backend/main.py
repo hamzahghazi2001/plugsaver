@@ -4,7 +4,7 @@ from app.auth import create_account, registration_verify, email_code_gen, login,
 from fastapi import FastAPI, HTTPException, Depends, Query, Path, UploadFile, File, Form
 from app.household import create_household, join_household
 from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room
-from app.rewards import Points_and_badges, get_global, get_local, get_household
+from app.rewards import Points_and_badges, update_badges, get_rewards, send_results, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from app.algo import calculate_live_consumption
 from app.dashboardparsevalues import json_energy_consumption, roomjson, devicecatjson, statsjson
@@ -791,6 +791,35 @@ async def start_live_consumption(household_code: str = Query(...)):
     # Start the live consumption calculation
     asyncio.create_task(calculate_live_consumption(household_code))
     return {"message": "Live consumption calculation started"}'''
+
+class RewardsInfo(BaseModel):
+    rewards_id: int
+
+@app.post("/points_and_badges")
+async def points_and_badges_endpoint(request : RewardsInfo):
+    result = Points_and_badges(request.rewards_id)
+    print("Result from points_and_badges function:", result)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return {"success": True, "message": "points and badges added successfully."}
+
+@app.get("/api/auth/get_rewards")
+async def get_rewards_endpoint(rewards_id: str = Query(...)):
+    try:
+        id = int(rewards_id)
+        result = get_rewards(id)
+        '''if not result.success:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "no record"}
+            )'''
+        return result
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"An error occurred: {str(e)}"}
+        )
+
 
                  
 # def test_signup():
