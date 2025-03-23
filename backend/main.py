@@ -7,7 +7,7 @@ from app.devicecreation import add_device, get_device_categories, insert_default
 from app.rewards import Points_and_badges, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from app.algo import calculate_live_consumption
-from app.dashboardparsevalues import json_energy_consumption, roomjson, devicecatjson
+from app.dashboardparsevalues import json_energy_consumption, roomjson, devicecatjson, statsjson
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -663,13 +663,7 @@ async def get_device_category(household_code: str = Query(...)):
 # New endpoint for efficiency score and other metrics
 @app.get("/efficiency_metrics")
 async def get_efficiency_metrics(household_code: str = Query(...)):
-    result = {
-        "efficiencyScore": 85,  # Example efficiency score
-        "electricityUsage": 350,  # Example electricity usage in kWh
-        "peakPowerUsage": 60,  # Example peak power usage in kW
-        "carbonFootprint": 45,  # Example carbon footprint in kg CO2
-        "costSavings": 120,  # Example cost savings in dollars
-    }
+    result = await statsjson(household_code)
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
     

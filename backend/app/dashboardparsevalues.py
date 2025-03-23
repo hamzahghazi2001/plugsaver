@@ -86,8 +86,6 @@ async def roomjson(household_code):
 
     # Convert the room consumption dictionary to the desired JSON format with percentages
     result = [{"name": room_name, "value": int((consumption / total_consumption) * 100)} for room_name, consumption in room_consumption.items()]
-    
-    print(result)
     return result
 
 async def devicecatjson(household_code):
@@ -118,6 +116,61 @@ async def devicecatjson(household_code):
 
     # Convert the category consumption dictionary to the desired JSON format
     result = [{"name": category, "usage": consumption} for category, consumption in category_consumption.items()]
-    
-    print(result)
+    return result
+
+async def statsjson(household_code):
+    # Constants
+    KG_CO2_PER_KWH = 0.45  # Example value for kg of carbon per kWh
+    COST_PER_KWH = 0.29  # Cost per kWh in dollars
+    MAX_ENERGY_CONSUMPTION = 1000  # Example maximum energy consumption in kWh
+    MIN_ENERGY_CONSUMPTION = 0  # Minimum energy consumption in kWh
+
+    # Fetch devices for the given household code
+    devices_response = supabase.table('devices').select('*').eq('household_code', household_code).execute()
+    devices = devices_response.data
+
+    # Fetch analytics data for the given household code
+    analytics_response = supabase.table('analytics').select('*').eq('household_code', household_code).execute()
+    analytics = analytics_response.data
+
+    # Initialize variables
+    total_energy_consumed = 0
+    peak_power_usage = 0
+    device_energy_consumption = {}
+
+    # Calculate total energy consumption and peak power usage
+    for entry in analytics:
+        device_id = entry['device_id']
+        energy_consumed = entry['energy_consumed'] / 1000  # Convert wattage to kWh
+        total_energy_consumed += energy_consumed
+
+        # Track energy consumption per device to find peak power usage
+        if device_id in device_energy_consumption:
+            device_energy_consumption[device_id] += energy_consumed
+        else:
+            device_energy_consumption[device_id] = energy_consumed
+
+    # Find the device with the highest energy consumption (peak power usage)
+    peak_power_usage = max(device_energy_consumption.values(), default=0)
+
+    # Calculate carbon footprint and cost savings
+    carbon_footprint = total_energy_consumed * KG_CO2_PER_KWH
+    cost_savings = total_energy_consumed * COST_PER_KWH
+
+    # Calculate efficiency score
+    if total_energy_consumed <= MIN_ENERGY_CONSUMPTION:
+        efficiency_score = 100
+    elif total_energy_consumed >= MAX_ENERGY_CONSUMPTION:
+        efficiency_score = 0
+    else:
+        efficiency_score = 100 - ((total_energy_consumed - MIN_ENERGY_CONSUMPTION) / (MAX_ENERGY_CONSUMPTION - MIN_ENERGY_CONSUMPTION) * 100)
+
+    # Prepare the result in the desired JSON format
+    result = {
+        "efficiencyScore": efficiency_score,
+        "electricityUsage": total_energy_consumed,
+        "peakPowerUsage": peak_power_usage,
+        "carbonFootprint": carbon_footprint,
+        "costSavings": cost_savings,
+    }
     return result
