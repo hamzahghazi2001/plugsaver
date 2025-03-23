@@ -3,27 +3,57 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import { Zap, Lamp, Speaker, Tv, Computer, Fan, RefrigeratorIcon, Settings } from "lucide-react"
 
 // UI & Icons
 import { Button } from "@/components/ui/button"
 import {
-  User,
-  Settings,
-  LogOut,
-  Home,
-  BarChartIcon as ChartBar,
+  Plug,
+  Scan,
   Lightbulb,
-  User2,
-  Tv,
-  Computer,
-  Fan,
+  LampDesk,
+  LampFloor,
+  Radio,
+  Headphones,
+  Gamepad2,
+  MonitorSmartphone,
+  Music2,
+  Projector,
+  Microwave,
+  Coffee,
+  Utensils,
+  Soup,
+  MicrowaveIcon as Oven,
+  CookingPotIcon as Stove,
+  ComputerIcon as Blender,
+  Sandwich,
+  Beef,
+  Salad,
+  Laptop,
+  Printer,
+  Router,
+  WifiIcon,
+  Cpu,
+  HardDrive,
+  Wind,
+  Thermometer,
+  Snowflake,
+  Flame,
+  Droplets,
+  ShowerHeadIcon as Shower,
+  Scissors,
+  BrushIcon as Toothbrush,
+  Lock,
+  BellRing,
+  Camera,
+  Siren,
+  BatteryCharging,
+  Wrench,
+  Dumbbell,
+  User,
+  LogOut,
   RefreshCw,
   Smartphone,
-  Zap,
-  Sofa,
-  Utensils,
-  Bed,
-  Briefcase,
   DollarSign,
   Sparkles,
 } from "lucide-react"
@@ -40,8 +70,74 @@ import {
 // 1) PLACEHOLDER DATA FOR BACKEND INTEGRATION
 // -----------------------------------------------------------------
 
+// Define types for devices and rooms
+type Device = {
+  device_name: string
+  power: string
+  usage: string
+  icon: string
+  active: boolean
+}
+
+type Room = {
+  room_name: string
+  usage: string
+  icon: React.ComponentType<{ className?: string }>
+  devices: number
+  total_power: string
+}
+
+const iconMap: Record<string, React.ElementType> = {
+  "Desk Lamp": Lamp,
+  "Light Bulb": Lightbulb,
+  "Floor Lamp": LampFloor,
+  "Table Lamp": LampDesk,
+  TV: Tv,
+  Radio: Radio,
+  Speaker: Speaker,
+  Headphones: Headphones,
+  "Game Console": Gamepad2,
+  Monitor: MonitorSmartphone,
+  "Sound System": Music2,
+  Projector: Projector,
+  Refrigerator: RefrigeratorIcon,
+  Microwave: Microwave,
+  "Coffee Maker": Coffee,
+  Toaster: Utensils,
+  "Slow Cooker": Soup,
+  Oven: Oven,
+  Stove: Stove,
+  Blender: Blender,
+  "Sandwich Maker": Sandwich,
+  "Air Fryer": Beef,
+  "Food Processor": Salad,
+  Computer: Computer,
+  Laptop: Laptop,
+  Printer: Printer,
+  Scanner: Scan,
+  Router: Router,
+  "WiFi Extender": WifiIcon,
+  "CPU/Server": Cpu,
+  "External Drive": HardDrive,
+  Fan: Fan,
+  "Air Purifier": Wind,
+  Thermostat: Thermometer,
+  "Air Conditioner": Snowflake,
+  Heater: Flame,
+  Humidifier: Droplets,
+  "Water Heater": Shower,
+  "Hair Dryer": Scissors,
+  "Electric Toothbrush": Toothbrush,
+  "Smart Plug": Plug,
+  "Smart Lock": Lock,
+  Doorbell: BellRing,
+  "Security Camera": Camera,
+  "Alarm System": Siren,
+  "Battery Charger": BatteryCharging,
+  "Power Tool": Wrench,
+  "Exercise Equipment": Dumbbell,
+}
 // Tips fetched from backend (example placeholders)
-// Energy saving tips data
 const energySavingTips = [
   {
     title: "Recover greywater from the washing machine",
@@ -63,22 +159,6 @@ const energySavingTips = [
     description: "Each degree adjustment can save up to 5% on your cooling costs.",
     icon: Settings,
   },
-]
-
-// Devices from backend (example placeholders)
-const topActiveDevices = [
-  { name: "Placeholder Device A", power: "0W", usage: "0 kWh", icon: Tv, active: true },
-  { name: "Placeholder Device B", power: "0W", usage: "0 kWh", icon: Computer, active: false },
-  { name: "Placeholder Device C", power: "0W", usage: "0 kWh", icon: Fan, active: true },
-  { name: "Placeholder Device C", power: "0W", usage: "0 kWh", icon: Fan, active: true },
-]
-
-// Rooms from backend (example placeholders)
-const topActiveRooms = [
-  { name: "Placeholder Room 1", usage: "0 kWh", icon: Sofa, devices: 0 },
-  { name: "Placeholder Room 2", usage: "0 kWh", icon: Utensils, devices: 0 },
-  { name: "Placeholder Room 3", usage: "0 kWh", icon: Bed, devices: 0 },
-  { name: "Placeholder Room 4", usage: "0 kWh", icon: Briefcase, devices: 0 },
 ]
 
 // Comparison data (example placeholders)
@@ -130,6 +210,10 @@ export default function HomePage() {
   const [isTablet, setIsTablet] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
 
+  // State for top active devices and rooms
+  const [topActiveDevices, setTopActiveDevices] = useState<Device[]>([])
+  const [topActiveRooms, setTopActiveRooms] = useState<Room[]>([])
+
   // Watch for screen-size changes
   useEffect(() => {
     const checkScreenSize = () => {
@@ -175,6 +259,71 @@ export default function HomePage() {
     router.push("/login")
   }
 
+  // Glass card style
+  const glassCardStyle =
+    "bg-white/20 backdrop-blur-md border border-white/30 shadow-xl dark:bg-blue-900/20 dark:border-blue-300/20"
+
+  // Fetch top active rooms
+  const fetchTopActiveRooms = async () => {
+    try {
+      const householdCode = localStorage.getItem("household_code")
+      if (!householdCode) {
+        console.error("Household code not found in local storage")
+        return
+      }
+
+      const response = await fetch(`/api/auth/top_active_rooms?household_code=${householdCode}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch top active rooms")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        console.log("Top active rooms:", data.data.top_rooms)
+        setTopActiveRooms(data.data.top_rooms) // Update state with fetched rooms
+      } else {
+        console.error("Error fetching top active rooms:", data.message)
+      }
+    } catch (error) {
+      console.error("Error fetching top active rooms:", error)
+    }
+  }
+
+  const fetchTopActiveDevices = async () => {
+    try {
+      const householdCode = localStorage.getItem("household_code")
+      if (!householdCode) {
+        console.error("Household code not found in local storage")
+        return
+      }
+
+      const response = await fetch(`/api/auth/top_active_devices?household_code=${householdCode}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch top active devices")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        console.log("Top active devices:", data.data.top_devices)
+        const devicesWithIcons = data.data.top_devices.map((device: Device) => ({
+          ...device,
+          icon: iconMap[device.icon] || Plug, // Default to Plug if icon not found
+        }))
+        // Update state with fetched devices (no icon mapping needed)
+        setTopActiveDevices(devicesWithIcons)
+      } else {
+        console.error("Error fetching top active devices:", data.message)
+      }
+    } catch (error) {
+      console.error("Error fetching top active devices:", error)
+    }
+  }
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchTopActiveRooms()
+    fetchTopActiveDevices()
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-blue-800 overflow-x-hidden">
       {/* Decorative background elements */}
@@ -187,7 +336,10 @@ export default function HomePage() {
       {/* Main content */}
       <div className="relative z-10">
         {/* Header */}
-        <header className="backdrop-blur-sm bg-white/70 dark:bg-blue-900/30 border-b border-gray-200 dark:border-white/10 sticky top-0 z-20">
+        <header
+          className="backdrop-blur-sm border-b border-gray-200 dark:border-white/10 sticky top-0 z-20"
+          style={{ background: "radial-gradient(circle, rgba(174,238,189,0.7) 0%, rgba(159,148,233,0.7) 100%)" }}
+        >
           <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 p-2 rounded-lg">
@@ -238,7 +390,110 @@ export default function HomePage() {
         </header>
 
         {/* Main content area */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div
+          className="max-w-7xl mx-auto px-4 py-6 relative overflow-hidden"
+          style={{
+            background: "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
+          }}
+        >
+          {/* Decorative elements */}
+          <div className="absolute top-10 right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-10 left-1/3 w-40 h-40 bg-blue-200/20 rounded-full blur-2xl"></div>
+
+          {/* Enhanced grid pattern overlay with sophisticated visual effects */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Subtle grid pattern */}
+            <div
+              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
+              style={{
+                backgroundImage: `
+        linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)
+      `,
+                backgroundSize: "24px 24px",
+              }}
+            ></div>
+
+            {/* Diagonal lines for added texture */}
+            <div
+              className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]"
+              style={{
+                backgroundImage: `
+        linear-gradient(45deg, rgba(99, 102, 241, 0.1) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(99, 102, 241, 0.1) 25%, transparent 25%)
+      `,
+                backgroundSize: "60px 60px",
+              }}
+            ></div>
+
+            {/* Animated gradient overlay with improved animation */}
+            <div
+              className="absolute inset-0 opacity-[0.04] dark:opacity-[0.05] animate-[pulse_8s_ease-in-out_infinite]"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 40%), radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.3) 0%, transparent 40%)",
+              }}
+            ></div>
+
+            {/* Subtle floating particles effect */}
+            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-white dark:bg-blue-200 animate-[float_15s_ease-in-out_infinite]"
+                  style={{
+                    width: `${Math.random() * 4 + 2}px`,
+                    height: `${Math.random() * 4 + 2}px`,
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 5}s`,
+                    animationDuration: `${Math.random() * 10 + 15}s`,
+                    opacity: 0.4,
+                  }}
+                ></div>
+              ))}
+            </div>
+
+            {/* Soft glow effects */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div
+                className="absolute w-[40%] h-[40%] rounded-full blur-[80px] opacity-[0.03] dark:opacity-[0.04] animate-[drift_25s_ease-in-out_infinite]"
+                style={{
+                  background: "radial-gradient(circle, rgba(147, 197, 253, 0.8) 0%, transparent 70%)",
+                  top: "20%",
+                  left: "10%",
+                }}
+              ></div>
+              <div
+                className="absolute w-[50%] h-[50%] rounded-full blur-[100px] opacity-[0.03] dark:opacity-[0.04] animate-[drift_30s_ease-in-out_infinite_reverse]"
+                style={{
+                  background: "radial-gradient(circle, rgba(167, 243, 208, 0.8) 0%, transparent 70%)",
+                  bottom: "10%",
+                  right: "15%",
+                  animationDelay: "-5s",
+                }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Add keyframes for new animations to the first style tag in the document */}
+          <style jsx global>{`
+            @keyframes float {
+              0%, 100% { transform: translateY(0) translateX(0); }
+              25% { transform: translateY(-10px) translateX(5px); }
+              50% { transform: translateY(5px) translateX(-5px); }
+              75% { transform: translateY(-5px) translateX(10px); }
+            }
+            
+            @keyframes drift {
+              0%, 100% { transform: translateY(0) translateX(0); }
+              25% { transform: translateY(-5%) translateX(2%); }
+              50% { transform: translateY(3%) translateX(-3%); }
+              75% { transform: translateY(-2%) translateX(5%); }
+            }
+          `}</style>
+
           {/* Dashboard overview */}
           <div className="mb-8">
             {/* Current usage card - expanded to fill full width */}
@@ -246,7 +501,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="w-full bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl overflow-hidden"
+              className={`w-full rounded-2xl overflow-hidden ${glassCardStyle}`}
             >
               <div className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -256,7 +511,7 @@ export default function HomePage() {
                     </div>
                     <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Current Usage</h2>
                   </div>
-                  <div className="flex items-center gap-3 bg-gray-100 dark:bg-blue-700/30 px-3 py-2 rounded-full self-start md:self-auto">
+                  <div className="flex items-center gap-3 bg-white/30 dark:bg-blue-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm">
                     <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
                   </div>
@@ -266,13 +521,13 @@ export default function HomePage() {
                   {/* Left column - Circular progress */}
                   <div className="flex justify-center md:justify-start">
                     <div className="relative w-36 h-36 md:w-48 md:h-48">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                      <svg className="w-full h-full -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
                         <circle
                           cx="50"
                           cy="50"
                           r="45"
                           fill="none"
-                          stroke="rgba(0,0,0,0.1)"
+                          stroke="rgba(255,255,255,0.2)"
                           className="dark:stroke-white/10"
                           strokeWidth="8"
                         />
@@ -305,14 +560,14 @@ export default function HomePage() {
 
                   {/* Middle column - Cost and usage details */}
                   <div className="flex flex-col justify-center items-center md:items-start space-y-6">
-                    <div className="text-center md:text-left">
-                      <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">Current Cost</p>
+                    <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Current Cost</p>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                         AED {currentUsage.amount}
                       </p>
                     </div>
-                    <div className="text-center md:text-left">
-                      <p className="text-sm text-gray-500 dark:text-blue-300 mb-1">Energy Used</p>
+                    <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Energy Used</p>
                       <p className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
                         {currentUsage.kwh} kWh
                       </p>
@@ -321,7 +576,7 @@ export default function HomePage() {
 
                   {/* Right column - Additional stats */}
                   <div className="flex flex-col justify-center space-y-6">
-                    <div className="bg-gray-50 dark:bg-blue-800/30 p-4 rounded-xl border border-gray-100 dark:border-blue-700/30">
+                    <div className="bg-white/30 dark:bg-blue-800/30 p-4 rounded-xl border border-white/30 dark:border-blue-700/30 backdrop-blur-sm shadow-sm">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-700/50">
                           <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-300" />
@@ -333,14 +588,14 @@ export default function HomePage() {
                       </p>
                     </div>
 
-                    <div>
+                    <div className="bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-500 dark:text-blue-300">Budget Progress</span>
-                        <span className="text-gray-500 dark:text-blue-300">
+                        <span className="text-gray-600 dark:text-blue-300 font-medium">Budget Progress</span>
+                        <span className="text-gray-600 dark:text-blue-300">
                           AED {currentUsage.amount} / {currentUsage.budgetGoal}
                         </span>
                       </div>
-                      <div className="h-3 bg-gray-100 dark:bg-blue-950/50 rounded-full overflow-hidden">
+                      <div className="h-3 bg-white/30 dark:bg-blue-950/50 rounded-full overflow-hidden backdrop-blur-sm">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${currentUsage.budgetUsed}%` }}
@@ -354,29 +609,29 @@ export default function HomePage() {
               </div>
 
               {/* Bottom stats bar */}
-              <div className="bg-gray-50 dark:bg-blue-900/40 border-t border-gray-100 dark:border-blue-800/30 p-4 md:p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
+              <div className="bg-white/30 dark:bg-blue-900/40 border-t border-white/30 dark:border-blue-800/30 p-5 md:p-6 backdrop-blur-sm">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Daily Average</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       AED {(Number.parseFloat(currentUsage.amount) / 30).toFixed(2)}
                     </p>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Projected Monthly</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       AED {((Number.parseFloat(currentUsage.amount) * 30) / new Date().getDate()).toFixed(2)}
                     </p>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Active Devices</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {topActiveDevices.filter((d) => d.active).length}
+                      {topActiveDevices?.filter((d) => d.active).length}
                     </p>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Total Rooms</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{topActiveRooms.length}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{topActiveRooms?.length || 0}</p>
                   </div>
                 </div>
               </div>
@@ -391,44 +646,45 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+                className={`rounded-2xl p-6 ${glassCardStyle}`}
               >
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Devices</h2>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50"
+                    size="sm"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-blue-700/50"
+                    onClick={fetchTopActiveDevices}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="space-y-3">
-                  {topActiveDevices.map((device, index) => (
+                  {topActiveDevices?.map((device, index) => (
                     <motion.div
                       key={index}
                       whileHover={{ x: 5 }}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
                         device.active
-                          ? "bg-blue-50 border-blue-200 dark:bg-blue-700/30 dark:border-blue-600/50"
-                          : "bg-gray-50 border-gray-200 dark:bg-blue-800/30 dark:border-blue-700/30"
+                          ? "bg-blue-50/50 border-blue-200/50 dark:bg-blue-700/30 dark:border-blue-600/50 backdrop-blur-sm"
+                          : "bg-white/30 border-white/30 dark:bg-blue-800/30 dark:border-blue-700/30 backdrop-blur-sm"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            device.active ? "bg-blue-100 dark:bg-blue-600/50" : "bg-gray-100 dark:bg-blue-800/50"
+                            device.active ? "bg-blue-100/70 dark:bg-blue-600/50" : "bg-white/50 dark:bg-blue-800/50"
                           }`}
                         >
-                          <device.icon
-                            className={`w-5 h-5 ${
+                          {React.createElement(device.icon, {
+                            className: `w-5 h-5 ${
                               device.active ? "text-blue-500 dark:text-blue-300" : "text-gray-400 dark:text-blue-400"
-                            }`}
-                          />
+                            }`,
+                          })}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{device.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-blue-300">{device.power}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{device.device_name}</p>
+                          <p className="text-xs text-gray-500 dark:text-blue-300">{device.power}W</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -447,30 +703,31 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
-                className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl"
+                className={`rounded-2xl p-6 ${glassCardStyle}`}
               >
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Active Rooms</h2>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-blue-700/50"
+                    size="sm"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-blue-700/50"
+                    onClick={fetchTopActiveRooms}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {topActiveRooms.map((room, index) => (
+                  {topActiveRooms?.map((room, index) => (
                     <motion.div
                       key={index}
                       whileHover={{ y: -5 }}
-                      className="bg-gray-50 dark:bg-blue-800/30 p-4 rounded-lg border border-gray-200 dark:border-blue-700/30 flex flex-col items-center"
+                      className="bg-white/30 dark:bg-blue-800/30 p-4 rounded-lg border border-white/30 dark:border-blue-700/30 flex flex-col items-center backdrop-blur-sm"
                     >
-                      <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-blue-700/30 flex items-center justify-center mb-2">
-                        <room.icon className="w-6 h-6 text-gray-500 dark:text-blue-300" />
+                      <div className="w-12 h-12 rounded-full bg-white/50 dark:bg-blue-700/30 flex items-center justify-center mb-2">
+                        {React.createElement(room.icon, { className: "w-6 h-6 text-gray-500 dark:text-blue-300" })}
                       </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{room.name}</p>
-                      <p className="text-xs text-gray-500 dark:text-blue-300">{room.usage}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{room.room_name}</p>
+                      <p className="text-xs text-gray-500 dark:text-blue-300">{room.total_power}W</p>
                       <p className="text-xs text-gray-400 dark:text-blue-400 mt-1">{room.devices} devices</p>
                     </motion.div>
                   ))}
@@ -484,7 +741,7 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
-            className="bg-white dark:bg-gradient-to-br dark:from-blue-800/80 dark:to-blue-900/80 rounded-2xl p-6 border border-gray-200 dark:border-blue-700/50 backdrop-blur-sm shadow-xl mb-20 md:mb-8"
+            className={`rounded-2xl p-6 mb-20 md:mb-8 ${glassCardStyle}`}
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Energy Saving Tips</h2>
@@ -493,7 +750,7 @@ export default function HomePage() {
                   <div
                     key={i}
                     className={`w-2 h-2 rounded-full ${
-                      i === currentTip ? "bg-blue-500 dark:bg-blue-400" : "bg-gray-200 dark:bg-blue-800/80"
+                      i === currentTip ? "bg-blue-500 dark:bg-blue-400" : "bg-white/50 dark:bg-blue-800/80"
                     }`}
                   />
                 ))}
@@ -505,7 +762,7 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
-              className="bg-gray-50 dark:bg-blue-700/20 rounded-xl p-4 border border-gray-200 dark:border-blue-600/30"
+              className="bg-white/30 dark:bg-blue-700/20 rounded-xl p-4 border border-white/30 dark:border-blue-600/30 backdrop-blur-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="flex-1">
@@ -514,7 +771,7 @@ export default function HomePage() {
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-blue-200">{energySavingTips[currentTip].description}</p>
                 </div>
-                <div className="w-16 h-16 flex-shrink-0 bg-blue-50 dark:bg-gradient-to-br dark:from-blue-500/30 dark:to-cyan-500/30 rounded-lg flex items-center justify-center">
+                <div className="w-16 h-16 flex-shrink-0 bg-white/40 dark:bg-gradient-to-br dark:from-blue-500/30 dark:to-cyan-500/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   {React.createElement(energySavingTips[currentTip].icon, {
                     className: "w-8 h-8 text-blue-500 dark:text-cyan-300",
                   })}
@@ -523,7 +780,7 @@ export default function HomePage() {
               <div className="mt-4 flex justify-end">
                 <Button
                   size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white"
+                  className="bg-blue-500/80 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500 text-white backdrop-blur-sm"
                 >
                   <Sparkles className="w-4 h-4 mr-1" /> Apply Tip
                 </Button>
@@ -532,39 +789,6 @@ export default function HomePage() {
           </motion.div>
         </div>
       </div>
-
-      {/* Bottom Navigation - Mobile Only */}
-      <motion.nav
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gradient-to-t dark:from-blue-950 dark:to-blue-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-blue-800/50 md:hidden z-50 shadow-lg"
-      >
-        <div className="flex justify-around py-3 px-4 max-w-md mx-auto">
-          {[
-            { icon: Home, label: "Home", active: true },
-            { icon: ChartBar, label: "Live Now", active: false },
-            { icon: Settings, label: "Summary", active: false },
-            { icon: Lightbulb, label: "Tips", active: false },
-            { icon: User2, label: "Settings", active: false },
-          ].map(({ icon: Icon, label, active }) => (
-            <button
-              key={label}
-              className={`flex flex-col items-center gap-1 transition-all duration-200 ${
-                active
-                  ? "text-blue-500 dark:text-blue-400 scale-110"
-                  : "text-gray-500 dark:text-blue-300/70 hover:text-gray-700 dark:hover:text-blue-200"
-              }`}
-            >
-              <div className={`p-1.5 rounded-full ${active ? "bg-blue-50 dark:bg-blue-800/50" : ""}`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <span className="text-xs">{label}</span>
-            </button>
-          ))}
-        </div>
-      </motion.nav>
     </div>
   )
 }
-
