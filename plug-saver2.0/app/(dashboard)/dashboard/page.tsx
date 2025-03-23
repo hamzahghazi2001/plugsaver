@@ -301,11 +301,11 @@ const DashboardPage = () => {
               </Card>
 
             <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-              <h3 className="font-medium mb-2">Cost Savings</h3>
+              <h3 className="font-medium mb-2">Cost Expenditure</h3>
               <div className="flex items-center">
                 <DollarSign className="w-8 h-8 text-green-400 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">${costSavings}</div>
+                  <div className="text-2xl font-bold">{costSavings} AED </div>
                   <div className="text-sm text-gray-500">This month</div>
                 </div>
               </div>
