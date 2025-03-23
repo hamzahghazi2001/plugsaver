@@ -28,18 +28,31 @@ async def json_energy_consumption(household_code):
 
     # Extrapolate values for week, month, and year
     daily_average = sum(day_consumption) / 7
-    weekly_average = daily_average * 7
-    monthly_average = daily_average * 30
     yearly_average = daily_average * 365
+
+    # Adjust weekly consumption based on the month
+    for i in range(52):
+        month = (i // 4) % 12  # Approximate month index
+        if month in [5, 6, 7, 8]:  # Summer months (June to September)
+            weekly_average = daily_average * 7 * 1.2  # 20% higher consumption
+        elif month in [11, 0, 1]:  # Winter months (December to February)
+            weekly_average = daily_average * 7 * 0.8  # 20% lower consumption
+        else:
+            weekly_average = daily_average * 7  # Normal consumption
+        week_consumption[i] = {"name": f"Week {i + 1}", "value": weekly_average}
+
+    # Adjust monthly consumption based on the season
+    for i in range(12):
+        if i in [5, 6, 7, 8]:  # Summer months (June to September)
+            monthly_average = daily_average * 30 * 1.2  # 20% higher consumption
+        elif i in [11, 0, 1]:  # Winter months (December to February)
+            monthly_average = daily_average * 30 * 0.8  # 20% lower consumption
+        else:
+            monthly_average = daily_average * 30  # Normal consumption
+        month_consumption[i] = {"name": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i], "value": monthly_average}
 
     for i in range(7):
         day_consumption[i] = {"name": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i], "value": day_consumption[i]}
-
-    for i in range(52):
-        week_consumption[i] = {"name": f"Week {i + 1}", "value": weekly_average}
-
-    for i in range(12):
-        month_consumption[i] = {"name": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i], "value": monthly_average}
 
     for i in range(2):
         year_consumption[i] = {"name": str(today.year + i), "value": yearly_average}
