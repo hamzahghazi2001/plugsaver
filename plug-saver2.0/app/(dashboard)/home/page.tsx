@@ -65,6 +65,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // -----------------------------------------------------------------
 // 1) PLACEHOLDER DATA FOR BACKEND INTEGRATION
@@ -218,6 +219,9 @@ export default function HomePage() {
     return false
   })
 
+  const [userAvatar, setUserAvatar] = useState<string>("/placeholder.svg?height=40&width=40")
+  const [userName, setUserName] = useState<string>("User")
+
   // Load dark mode preference from localStorage on initial render
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode") === "true"
@@ -296,6 +300,34 @@ export default function HomePage() {
     await fetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
+
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem("user_id")
+      if (!userId) return
+
+      try {
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`)
+        const result = await response.json()
+
+        if (result.success && result.avatar_url) {
+          setUserAvatar(result.avatar_url)
+        }
+
+        // Also fetch user details to get the name
+        const userResponse = await fetch(`/api/auth/get_user_details?user_id=${userId}`)
+        const userData = await userResponse.json()
+
+        if (userData.success && userData.user.name) {
+          setUserName(userData.user.name)
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
 
   // Glass card style
   const glassCardStyle = `p-5 rounded-xl transition-all duration-300 overflow-hidden relative group
@@ -451,9 +483,14 @@ export default function HomePage() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50"
+                    className="w-10 h-10 rounded-full p-0 overflow-hidden bg-transparent hover:bg-gray-100/10 dark:hover:bg-blue-800/70"
                   >
-                    <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-8 h-8 rounded-full" />
+                    <Avatar className="w-full h-full border border-gray-200 dark:border-blue-700/50">
+                      <AvatarImage src={userAvatar} alt={userName} />
+                      <AvatarFallback className="bg-gray-100 dark:bg-blue-800/50 text-gray-800 dark:text-blue-100">
+                        {userName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
