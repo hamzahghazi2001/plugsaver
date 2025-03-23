@@ -23,7 +23,7 @@ import {
 type PeriodType = "day" | "week" | "month" | "year"
 
 const DashboardPage = () => {
-  const [period, setPeriod] = useState<PeriodType>("week")
+  const [period, setPeriod] = useState<PeriodType>("day")
   const [energyData, setEnergyData] = useState<Record<PeriodType, { name: string; value: number }[]> | null>(null)
   const [roomsData, setRoomsData] = useState<{ name: string; value: number }[] | null>(null)
   const [applianceData, setApplianceData] = useState<{ name: string; usage: number }[] | null>(null)
@@ -301,25 +301,17 @@ const DashboardPage = () => {
               </Card>
 
             <Card className={`p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-              <h3 className="font-medium mb-2">Cost Expenditure</h3>
+              <h3 className="font-medium mb-2">Cost Savings</h3>
               <div className="flex items-center">
                 <DollarSign className="w-8 h-8 text-green-400 mr-4" />
                 <div>
-                  <div className="text-2xl font-bold">{costSavings} AED </div>
+                  <div className="text-2xl font-bold">${costSavings}</div>
                   <div className="text-sm text-gray-500">This month</div>
                 </div>
               </div>
             </Card>
 
-        <Card className={`mt-6 p-4 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
-          <h2 className="font-medium mb-4">Energy-Saving Tips</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li>Adjust your thermostat by 1°C to save up to 10% on your heating bill.</li>
-            <li>Replace old appliances with energy-efficient models to reduce electricity consumption.</li>
-            <li>Use natural light when possible and switch to LED bulbs for artificial lighting.</li>
-            <li>Unplug electronics and appliances when not in use to avoid phantom energy drain.</li>
-          </ul>
-        </Card>
+       
       </div>
     </div>
   )
