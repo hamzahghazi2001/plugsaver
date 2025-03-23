@@ -384,7 +384,7 @@ export default function RewardsPage() {
       }}
     >
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+        <h1 className={`text-3xl md:text-4xl font-bold ${isDarkMode ? "text-gray-900" : "text-white"}`}>
           Rewards & Achievements
         </h1>
         <Button
