@@ -202,7 +202,7 @@ export default function HomePage() {
   // Current tip index for rotating tips
   const [currentTip, setCurrentTip] = useState(0)
 
-  // Simulated “live wattage” for demonstration
+  // Simulated "live wattage" for demonstration
   const [liveWattage, setLiveWattage] = useState(0)
 
   // Determine screen sizes for responsiveness
@@ -213,6 +213,10 @@ export default function HomePage() {
   // State for top active devices and rooms
   const [topActiveDevices, setTopActiveDevices] = useState<Device[]>([])
   const [topActiveRooms, setTopActiveRooms] = useState<Room[]>([])
+
+  // State for electricity usage and cost savings from efficiency metrics
+  const [electricityUsage, setElectricityUsage] = useState<number | null>(null)
+  const [costSavings, setCostSavings] = useState<number | null>(null)
 
   // Watch for screen-size changes
   useEffect(() => {
@@ -227,7 +231,7 @@ export default function HomePage() {
     return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  // Simulate live wattage (you’d replace this with real-time data from your backend)
+  // Simulate live wattage (you'd replace this with real-time data from your backend)
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveWattage((prev) => {
@@ -254,7 +258,7 @@ export default function HomePage() {
 
   // Example logout handler
   const handleLogout = async () => {
-    // In real scenario, you’d call your logout endpoint
+    // In real scenario, you'd call your logout endpoint
     await fetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
@@ -318,10 +322,38 @@ export default function HomePage() {
       console.error("Error fetching top active devices:", error)
     }
   }
+
+  const fetchEfficiencyMetrics = async () => {
+    try {
+      const householdCode = localStorage.getItem("household_code")
+      if (!householdCode) {
+        console.error("Household code not found in local storage")
+        return
+      }
+
+      const response = await fetch(`/api/auth/efficiency_metrics?household_code=${householdCode}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch efficiency metrics")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        console.log("Efficiency metrics data:", data.data.data)
+        setElectricityUsage(data.data.data.electricityUsage)
+        setCostSavings(data.data.data.costSavings)
+      } else {
+        console.error("Error fetching efficiency metrics:", data.message)
+      }
+    } catch (error) {
+      console.error("Error fetching efficiency metrics:", error)
+    }
+  }
+
   // Fetch data on component mount
   useEffect(() => {
     fetchTopActiveRooms()
     fetchTopActiveDevices()
+    fetchEfficiencyMetrics()
   }, [])
 
   return (
@@ -561,16 +593,18 @@ export default function HomePage() {
                   {/* Middle column - Cost and usage details */}
                   <div className="flex flex-col justify-center items-center md:items-start space-y-6">
                     <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Current Cost</p>
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Cost Savings</p>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                        AED {currentUsage.amount}
+                        AED {costSavings !== null ? Math.round(costSavings) : "-"}
                       </p>
+                      <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
                     <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Energy Used</p>
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Electricity Usage</p>
                       <p className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
-                        {currentUsage.kwh} kWh
+                        {electricityUsage !== null ? `${electricityUsage} kWh` : "-"}
                       </p>
+                      <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
                   </div>
 
