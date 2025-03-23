@@ -167,10 +167,10 @@ async def statsjson(household_code):
 
     # Prepare the result in the desired JSON format
     result = {
-        "efficiencyScore": efficiency_score,
-        "electricityUsage": total_energy_consumed,
-        "peakPowerUsage": peak_power_usage,
-        "carbonFootprint": carbon_footprint,
-        "costSavings": cost_savings,
+        "efficiencyScore": round(efficiency_score),
+        "electricityUsage": round(total_energy_consumed, 3),
+        "peakPowerUsage": round(peak_power_usage, 3),
+        "carbonFootprint": round(carbon_footprint, 3),
+        "costSavings": round(cost_savings, 2),
     }
     return result
