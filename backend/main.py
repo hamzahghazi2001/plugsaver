@@ -666,7 +666,88 @@ async def get_efficiency_metrics(household_code: str = Query(...)):
     result = await statsjson(household_code)
     print(result)  # Print the result to the console for debugging
     return JSONResponse(content={"success": True, "data": result})
-    
+
+@app.get("/top-active-rooms")
+async def get_top_active_rooms(household_code: str = Query(...)):
+    try:
+        # Fetch all rooms for the household
+        rooms_result = supabase.table("rooms").select("room_id, room_name").eq("household_code", household_code).execute()
+        if not rooms_result.data:
+            return {"success": False, "message": "No rooms found for this household."}
+
+        # Fetch all devices for the household
+        devices_result = supabase.table("devices").select("room_id, power").eq("household_code", household_code).execute()
+        if not devices_result.data:
+            return {"success": False, "message": "No devices found for this household."}
+
+        # Calculate total power for each room
+        room_power = {}
+        for device in devices_result.data:
+            room_id = device["room_id"]
+            power_str = device["power"]  # e.g., "44W"
+            power = int(power_str[:-1]) if power_str and power_str[-1] == "W" else 0  # Remove "W" and convert to int
+
+            if room_id in room_power:
+                room_power[room_id] += power
+            else:
+                room_power[room_id] = power
+
+        # Prepare the result with room names and total power
+        top_rooms = []
+        for room in rooms_result.data:
+            room_id = room["room_id"]
+            room_name = room["room_name"]
+            total_power = room_power.get(room_id, 0)
+            top_rooms.append({
+                "room_id": room_id,
+                "room_name": room_name,
+                "total_power": total_power,
+                "icon": "Sofa"  # Example: Add a default icon
+            })
+
+        # Sort rooms by total power in descending order and get the top 4
+        top_rooms_sorted = sorted(top_rooms, key=lambda x: x["total_power"], reverse=True)[:4]
+
+        # Print the top rooms for debugging
+        print("Top Active Rooms:", top_rooms_sorted)
+
+        return {"success": True, "top_rooms": top_rooms_sorted}
+    except Exception as e:
+        print(f"Error fetching top active rooms: {e}")
+        return {"success": False, "message": f"An error occurred: {str(e)}"}
+        
+@app.get("/top-active-devices")
+async def get_top_active_devices(household_code: str = Query(...)):
+    try:
+        # Fetch all devices for the household
+        devices_result = supabase.table("devices").select("device_id, device_name, power, icon").eq("household_code", household_code).execute()
+        if not devices_result.data:
+            return {"success": False, "message": "No devices found for this household."}
+
+        # Extract power values and convert to integers
+        devices_with_power = []
+        for device in devices_result.data:
+            power_str = device["power"]  # e.g., "44W"
+            power = int(power_str[:-1]) if power_str and power_str[-1] == "W" else 0  # Remove "W" and convert to int
+            icon_name = device["icon"].get("name", "plug")  # Extract the "name" field from the JSONB icon object
+            devices_with_power.append({
+                "device_id": device["device_id"],
+                "device_name": device["device_name"],
+                "power": power,
+                "icon": icon_name  # Send only the icon name
+            })
+
+        # Sort devices by power in descending order and get the top 4
+        top_devices_sorted = sorted(devices_with_power, key=lambda x: x["power"], reverse=True)[:4]
+
+        # Print the top devices for debugging
+        print("Top Active Devices:", top_devices_sorted)
+
+        return {"success": True, "top_devices": top_devices_sorted}
+    except Exception as e:
+        print(f"Error fetching top active devices: {e}")
+        return {"success": False, "message": str(e)} 
+
 '''@app.get("/start-live-consumption")
 async def start_live_consumption(household_code: str = Query(...)):
     if not household_code:
