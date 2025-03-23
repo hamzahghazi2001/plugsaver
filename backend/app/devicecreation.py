@@ -52,14 +52,13 @@ def get_device_categories():
 
 def add_room(user_id: str, household_code: str, room_name: str):
     try:
-        # Step 1: Check if the user has 'can_configure' permission
-        permission_response = supabase.table("householdpermissions") \
+        # Step 1: Check if the user has 'can_configure' permission from the configure_permission table
+        configure_permission_response = supabase.table("configure_permission") \
             .select("can_configure") \
             .eq("user_id", user_id) \
-            .eq("household_code", household_code) \
             .execute()
 
-        if not permission_response.data or not permission_response.data[0].get("can_configure"):
+        if not configure_permission_response.data or not configure_permission_response.data[0].get("can_configure"):
             print("Permission denied: User does not have 'can_configure' permission")  # Debug log
             return {"success": False, "message": "Permission denied: You do not have permission to configure rooms."}
 
@@ -84,14 +83,13 @@ def add_room(user_id: str, household_code: str, room_name: str):
 
 def add_device(user_id, room_id, device_name, device_category, household_code, active_days, active_time_start, active_time_end, icon, power, isOn, consumptionLimit, schedule):
     try:
-        # Step 1: Check if the user has 'can_configure' permission
-        permission_response = supabase.table("householdpermissions") \
+        # Step 1: Check if the user has 'can_configure' permission from the configure_permission table
+        configure_permission_response = supabase.table("configure_permission") \
             .select("can_configure") \
             .eq("user_id", user_id) \
-            .eq("household_code", household_code) \
             .execute()
 
-        if not permission_response.data or not permission_response.data[0].get("can_configure"):
+        if not configure_permission_response.data or not configure_permission_response.data[0].get("can_configure"):
             print("Permission denied: User does not have 'can_configure' permission")  # Debug log
             return {"success": False, "message": "Permission denied: You do not have permission to add devices."}
 
@@ -132,8 +130,7 @@ def add_device(user_id, room_id, device_name, device_category, household_code, a
                 "room_id": room_id,
                 "device_id": device_id,
                 "can_control": True,  # Grant control permission
-                "can_configure": True,
-                "manager_id": manager_id  # Grant configure permission
+                "manager_id": manager_id
             }).execute()
 
             print(f"Added permissions for user {user['user_id']}:", permission_response)  # Log the permission response
@@ -225,14 +222,13 @@ def give_permission(manager_id: int, user_id: int, household_code: str, room_id:
 
 def delete_device(household_code: str, user_id: int, device_id: int):
     try:
-        # Step 1: Check if the user has 'can_configure' permission
-        permission_response = supabase.table("householdpermissions") \
+        # Step 1: Check if the user has 'can_configure' permission from the configure_permission table
+        configure_permission_response = supabase.table("configure_permission") \
             .select("can_configure") \
             .eq("user_id", user_id) \
-            .eq("household_code", household_code) \
             .execute()
 
-        if not permission_response.data or not permission_response.data[0].get("can_configure"):
+        if not configure_permission_response.data or not configure_permission_response.data[0].get("can_configure"):
             print("Permission denied: User does not have 'can_configure' permission")  # Debug log
             return {"success": False, "message": "Permission denied: You do not have permission to delete devices."}
 
@@ -243,21 +239,28 @@ def delete_device(household_code: str, user_id: int, device_id: int):
         if not device.data:
             return {"success": False, "message": "Device not found."}
 
-        # Step 3: Delete all permissions associated with the device
+        # Step 3: Delete all permissions associated with the device in the householdpermissions table
         delete_permissions_response = supabase.table("householdpermissions") \
             .delete() \
             .eq("device_id", device_id) \
             .execute()
         print("Deleted permissions for device:", delete_permissions_response)  # Log the response
 
-        # Step 4: Delete the device
+        # Step 4: Delete dependent records in the analytics table
+        delete_analytics_response = supabase.table("analytics") \
+            .delete() \
+            .eq("device_id", device_id) \
+            .execute()
+        print("Deleted analytics records for device:", delete_analytics_response)  # Log the response
+
+        # Step 5: Delete the device
         delete_device_response = supabase.table("devices").delete().eq("device_id", device_id).execute()
         print("Delete device response:", delete_device_response)  # Log the response
 
         if not delete_device_response.data:
             return {"success": False, "message": "Failed to delete device."}
 
-        return {"success": True, "message": "Device and associated permissions deleted successfully."}
+        return {"success": True, "message": "Device, associated permissions, and analytics records deleted successfully."}
 
     except Exception as e:
         print("Error deleting device:", str(e))  # Log the error
@@ -293,14 +296,13 @@ def delete_device(household_code: str, user_id: int, device_id: int):
 
 def delete_room(household_code: str, user_id: int, room_id: int):
     try:
-        # Step 1: Check if the user has 'can_configure' permission
-        permission_response = supabase.table("householdpermissions") \
+        # Step 1: Check if the user has 'can_configure' permission from the configure_permission table
+        configure_permission_response = supabase.table("configure_permission") \
             .select("can_configure") \
             .eq("user_id", user_id) \
-            .eq("household_code", household_code) \
             .execute()
 
-        if not permission_response.data or not permission_response.data[0].get("can_configure"):
+        if not configure_permission_response.data or not configure_permission_response.data[0].get("can_configure"):
             print("Permission denied: User does not have 'can_configure' permission")  # Debug log
             return {"success": False, "message": "Permission denied: You do not have permission to delete rooms."}
 
@@ -309,37 +311,40 @@ def delete_room(household_code: str, user_id: int, room_id: int):
         if not household.data:
             return {"success": False, "message": "Invalid household code"}
 
-        # Step 3: Delete all devices associated with the room in the devices table
-        device_response = supabase.table("devices").delete().eq("room_id", room_id).execute()
+        # Step 3: Fetch all devices in the room
+        devices_in_room = supabase.table("devices").select("device_id").eq("room_id", room_id).execute()
+        print("Devices in room:", devices_in_room.data)  # Log the devices
 
-        # Step 4: Delete the room from the rooms table
+        # Step 4: Delete dependent records for each device in the room
+        for device in devices_in_room.data:
+            device_id = device["device_id"]
+
+            # Delete analytics records for the device
+            supabase.table("analytics").delete().eq("device_id", device_id).execute()
+            print(f"Deleted analytics records for device {device_id}")
+
+            # Delete permissions for the device
+            supabase.table("householdpermissions").delete().eq("device_id", device_id).execute()
+            print(f"Deleted permissions for device {device_id}")
+
+        # Step 5: Delete all devices in the room
+        device_response = supabase.table("devices").delete().eq("room_id", room_id).execute()
+        print("Deleted devices in room:", device_response)
+
+        # Step 6: Delete permissions associated with the room (if any)
+        delete_permissions_response = supabase.table("householdpermissions") \
+            .delete() \
+            .eq("room_id", room_id) \
+            .execute()
+        print("Deleted permissions for room:", delete_permissions_response)
+
+        # Step 7: Delete the room from the rooms table
         room_response = supabase.table("rooms").delete().eq("room_id", room_id).execute()
         if not room_response.data:
             return {"success": False, "message": "Failed to delete room. The room might not exist."}
 
-        return {"success": True, "message": "Room, devices, and permissions successfully deleted"}
+        return {"success": True, "message": "Room, devices, and associated records deleted successfully."}
 
     except Exception as e:
         print("Error deleting room:", str(e))  # Log the error
         return {"success": False, "message": str(e)}
-
-
-def update_device(device_id: str, updated_device_data: dict):
-
-    try:
-        # Fetch the existing device to ensure it exists
-        existing_device = supabase.table("devices").select("*").eq("device_id", device_id).execute()
-
-        if not existing_device.data:
-            return {"success": False, "message": "Device not found."}
-
-        # Update the device in the database
-        response = supabase.table("devices").update(updated_device_data).eq("device_id", device_id).execute()
-
-        if response.data:
-            return {"success": True, "device": response.data[0]}
-        else:
-            return {"success": False, "message": "Failed to update device."}
-    except Exception as e:
-        print(f"Error updating device: {e}")
-        return {"success": False, "message": "An error occurred while updating the device."}

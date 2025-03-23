@@ -29,6 +29,15 @@ def create_household(user_email, household_code):
         "household_code": household_code
     }).eq("email", user_email).execute()
 
+        # Insert into configure_permission table
+    configure_permission_response = supabase.table("configure_permission").select("*").eq("user_id", user_id).execute()
+    
+    if not configure_permission_response.data:  # Avoid duplicate entries
+        supabase.table("configure_permission").insert({
+            "user_id": user_id,
+            "can_configure": True  # Set can_configure to True
+        }).execute()
+
     return {"success": True, "household_code": household_code}
 
 def join_household(user_email, household_code):
@@ -75,8 +84,7 @@ def join_household(user_email, household_code):
                 "household_code": household_code,
                 "room_id": device["room_id"],
                 "device_id": device["device_id"],
-                "can_control": True,
-                "can_configure": True  # Change to False if only the manager should configure
+                "can_control": True,  # Change to False if only the manager should configure
             }).execute()
 
     # Update user role
@@ -84,5 +92,14 @@ def join_household(user_email, household_code):
         "role": "member",
         "household_code": household_code
     }).eq("email", user_email).execute()
+
+    # Insert into configure_permission table
+    configure_permission_response = supabase.table("configure_permission").select("*").eq("user_id", user_id).execute()
+    
+    if not configure_permission_response.data:  # Avoid duplicate entries
+        supabase.table("configure_permission").insert({
+            "user_id": user_id,
+            "can_configure": True  # Set can_configure to True
+        }).execute()
 
     return {"success": True, "message": "Joined household successfully with full access to all devices!"}
