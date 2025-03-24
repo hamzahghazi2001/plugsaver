@@ -2,7 +2,7 @@
 import jsQR from "jsqr"
 import QrScanner from "react-qr-scanner"
 
-import type React from "react"
+import React from "react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
@@ -198,7 +198,7 @@ interface Device {
   id: number
   name: string
   room: string | null
-  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+  icon: React.ForwardRefExoticComponent<Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
   power: string
   isOn: boolean
   type?: string
@@ -225,7 +225,7 @@ interface FoundDevice {
 }
 
 interface DeviceIcon {
-  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+  icon: React.ForwardRefExoticComponent<Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
   name: string
 }
 
@@ -507,7 +507,7 @@ export default function DevicesPage() {
 
             // Get the icon component based on the icon name or use a default
             let iconComponent: React.ForwardRefExoticComponent<
-              Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+              Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
             > = Plug // Default icon
             if (typeof device.icon === "string") {
               try {
@@ -1036,7 +1036,7 @@ export default function DevicesPage() {
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
-              <h2 className="text-xl font-semibold text-black mb-1">Energy Consumption</h2>
+              <h2 className="text-xl font-semibold text-white mb-1">Energy Consumption</h2>
               <p className="text-sm text-black-300">Current device usage</p>
             </div>
 
@@ -1184,7 +1184,7 @@ export default function DevicesPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <Card className={styles.deviceCardStyle(isOn, needsRoomAssignment).baseStyle}>
+                      <Card className={styles.deviceCardStyle(!!isOn, !!needsRoomAssignment).baseStyle}>
                         {/* Card Header with status indicator */}
                         <div
                           className={`p-4 ${isOn ? "bg-white-500/20" : "bg-gray-700/30"} transition-colors duration-300`}
@@ -1196,7 +1196,9 @@ export default function DevicesPage() {
                                   isOn ? "bg-blue-500/40" : "bg-gray-600/40"
                                 }`}
                               >
-                                <Icon className={`w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`} />
+                                {React.createElement(Icon, {
+                                  className: `w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`,
+                                })}
                               </div>
                               <div>
                                 <h3 className="font-bold text-lg">{name}</h3>
