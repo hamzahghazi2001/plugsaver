@@ -918,12 +918,13 @@ export default function DevicesPage() {
 
     try {
       console.log("Sending request to backend to assign device to room...") // Log the API call
-      const response = await fetch(`/api/auth/devices/${deviceId}`, {
+      const response = await fetch(`/api/auth/roomassignment/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          device_id: deviceId,
           room_id: room.room_id, // Use room.room_id
         }),
       })
