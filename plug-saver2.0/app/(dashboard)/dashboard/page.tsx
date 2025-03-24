@@ -602,12 +602,12 @@ const DashboardPage = () => {
               <div className={`mt-4 h-2 ${isDarkMode ? "bg-white/10" : "bg-black/10"} rounded-full overflow-hidden`}>
                 <div
                   className={`h-full rounded-full ${isDarkMode ? "bg-red-400" : "bg-red-500"}`}
-                  style={{ width: `${Math.min(100, (peakPowerUsage || 0) / 0.1)}%` }}
+                  style={{ width: `${Math.min(100, (peakPowerUsage || 0) / 1)}%` }}
                 ></div>
               </div>
               <div className={`mt-2 text-xs ${isDarkMode ? "text-white/70" : "text-gray-600"} flex justify-between`}>
                 <span>0 kW</span>
-                <span>10 kW</span>
+                <span>100 kW</span>
               </div>
             </div>
           </div>
@@ -663,7 +663,7 @@ const DashboardPage = () => {
             <div className={`p-2 rounded-lg ${isDarkMode ? "bg-green-500/30" : "bg-green-500/20"}`}>
               <DollarSign className={`w-5 h-5 ${isDarkMode ? "text-green-400" : "text-green-600"}`} />
             </div>
-            <h3 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-800"}`}>Cost Savings</h3>
+            <h3 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-800"}`}>Cost Expenditure</h3>
           </div>
           <div className="flex items-center relative z-10">
             <div className="flex-1">

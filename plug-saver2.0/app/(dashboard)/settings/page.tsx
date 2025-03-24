@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   User,
   Info,
@@ -19,12 +19,13 @@ import {
   LogOut,
   CheckCircle,
   Mail,
-  Phone,
   UserPlus,
-  FileQuestion,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+  Settings,
+  Sun,
+  Moon,
+} from "lucide-react"
+import { motion } from "framer-motion"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Dialog,
   DialogContent,
@@ -32,25 +33,25 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { createClient } from "@supabase/supabase-js";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createClient } from "@supabase/supabase-js"
 
 // Initialize Supabase client
-const supabaseUrl = "https://xgcfvxwrcunwsrvwwjjx.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY2Z2eHdyY3Vud3Nydnd3amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTIzNzIsImV4cCI6MjA1MzU2ODM3Mn0.fgT2LL7dlx7VR185WABZCtK8ZdF4rpdOIy-crGpp6tU";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = "https://xgcfvxwrcunwsrvwwjjx.supabase.co"
+const supabaseKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY2Z2eHdyY3Vud3Nydnd3amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTIzNzIsImV4cCI6MjA1MzU2ODM3Mn0.fgT2LL7dlx7VR185WABZCtK8ZdF4rpdOIy-crGpp6tU"
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default function SettingsPage() {
-  const router = useRouter();
+  const router = useRouter()
 
   // State for various settings
   const [user, setUser] = useState({
@@ -58,67 +59,63 @@ export default function SettingsPage() {
     role: "Household Manager",
     avatar: "/placeholder.svg?height=80&width=80",
     email: "user@example.com",
-    country: "United Arab Emirates", 
+    country: "United Arab Emirates",
     birthdate: "1990-01-01",
     language: "English",
-  });
+  })
 
   // State for household code
-  const [householdCode, setHouseholdCode] = useState<string | null>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [managerId, setManagerId] = useState<number | null>(null); // Track the manager ID
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null); // Track the selected member ID
+  const [householdCode, setHouseholdCode] = useState<string | null>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [managerId, setManagerId] = useState<number | null>(null) // Track the manager ID
+  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null) // Track the selected member ID
 
-  const loggedInUserId = Number(localStorage.getItem("user_id"));
+  const loggedInUserId = Number(localStorage.getItem("user_id"))
 
-  
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("darkMode") === "true";
+      return localStorage.getItem("darkMode") === "true"
     }
-    return false;
-  });
-  
+    return false
+  })
 
   // Apply dark mode class to the document element
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add("dark");
+      document.documentElement.classList.add("dark")
     } else {
-      document.documentElement.classList.remove("dark");
+      document.documentElement.classList.remove("dark")
     }
-    localStorage.setItem("darkMode", isDarkMode.toString());
-  }, [isDarkMode]);
+    localStorage.setItem("darkMode", isDarkMode.toString())
+  }, [isDarkMode])
 
   // Toggle dark mode
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
+    setIsDarkMode((prev) => !prev)
+  }
 
   useEffect(() => {
     const fetchHouseholdUsers = async () => {
-      const household_code = localStorage.getItem("household_code");
-      const user_id = localStorage.getItem("user_id");
-  
+      const household_code = localStorage.getItem("household_code")
+      const user_id = localStorage.getItem("user_id")
+
       if (!household_code || !user_id) {
-        setError("Household code or user ID not found in localStorage");
-        setLoading(false);
-        return;
+        setError("Household code or user ID not found in localStorage")
+        setLoading(false)
+        return
       }
-  
+
       try {
-        const response = await fetch(
-          `/api/auth/get_householdusers?household_code=${household_code}`
-        );
-        const data = await response.json();
-  
+        const response = await fetch(`/api/auth/get_householdusers?household_code=${household_code}`)
+        const data = await response.json()
+
         if (data.success) {
           // Find the current user (manager or member)
-          const currentUser = data.users.find((user: any) => user.user_id.toString() === user_id.toString());
-  
+          const currentUser = data.users.find((user: any) => user.user_id.toString() === user_id.toString())
+
           if (currentUser) {
             // Set the current user's details
             setUser((prev) => ({
@@ -128,51 +125,51 @@ export default function SettingsPage() {
               country: currentUser.country || prev.country,
               birthdate: currentUser.dob || prev.birthdate,
               role: currentUser.role || prev.role,
-            }));
-  
+            }))
+
             // Filter out the current user from the list of household members
-            const otherUsers = data.users.filter((user: any) => user.user_id.toString() !== user_id.toString());
-  
+            const otherUsers = data.users.filter((user: any) => user.user_id.toString() !== user_id.toString())
+
             // Set the list of all household members (excluding the current user)
-            setUsers(otherUsers);
-  
+            setUsers(otherUsers)
+
             // Find the manager ID
-            const manager = data.users.find((user: any) => user.role === "manager");
+            const manager = data.users.find((user: any) => user.role === "manager")
             if (manager) {
-              setManagerId(Number(manager.user_id)); // Set the manager ID
+              setManagerId(Number(manager.user_id)) // Set the manager ID
             }
-  
+
             // Set the household code
-            setHouseholdCode(household_code);
+            setHouseholdCode(household_code)
           } else {
-            setError("Current user not found in household");
+            setError("Current user not found in household")
           }
         } else {
-          setError(data.message || "Failed to fetch household users");
+          setError(data.message || "Failed to fetch household users")
         }
       } catch (error) {
-        console.error("Error fetching household users:", error);
-        setError("An error occurred while fetching household users");
+        console.error("Error fetching household users:", error)
+        setError("An error occurred while fetching household users")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-  
-    fetchHouseholdUsers();
-  }, []);
+    }
+
+    fetchHouseholdUsers()
+  }, [])
 
   // Fetch username, country, email, and household code from localStorage on mount
   useEffect(() => {
     const fetchUserDetails = async () => {
-      const user_id = localStorage.getItem("user_id"); // Get user_id from localStorage
+      const user_id = localStorage.getItem("user_id") // Get user_id from localStorage
       if (!user_id) {
-        console.error("User ID not found in localStorage");
-        return;
+        console.error("User ID not found in localStorage")
+        return
       }
 
       try {
-        const response = await fetch(`/api/auth/get_user_details?user_id=${user_id}`);
-        const data = await response.json();
+        const response = await fetch(`/api/auth/get_user_details?user_id=${user_id}`)
+        const data = await response.json()
 
         if (data.success) {
           // Update the user state with fetched details
@@ -182,29 +179,29 @@ export default function SettingsPage() {
             email: data.user.email || prev.email,
             country: data.user.country || prev.country,
             birthdate: data.user.dob || prev.birthdate,
-          }));
+          }))
         } else {
-          console.error("Failed to fetch user details:", data.message);
+          console.error("Failed to fetch user details:", data.message)
         }
       } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error("Error fetching user details:", error)
       }
-    };
+    }
 
-    fetchUserDetails();
-  }, []);
+    fetchUserDetails()
+  }, [])
 
   // States for different dialog modals
-  const [activeDialog, setActiveDialog] = useState<string | null>(null);
-  const [activeSheet, setActiveSheet] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<string | null>(null)
+  const [activeSheet, setActiveSheet] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // State for managing member permissions dialog
-  const [manageMemberDialogOpen, setManageMemberDialogOpen] = useState(false);
+  const [manageMemberDialogOpen, setManageMemberDialogOpen] = useState(false)
   const [manageMemberPermissions, setManageMemberPermissions] = useState({
     control: false,
     configure: false,
-  });
+  })
 
   // Toggle states for various settings
   const [settings, setSettings] = useState({
@@ -216,7 +213,6 @@ export default function SettingsPage() {
     security: {
       twoFactorAuth: false,
       rememberDevice: true,
-
     },
     notifications: {
       appNotifications: true,
@@ -235,104 +231,103 @@ export default function SettingsPage() {
       autoSaving: true,
       smartScheduling: true,
       guestAccess: false,
-
     },
-  });
+  })
 
   // Handle opening dialogs
   const openDialog = (dialog: string) => {
-    setActiveDialog(dialog);
-    setSaveSuccess(false);
-  };
+    setActiveDialog(dialog)
+    setSaveSuccess(false)
+  }
 
   // Handle opening sheets (for mobile view)
   const openSheet = (sheet: string) => {
-    setActiveSheet(sheet);
-    setSaveSuccess(false);
-  };
+    setActiveSheet(sheet)
+    setSaveSuccess(false)
+  }
 
   // Handle saving settings
   const handleSave = () => {
-    setSaveSuccess(true);
+    setSaveSuccess(true)
     // Would normally save to a database or API
     setTimeout(() => {
-      if (activeDialog) setActiveDialog(null);
-      if (activeSheet) setActiveSheet(null);
-      setManageMemberDialogOpen(false);
-    }, 1500);
-  };
+      if (activeDialog) setActiveDialog(null)
+      if (activeSheet) setActiveSheet(null)
+      setManageMemberDialogOpen(false)
+    }, 1500)
+  }
 
   // Handle logout
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-  };
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+  }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (!file) {
-      alert("No file selected.");
-      return;
+      alert("No file selected.")
+      return
     }
-  
-    const userId = localStorage.getItem("user_id");
+
+    const userId = localStorage.getItem("user_id")
     if (!userId) {
-      alert("User ID not found. Please log in again.");
-      return;
+      alert("User ID not found. Please log in again.")
+      return
     }
-  
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("user_id", userId); // Ensure user_id is sent as a form field
-  
+
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("user_id", userId) // Ensure user_id is sent as a form field
+
     try {
       const response = await fetch("/api/auth/profile_pic", {
         method: "POST",
         body: formData,
-      });
-  
-      const result = await response.json();
-      console.log("POST Response:", result);
-  
+      })
+
+      const result = await response.json()
+      console.log("POST Response:", result)
+
       if (!result.success) {
-        throw new Error(result.message);
+        throw new Error(result.message)
       }
-  
+
       // Update the local state with the new avatar URL
-      setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
-      alert("Profile picture updated successfully!");
+      setUser((prev) => ({ ...prev, avatar: result.avatar_url }))
+      alert("Profile picture updated successfully!")
     } catch (error) {
-      console.error("Error uploading avatar:", error);
-      alert("An error occurred while uploading the avatar.");
+      console.error("Error uploading avatar:", error)
+      alert("An error occurred while uploading the avatar.")
     }
-  };
+  }
 
   useEffect(() => {
     const fetchProfilePicture = async () => {
-      const userId = localStorage.getItem("user_id");
-      if (!userId) return;
-  
+      const userId = localStorage.getItem("user_id")
+      if (!userId) return
+
       try {
-        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`);
-        const result = await response.json();
-  
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`)
+        const result = await response.json()
+
         if (result.success && result.avatar_url) {
           // Update the local state with the fetched avatar URL
-          setUser((prev) => ({ ...prev, avatar: result.avatar_url }));
-  
+          setUser((prev) => ({ ...prev, avatar: result.avatar_url }))
+
           // Debug: Log the fetched avatar URL
-          console.log("Fetched Avatar URL:", result.avatar_url);
+          console.log("Fetched Avatar URL:", result.avatar_url)
         } else {
-          console.error("Error fetching profile picture:", result);
+          console.error("Error fetching profile picture:", result)
         }
       } catch (error) {
-        console.error("Error fetching profile picture:", error);
+        console.error("Error fetching profile picture:", error)
       }
-    };
-  
-    fetchProfilePicture();
-  }, []);
-  
+    }
+
+    fetchProfilePicture()
+  }, [])
+
   // Handle toggle changes
   const handleToggleChange = (category: string, setting: string, value: boolean) => {
     setSettings({
@@ -341,8 +336,8 @@ export default function SettingsPage() {
         ...settings[category as keyof typeof settings],
         [setting]: value,
       },
-    });
-  };
+    })
+  }
 
   // Get appropriate component based on screen size
   const SettingsItem = ({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) => (
@@ -360,14 +355,20 @@ export default function SettingsPage() {
       </div>
       <ChevronRight className="w-5 h-5 text-gray-400" />
     </motion.button>
-  );
+  )
 
   // Profile settings content
-  const ProfilePictureContent = () => (
+  const ProfilePictureContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="text-center mb-4">
-        Upload a new profile picture from your device
-      </DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="text-center mb-4">
+          Upload a new profile picture from your device
+        </DialogDescription>
+      ) : (
+        <p className="text-center text-gray-500 dark:text-gray-400 mb-4">
+          Upload a new profile picture from your device
+        </p>
+      )}
 
       <div className="flex flex-col items-center gap-4 mb-6">
         <Avatar className="w-24 h-24">
@@ -385,43 +386,224 @@ export default function SettingsPage() {
         </Label>
       </div>
     </>
-  );
+  )
 
-  const PersonalInfoContent = () => {
+  const PersonalInfoContent = ({ inDialog = true }) => {
     // Comprehensive list of all countries
     const countries = [
-      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia",
-      "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium",
-      "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
-      "Burkina Faso", "Burundi", "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic",
-      "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba",
-      "Cyprus", "Czechia", "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
-      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji",
-      "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea",
-      "Guinea-Bissau", "Guyana", "Haiti", "Holy See", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran",
-      "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait",
-      "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
-      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius",
-      "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
-      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea",
-      "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea",
-      "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
-      "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia",
-      "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
-      "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
-      "Syria", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia",
-      "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America",
-      "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
-    ];
+      "Afghanistan",
+      "Albania",
+      "Algeria",
+      "Andorra",
+      "Angola",
+      "Antigua and Barbuda",
+      "Argentina",
+      "Armenia",
+      "Australia",
+      "Austria",
+      "Azerbaijan",
+      "Bahamas",
+      "Bahrain",
+      "Bangladesh",
+      "Barbados",
+      "Belarus",
+      "Belgium",
+      "Belize",
+      "Benin",
+      "Bhutan",
+      "Bolivia",
+      "Bosnia and Herzegovina",
+      "Botswana",
+      "Brazil",
+      "Brunei",
+      "Bulgaria",
+      "Burkina Faso",
+      "Burundi",
+      "Côte d'Ivoire",
+      "Cabo Verde",
+      "Cambodia",
+      "Cameroon",
+      "Canada",
+      "Central African Republic",
+      "Chad",
+      "Chile",
+      "China",
+      "Colombia",
+      "Comoros",
+      "Congo (Congo-Brazzaville)",
+      "Costa Rica",
+      "Croatia",
+      "Cuba",
+      "Cyprus",
+      "Czechia",
+      "Democratic Republic of the Congo",
+      "Denmark",
+      "Djibouti",
+      "Dominica",
+      "Dominican Republic",
+      "Ecuador",
+      "Egypt",
+      "El Salvador",
+      "Equatorial Guinea",
+      "Eritrea",
+      "Estonia",
+      "Eswatini",
+      "Ethiopia",
+      "Fiji",
+      "Finland",
+      "France",
+      "Gabon",
+      "Gambia",
+      "Georgia",
+      "Germany",
+      "Ghana",
+      "Greece",
+      "Grenada",
+      "Guatemala",
+      "Guinea",
+      "Guinea-Bissau",
+      "Guyana",
+      "Haiti",
+      "Holy See",
+      "Honduras",
+      "Hungary",
+      "Iceland",
+      "India",
+      "Indonesia",
+      "Iran",
+      "Iraq",
+      "Ireland",
+      "Israel",
+      "Italy",
+      "Jamaica",
+      "Japan",
+      "Jordan",
+      "Kazakhstan",
+      "Kenya",
+      "Kiribati",
+      "Kuwait",
+      "Kyrgyzstan",
+      "Laos",
+      "Latvia",
+      "Lebanon",
+      "Lesotho",
+      "Liberia",
+      "Libya",
+      "Liechtenstein",
+      "Lithuania",
+      "Luxembourg",
+      "Madagascar",
+      "Malawi",
+      "Malaysia",
+      "Maldives",
+      "Mali",
+      "Malta",
+      "Marshall Islands",
+      "Mauritania",
+      "Mauritius",
+      "Mexico",
+      "Micronesia",
+      "Moldova",
+      "Monaco",
+      "Mongolia",
+      "Montenegro",
+      "Morocco",
+      "Mozambique",
+      "Myanmar (Burma)",
+      "Namibia",
+      "Nauru",
+      "Nepal",
+      "Netherlands",
+      "New Zealand",
+      "Nicaragua",
+      "Niger",
+      "Nigeria",
+      "North Korea",
+      "North Macedonia",
+      "Norway",
+      "Oman",
+      "Pakistan",
+      "Palau",
+      "Palestine State",
+      "Panama",
+      "Papua New Guinea",
+      "Paraguay",
+      "Peru",
+      "Philippines",
+      "Poland",
+      "Portugal",
+      "Qatar",
+      "Romania",
+      "Russia",
+      "Rwanda",
+      "Saint Kitts and Nevis",
+      "Saint Lucia",
+      "Saint Vincent and the Grenadines",
+      "Samoa",
+      "San Marino",
+      "Sao Tome and Principe",
+      "Saudi Arabia",
+      "Senegal",
+      "Serbia",
+      "Seychelles",
+      "Sierra Leone",
+      "Singapore",
+      "Slovakia",
+      "Slovenia",
+      "Solomon Islands",
+      "Somalia",
+      "South Africa",
+      "South Korea",
+      "South Sudan",
+      "Spain",
+      "Sri Lanka",
+      "Sudan",
+      "Suriname",
+      "Sweden",
+      "Switzerland",
+      "Syria",
+      "Tajikistan",
+      "Tanzania",
+      "Thailand",
+      "Timor-Leste",
+      "Togo",
+      "Tonga",
+      "Trinidad and Tobago",
+      "Tunisia",
+      "Turkey",
+      "Turkmenistan",
+      "Tuvalu",
+      "Uganda",
+      "Ukraine",
+      "United Arab Emirates",
+      "United Kingdom",
+      "United States of America",
+      "Uruguay",
+      "Uzbekistan",
+      "Vanuatu",
+      "Venezuela",
+      "Vietnam",
+      "Yemen",
+      "Zambia",
+      "Zimbabwe",
+    ]
 
     return (
       <>
-        <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Update your personal information</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Update your personal information</p>
+        )}
 
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
-            <Input id="username" value={user.username} onChange={(e) => setUser({ ...user, username: e.target.value })} />
+            <Input
+              id="username"
+              value={user.username}
+              onChange={(e) => setUser({ ...user, username: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
@@ -431,7 +613,7 @@ export default function SettingsPage() {
               type="email"
               value={user.email}
               readOnly
-              className="bg-gray-100 cursor-not-allowed" // Grey out and disable the email field
+              className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed"
             />
           </div>
 
@@ -444,7 +626,9 @@ export default function SettingsPage() {
               <SelectTrigger>
                 <SelectValue placeholder="Select your country" />
               </SelectTrigger>
-              <SelectContent className="max-h-60 overflow-y-auto"> {/* Scrollable dropdown */}
+              <SelectContent className="max-h-60 overflow-y-auto">
+                {" "}
+                {/* Scrollable dropdown */}
                 {countries.map((country) => (
                   <SelectItem key={country} value={country}>
                     {country}
@@ -465,12 +649,16 @@ export default function SettingsPage() {
           </div>
         </div>
       </>
-    );
-  };
+    )
+  }
 
-  const DataSharingContent = () => (
+  const DataSharingContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="mb-4">Control how your data is used and shared</DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Control how your data is used and shared</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Control how your data is used and shared</p>
+      )}
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -507,7 +695,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <div className="pt-5 border-t"/>
+          <div className="pt-5 border-t" />
           <h4 className="text-sm font-medium mb-3">Account Deletion</h4>
           <Button variant="destructive" className="w-full">
             Request Account Deletion
@@ -515,11 +703,15 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  );
+  )
 
-  const SecurityContent = () => (
+  const SecurityContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="mb-4">Manage your security preferences and account protection</DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Manage your security preferences and account protection</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your security preferences and account protection</p>
+      )}
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -542,17 +734,25 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-5 border-t">
-          <Button variant="outline" className="w-full">
-            Change Password
-          </Button>
-        </div>
+  <Button 
+    variant="outline" 
+    className="w-full"
+    onClick={() => router.push('/changepassword')}
+  >
+    Change Password
+  </Button>
+</div>
       </div>
     </>
-  );
+  )
 
-  const NotificationsContent = () => (
+  const NotificationsContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="mb-4">Customize your notification preferences</DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your notification preferences</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your notification preferences</p>
+      )}
 
       <div className="space-y-6">
         <div className="space-y-2">
@@ -601,22 +801,30 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
-  );
+  )
 
-  const MembersContent = ({ managerId, householdCode }: { managerId: number | null; householdCode: string | null }) => {
-    const loggedInUserId = localStorage.getItem("user_id"); // Get the logged-in user's ID
-    const isManager = user.role === "manager"; // Check if the logged-in user is a manager
+  const MembersContent = ({
+    managerId,
+    householdCode,
+    inDialog = true,
+  }: { managerId: number | null; householdCode: string | null; inDialog?: boolean }) => {
+    const loggedInUserId = localStorage.getItem("user_id") // Get the logged-in user's ID
+    const isManager = user.role === "manager" // Check if the logged-in user is a manager
     //const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null); // Track the selected member ID
-  
+
     const handleManageClick = (memberId: number) => {
-      setSelectedMemberId(Number(memberId)); // Set the selected member ID
-      setManageMemberDialogOpen(true); // Open the permissions dialog
-    };
-  
+      setSelectedMemberId(Number(memberId)) // Set the selected member ID
+      setManageMemberDialogOpen(true) // Open the permissions dialog
+    }
+
     return (
       <>
-        <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
-  
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage household members and permissions</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage household members and permissions</p>
+        )}
+
         <div className="space-y-6">
           {/* Current User (Logged-In User) */}
           <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
@@ -631,7 +839,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-  
+
           {/* List of Other Household Members */}
           {users.length > 0 ? (
             users
@@ -666,7 +874,7 @@ export default function SettingsPage() {
           ) : (
             <p className="text-sm text-gray-500">No other members found.</p>
           )}
-  
+
           {/* Invite New Member Button (Only for Managers) */}
           {isManager && (
             <Button className="w-full flex items-center justify-center gap-2">
@@ -674,11 +882,8 @@ export default function SettingsPage() {
               <span>Invite New Member</span>
             </Button>
           )}
-  
-
         </div>
 
-  
         {/* Member Permissions Dialog */}
         <Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
           <DialogContent>
@@ -693,82 +898,81 @@ export default function SettingsPage() {
           </DialogContent>
         </Dialog>
       </>
-    );
-  };
-  
-  
+    )
+  }
+
   const MemberPermissionsContent = ({
     memberId,
     managerId,
     householdCode,
   }: {
-    memberId: number | null;
-    managerId: number | null;
-    householdCode: string | null;
+    memberId: number | null
+    managerId: number | null
+    householdCode: string | null
   }) => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [manageMemberPermissions, setManageMemberPermissions] = useState({
       control: true,
       configure: true,
-    });
-  
-const handleSavePermissions = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    console.log("Saving permissions for member ID:", memberId);
-    console.log("Manager ID:", managerId);
-    console.log("Household Code:", householdCode);
-    console.log("control:", manageMemberPermissions.control);
-    console.log("configure:", manageMemberPermissions.configure);
+    })
 
-    if (!memberId || !managerId || !householdCode) {
-      throw new Error("Missing required information.");
+    const handleSavePermissions = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        console.log("Saving permissions for member ID:", memberId)
+        console.log("Manager ID:", managerId)
+        console.log("Household Code:", householdCode)
+        console.log("control:", manageMemberPermissions.control)
+        console.log("configure:", manageMemberPermissions.configure)
+
+        if (!memberId || !managerId || !householdCode) {
+          throw new Error("Missing required information.")
+        }
+
+        const response = await fetch("/api/auth/update_permission", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            memberId,
+            managerId,
+            householdCode,
+            canControl: manageMemberPermissions.control,
+            canConfigure: manageMemberPermissions.configure,
+          }),
+        })
+
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update permissions.")
+        }
+
+        alert("Permissions updated successfully!")
+
+        // Set saveSuccess to true to show the success message
+        setSaveSuccess(true)
+
+        // Reset saveSuccess after a short delay
+        setTimeout(() => {
+          setSaveSuccess(false)
+        }, 2000) // Reset after 2 seconds
+
+        // Close the dialog
+        setManageMemberDialogOpen(false)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "An error occurred.")
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const response = await fetch("/api/auth/update_permission", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        memberId,
-        managerId,
-        householdCode,
-        canControl: manageMemberPermissions.control,
-        canConfigure: manageMemberPermissions.configure,
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to update permissions.");
-    }
-
-    alert("Permissions updated successfully!");
-
-    // Set saveSuccess to true to show the success message
-    setSaveSuccess(true);
-
-    // Reset saveSuccess after a short delay
-    setTimeout(() => {
-      setSaveSuccess(false);
-    }, 2000); // Reset after 2 seconds
-
-    // Close the dialog
-    setManageMemberDialogOpen(false);
-  } catch (error) {
-    setError(error instanceof Error ? error.message : "An error occurred.");
-  } finally {
-    setLoading(false);
-  }
-};
-  
     return (
       <>
         <DialogDescription className="mb-4">Manage permissions for {memberId}</DialogDescription>
-  
+
         <div className="space-y-6">
           {/* Control Section */}
           <div className="flex items-center justify-between">
@@ -778,10 +982,12 @@ const handleSavePermissions = async () => {
             </div>
             <Switch
               checked={manageMemberPermissions.control}
-              onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, control: checked })}
+              onCheckedChange={(checked) =>
+                setManageMemberPermissions({ ...manageMemberPermissions, control: checked })
+              }
             />
           </div>
-  
+
           {/* Configure Section */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -790,12 +996,14 @@ const handleSavePermissions = async () => {
             </div>
             <Switch
               checked={manageMemberPermissions.configure}
-              onCheckedChange={(checked) => setManageMemberPermissions({ ...manageMemberPermissions, configure: checked })}
+              onCheckedChange={(checked) =>
+                setManageMemberPermissions({ ...manageMemberPermissions, configure: checked })
+              }
             />
           </div>
-  
+
           {error && <p className="text-red-500">{error}</p>}
-  
+
           <DialogFooter>
             <Button onClick={handleSavePermissions} disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
@@ -803,77 +1011,62 @@ const handleSavePermissions = async () => {
           </DialogFooter>
         </div>
       </>
-    );
-  };
+    )
+  }
 
-  const AccessibilityContent = () => {
+  const AccessibilityContent = ({ inDialog = true }) => {
     // Handle theme change
     const handleThemeChange = (value: string) => {
       if (value === "light") {
-        setIsDarkMode(false); // Disable dark mode
+        setIsDarkMode(false) // Disable dark mode
       } else if (value === "dark") {
-        setIsDarkMode(true); // Enable dark mode
+        setIsDarkMode(true) // Enable dark mode
       }
-    }; return (
-    <>
-      <DialogDescription className="mb-4">Customize your accessibility preferences</DialogDescription>
+    }
+    return (
+      <>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Customize your accessibility preferences</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your accessibility preferences</p>
+        )}
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">High Contrast</Label>
-            <p className="text-sm text-gray-400">Increase color contrast</p>
-          </div>
-          <Switch
-            checked={settings.accessibility.highContrast}
-            onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base">Large Text</Label>
-            <p className="text-sm text-gray-400">Increase text size</p>
-          </div>
-          <Switch
-            checked={settings.accessibility.largeText}
-            onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>App Theme</Label>
-          <RadioGroup
-            defaultValue={settings.accessibility.theme}
-            onValueChange={(value) => {
-              setSettings({
-                ...settings,
-                accessibility: {
-                  ...settings.accessibility,
-                  theme: value,
-                },
-              });
-              handleThemeChange(value);
-            }}
-            className="flex gap-3"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="light" id="theme-light" />
-              <Label htmlFor="theme-light">Light</Label>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">High Contrast</Label>
+              <p className="text-sm text-gray-400">Increase color contrast</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="dark" id="theme-dark" />
-              <Label htmlFor="theme-dark">Dark</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      </div>
-    </>
-  )};
+            <Switch
+              checked={settings.accessibility.highContrast}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
+            />
+          </div>
 
-  const SupportContent = () => (
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base">Large Text</Label>
+              <p className="text-sm text-gray-400">Increase text size</p>
+            </div>
+            <Switch
+              checked={settings.accessibility.largeText}
+              onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
+            />
+          </div>
+
+       
+        </div>
+      </>
+    )
+  }
+
+  const SupportContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="mb-4">Get help and support</DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Get help and support</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
+      )}
 
       <Tabs defaultValue="contact" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -909,12 +1102,10 @@ const handleSavePermissions = async () => {
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-purple-500" />
               <a href="mailto:plugsaver7@gmail.com" className="text-sm text-purple-500">
-              plugsaver7@gmail.com
+                plugsaver7@gmail.com
               </a>
             </div>
-            <div className="flex items-center gap-2">
-              
-            </div>
+            <div className="flex items-center gap-2"></div>
           </div>
         </TabsContent>
 
@@ -947,20 +1138,24 @@ const handleSavePermissions = async () => {
         </TabsContent>
       </Tabs>
     </>
-  );
+  )
 
-  const HouseholdContent = () => {
+  const HouseholdContent = ({ inDialog = true }) => {
     const copyHouseholdCode = () => {
       if (householdCode) {
         navigator.clipboard.writeText(householdCode).then(() => {
-          alert("Household code copied to clipboard!");
-        });
+          alert("Household code copied to clipboard!")
+        })
       }
-    };
+    }
 
     return (
       <>
-        <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
+        {inDialog ? (
+          <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Manage your household settings</p>
+        )}
 
         <div className="space-y-6">
           <div className="space-y-2">
@@ -1017,37 +1212,18 @@ const handleSavePermissions = async () => {
           </div>
         </div>
       </>
-    );
-  };
+    )
+  }
 
-  const DashboardContent = () => (
+  const DashboardContent = ({ inDialog = true }) => (
     <>
-      <DialogDescription className="mb-4">Customize your dashboard and widgets</DialogDescription>
+      {inDialog ? (
+        <DialogDescription className="mb-4">Customize your dashboard and widgets</DialogDescription>
+      ) : (
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your dashboard and widgets</p>
+      )}
 
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label className="text-base">Dashboard Layout</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="border-2 border-purple-500 rounded-md p-2 flex flex-col items-center gap-1 bg-purple-50/10">
-              <div className="grid grid-cols-2 gap-1 w-full">
-                <div className="aspect-video bg-purple-200/20 rounded"></div>
-                <div className="aspect-video bg-purple-200/20 rounded"></div>
-                <div className="aspect-video bg-purple-200/20 rounded col-span-2"></div>
-              </div>
-              <span className="text-xs font-medium">Standard</span>
-            </button>
-
-            <button className="border-2 border-transparent hover:border-purple-500 rounded-md p-2 flex flex-col items-center gap-1">
-              <div className="grid grid-cols-3 gap-1 w-full">
-                <div className="aspect-video bg-purple-200/20 rounded"></div>
-                <div className="aspect-video bg-purple-200/20 rounded"></div>
-                <div className="aspect-video bg-purple-200/20 rounded"></div>
-                <div className="aspect-video bg-purple-200/20 rounded col-span-3"></div>
-              </div>
-              <span className="text-xs font-medium">Compact</span>
-            </button>
-          </div>
-        </div>
+      
 
         <div className="space-y-3">
           <Label className="text-base">Visible Widgets</Label>
@@ -1092,256 +1268,405 @@ const handleSavePermissions = async () => {
             </div>
           </RadioGroup>
         </div>
-      </div>
+      
     </>
-  );
+  )
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-transparent pb-10 rounded-b-[40px]">
-        <div className="max-w-md mx-auto p-6">
-          <h1 className="text-2xl font-bold text-white mb-6">Settings</h1>
-
-          <div className="bg-white rounded-xl p-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={user.avatar} />
-                <AvatarFallback>{user.username[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="font-medium">{user.username}</h2>
-                <p className="text-sm text-gray-500">Personal Information</p>
-                <p className="font-medium text-sm mt-1">{user.role}</p>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Updated Header Section */}
+      <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:to-purple-900/30 pb-16 relative overflow-hidden min-h-[200px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-full backdrop-blur-md bg-white/10 border-white/20"
+              onClick={toggleDarkMode}
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl mb-6 md:mb-8 lg:mb-12">
+            <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
+              <div className="relative group">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-3 md:border-4 border-purple-100 dark:border-purple-900 shadow-md">
+                  <AvatarImage src={user.avatar} />
+                  <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-lg md:text-xl">
+                    {user.username[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div
+                  className="absolute inset-0 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={() => openDialog("profilePicture")}
+                >
+                  <Camera className="w-5 h-5 md:w-6 md:h-6" />
+                </div>
+              </div>
+              <div className="text-center md:text-left mt-2 md:mt-0">
+                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-lg md:text-2xl">{user.username}</h2>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start mt-1 md:mt-2 gap-1 md:gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                    {user.role}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    {user.country}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Settings Content */}
-      <div className="max-w-md mx-auto p-6 -mt-5">
-        <div className="space-y-8">
-          {/* Profile Section */}
-          <section>
-            <h2 className="text-lg font-medium text-purple-500 mb-2">Profile</h2>
-            <div className="space-y-1">
-              <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
-              <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
-              <SettingsItem icon={Share2} label="Data Sharing Preferences" onClick={() => openDialog("dataSharing")} />
+      {/* Updated Settings Content Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 lg:-mt-24 pb-16">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-8 border border-purple-100 dark:border-purple-900/50 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 transform transition-all duration-300 hover:shadow-2xl overflow-hidden">
+          {/* Decorative Background Elements */}
+          <div className="absolute -top-4 -left-4 w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
+          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 dark:from-purple-900/10 dark:via-transparent dark:to-purple-900/10 rounded-full blur-3xl -z-10"></div>
+          <div className="md:grid md:grid-cols-12 md:divide-x dark:divide-gray-700">
+            {/* Sidebar for desktop */}
+            <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-gray-50 dark:bg-gray-900/50">
+              <nav className="py-6 px-4">
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
+                      Profile
+                    </h3>
+                    <div className="space-y-1">
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "profilePicture"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("profilePicture")}
+                      >
+                        <User className="w-5 h-5 text-purple-500" />
+                        <span>Profile Picture</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "personalInfo"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("personalInfo")}
+                      >
+                        <Info className="w-5 h-5 text-purple-500" />
+                        <span>Personal Information</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "dataSharing"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("dataSharing")}
+                      >
+                        <Share2 className="w-5 h-5 text-purple-500" />
+                        <span>Data Sharing</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-3 mb-3">
+                      Account & App
+                    </h3>
+                    <div className="space-y-1">
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "security"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("security")}
+                      >
+                        <Shield className="w-5 h-5 text-purple-500" />
+                        <span>Security</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "notifications"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("notifications")}
+                      >
+                        <Bell className="w-5 h-5 text-purple-500" />
+                        <span>Notifications</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "members"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("members")}
+                      >
+                        <Users className="w-5 h-5 text-purple-500" />
+                        <span>Members</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "accessibility"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("accessibility")}
+                      >
+                        <Accessibility className="w-5 h-5 text-purple-500" />
+                        <span>Accessibility</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "support"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("support")}
+                      >
+                        <HelpCircle className="w-5 h-5 text-purple-500" />
+                        <span>Support</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "household"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("household")}
+                      >
+                        <Home className="w-5 h-5 text-purple-500" />
+                        <span>Household</span>
+                      </button>
+                      <button
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
+                          activeDialog === "dashboard"
+                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                        onClick={() => openDialog("dashboard")}
+                      >
+                        <LayoutDashboard className="w-5 h-5 text-purple-500" />
+                        <span>Dashboard</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-8 px-3">
+                  <Button
+                    variant="outline"
+                    className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out
+                  </Button>
+                </div>
+              </nav>
             </div>
-          </section>
 
-          {/* Account and App Section */}
-          <section>
-            <h2 className="text-lg font-medium text-purple-500 mb-2">Account and App</h2>
-            <div className="space-y-1">
-              <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
-              <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
-              <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
-              <SettingsItem icon={Accessibility} label="Accessibility" onClick={() => openDialog("accessibility")} />
-              <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
-              <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
-              <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
+            {/* Mobile view */}
+            <div className="md:hidden p-6 space-y-8">
+              <section>
+                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
+                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
+                    <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </span>
+                  Profile
+                </h2>
+                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                  <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
+                  <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
+                  <SettingsItem
+                    icon={Share2}
+                    label="Data Sharing Preferences"
+                    onClick={() => openDialog("dataSharing")}
+                  />
+                </div>
+              </section>
+              <section>
+                <h2 className="text-lg font-medium text-purple-600 dark:text-purple-400 mb-3 flex items-center">
+                  <span className="bg-purple-100 dark:bg-purple-900/30 p-1.5 rounded-md mr-2">
+                    <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </span>
+                  Account and App
+                </h2>
+                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                  <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
+                  <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
+                  <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
+                  <SettingsItem
+                    icon={Accessibility}
+                    label="Accessibility"
+                    onClick={() => openDialog("accessibility")}
+                  />
+                  <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
+                  <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
+                  <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
+                </div>
+              </section>
+              <Button
+                variant="outline"
+                className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/30"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log Out
+              </Button>
             </div>
-          </section>
 
-          {/* Logout Button */}
-          <Button
-            variant="outline"
-            className="w-full border-red-300 text-red-500 hover:bg-red-50 hover:text-red-600"
-            onClick={handleLogout}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log Out
-          </Button>
+            {/* Main content area for desktop */}
+            <div className="hidden md:block md:col-span-9 lg:col-span-9 p-8">
+              {activeDialog === null ? (
+                <div className="text-center py-16">
+                  <div className="mx-auto w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-6">
+                    <Settings className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Settings Dashboard</h2>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                    Select a settings category from the sidebar to customize your Plug Saver experience.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                    {[
+                      { icon: User, label: "Profile", dialog: "profilePicture" },
+                      { icon: Shield, label: "Security", dialog: "security" },
+                      { icon: Bell, label: "Notifications", dialog: "notifications" },
+                      { icon: Users, label: "Members", dialog: "members" },
+                      { icon: Home, label: "Household", dialog: "household" },
+                      { icon: LayoutDashboard, label: "Dashboard", dialog: "dashboard" },
+                    ].map((item) => (
+                      <button
+                        key={item.dialog}
+                        className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        onClick={() => openDialog(item.dialog)}
+                      >
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
+                          <item.icon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {activeDialog === "profilePicture" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Picture</h2>
+                      <ProfilePictureContent inDialog={false} />
+                      
+                    </div>
+                  )}
+                  {activeDialog === "personalInfo" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Personal Information
+                      </h2>
+                      <PersonalInfoContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "dataSharing" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Data Sharing Preferences
+                      </h2>
+                      <DataSharingContent inDialog={false} />
+                      
+                    </div>
+                  )}
+                  {activeDialog === "security" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                        Security and Privacy
+                      </h2>
+                      <SecurityContent inDialog={false} />
+                      
+                    </div>
+                  )}
+                  {activeDialog === "notifications" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Notifications</h2>
+                      <NotificationsContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "members" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Members</h2>
+                      <MembersContent inDialog={false} managerId={managerId} householdCode={householdCode} />
+                    
+                    </div>
+                  )}
+                  {activeDialog === "accessibility" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Accessibility</h2>
+                      <AccessibilityContent inDialog={false} />
+                      
+                    </div>
+                  )}
+                  {activeDialog === "support" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Support</h2>
+                      <SupportContent inDialog={false} />
+                    
+                    </div>
+                  )}
+                  {activeDialog === "household" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Household</h2>
+                      <HouseholdContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeDialog === "dashboard" && (
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Dashboard</h2>
+                      <DashboardContent inDialog={false} />
+                      <div className="mt-8 flex justify-end">
+                        {saveSuccess && (
+                          <p className="text-green-500 flex items-center text-sm mr-4">
+                            <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
+                          </p>
+                        )}
+                        <Button onClick={handleSave}>Save Changes</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Dialogs for each setting */}
-      <Dialog open={activeDialog === "profilePicture"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Profile Picture</DialogTitle>
-          </DialogHeader>
-          {ProfilePictureContent()}
-        
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "personalInfo"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Personal Information</DialogTitle>
-          </DialogHeader>
-          {PersonalInfoContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "dataSharing"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Data Sharing Preferences</DialogTitle>
-          </DialogHeader>
-          {DataSharingContent()}
-
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "security"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Security and Privacy</DialogTitle>
-          </DialogHeader>
-          {SecurityContent()}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "notifications"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Notifications</DialogTitle>
-          </DialogHeader>
-          {NotificationsContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "members"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Members</DialogTitle>
-    </DialogHeader>
-    <MembersContent 
-      managerId={managerId} 
-      householdCode={householdCode} 
-    />
-  </DialogContent>
-</Dialog>
-
-      <Dialog open={activeDialog === "accessibility"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Accessibility</DialogTitle>
-          </DialogHeader>
-          {AccessibilityContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "support"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Support</DialogTitle>
-          </DialogHeader>
-          {SupportContent()}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "household"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Household</DialogTitle>
-          </DialogHeader>
-          {HouseholdContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDialog === "dashboard"} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dashboard</DialogTitle>
-          </DialogHeader>
-          {DashboardContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-{/* Member Permissions Dialog */}
-<Dialog open={manageMemberDialogOpen} onOpenChange={setManageMemberDialogOpen}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Manage Permissions</DialogTitle>
-    </DialogHeader>
-    <MemberPermissionsContent
-      memberId={selectedMemberId} // Pass the selected member ID
-      managerId={managerId} // Pass the manager ID
-      householdCode={householdCode} // Pass the household code
-    />
-  </DialogContent>
-</Dialog>
-
-      {/* Mobile Sheets (alternative to dialogs for smaller screens) */}
-      {Object.entries({
-        profilePicture: { title: "Profile Picture", content: ProfilePictureContent },
-        personalInfo: { title: "Personal Information", content: PersonalInfoContent },
-        dataSharing: { title: "Data Sharing Preferences", content: DataSharingContent },
-        security: { title: "Security and Privacy", content: SecurityContent },
-        notifications: { title: "Notifications", content: NotificationsContent },
-        members: { title: "Members", content: () => <MembersContent managerId={managerId} householdCode={householdCode} /> },
-        accessibility: { title: "Accessibility", content: AccessibilityContent },
-        support: { title: "Support", content: SupportContent },
-        household: { title: "Household", content: HouseholdContent },
-        dashboard: { title: "Dashboard", content: DashboardContent },
-      }).map(([key, { title, content: Content }]) => (
-        <Sheet key={key} open={activeSheet === key} onOpenChange={(open) => !open && setActiveSheet(null)}>
-          <SheetContent className="sm:max-w-none md:hidden">
-            <SheetHeader>
-              <SheetTitle>{title}</SheetTitle>
-            </SheetHeader>
-            <div className="py-4">
-              <Content />
-            </div>
-            <SheetFooter>
-              {saveSuccess && (
-                <p className="text-green-500 flex items-center text-sm">
-                  <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-                </p>
-              )}
-              <Button onClick={handleSave} className="w-full">
-                Save Changes
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      ))}
     </div>
-  );
+  )
 }
+
