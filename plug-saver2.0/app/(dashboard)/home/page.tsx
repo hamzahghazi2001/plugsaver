@@ -225,6 +225,9 @@ export default function HomePage() {
   const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null) // Placeholder budget
   const [budgetUsed, setBudgetUsed] = useState<number>(0) // Track used budget
 
+  // Calculate total power consumption from active devices
+  const [totalPowerUsage, setTotalPowerUsage] = useState<number>(0)
+
   // Load dark mode preference from localStorage on initial render
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode") === "true"
@@ -422,36 +425,47 @@ ${
     }
   }
 
+  const calculateTotalPowerUsage = () => {
+    if (topActiveDevices && topActiveDevices.length > 0) {
+      const total = topActiveDevices.reduce((sum, device) => {
+        if (!device.active) return sum
+        const powerValue = device.power ? Number.parseInt(device.power, 10) : 0
+        return sum + (isNaN(powerValue) ? 0 : powerValue)
+      }, 0)
+      setTotalPowerUsage(total)
+    }
+  }
+
   const fetchMonthlyBudget = async () => {
     try {
-      const userId = localStorage.getItem("user_id");
+      const userId = localStorage.getItem("user_id")
       if (!userId) {
-        console.error("User ID not found in local storage");
-        return;
+        console.error("User ID not found in local storage")
+        return
       }
-  
-      const response = await fetch(`/api/auth/set_budget?user_id=${userId}`);
+
+      const response = await fetch(`/api/auth/set_budget?user_id=${userId}`)
       if (!response.ok) {
-        throw new Error("Failed to fetch budget");
+        throw new Error("Failed to fetch budget")
       }
-  
-      const data = await response.json();
+
+      const data = await response.json()
       if (data.success && data.budget !== undefined) {
-        setMonthlyBudget(data.budget);
+        setMonthlyBudget(data.budget)
       } else {
-        console.error("Error fetching budget:", data.message);
+        console.error("Error fetching budget:", data.message)
       }
     } catch (error) {
-      console.error("Error fetching budget:", error);
+      console.error("Error fetching budget:", error)
     }
-  };
+  }
 
   // Fetch data on component mount
   useEffect(() => {
     fetchTopActiveRooms()
     fetchTopActiveDevices()
     fetchEfficiencyMetrics()
-    fetchMonthlyBudget();
+    fetchMonthlyBudget()
 
     // Calculate budget usage based on electricity usage (simulated for now)
     // In a real app, you would get this from your backend
@@ -464,6 +478,11 @@ ${
 
     calculateBudgetUsage()
   }, [electricityUsage])
+
+  // Update total power usage whenever devices change
+  useEffect(() => {
+    calculateTotalPowerUsage()
+  }, [topActiveDevices])
 
   return (
     <div
@@ -682,7 +701,7 @@ ${
                   </div>
                   <div className="flex items-center gap-3 bg-white/30 dark:bg-gray-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm border border-white/20 dark:border-gray-600/20 animate-pulse-subtle">
                     <span className="inline-block w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
-                    <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {totalPowerUsage}W</p>
                   </div>
                 </div>
 
@@ -707,7 +726,7 @@ ${
                           cx="50"
                           cy="50"
                           r="45"
-                          fill={`rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.2})`}
+                          fill={`rgba(59, 130, 246, ${Math.min(totalPowerUsage / 400, 1) * 0.2})`}
                           className="transition-all duration-500 ease-out"
                         />
 
@@ -720,7 +739,7 @@ ${
                           stroke="url(#energyGradient)"
                           strokeWidth="8"
                           strokeDasharray="283"
-                          strokeDashoffset={283 - 283 * Math.min(liveWattage / 400, 1)}
+                          strokeDashoffset={283 - 283 * Math.min(totalPowerUsage / 400, 1)}
                           strokeLinecap="round"
                           className="transition-all duration-500 ease-out"
                           style={{
@@ -729,7 +748,7 @@ ${
                         />
 
                         {/* Animated dot that moves along the circle */}
-                        {liveWattage > 20 && (
+                        {totalPowerUsage > 20 && (
                           <circle
                             cx="50"
                             cy="5"
@@ -737,7 +756,7 @@ ${
                             fill="#3B82F6"
                             style={{
                               transformOrigin: "50px 50px",
-                              transform: `rotate(${Math.min(liveWattage / 400, 1) * 360}deg)`,
+                              transform: `rotate(${Math.min(totalPowerUsage / 400, 1) * 360}deg)`,
                               transition: "transform 0.5s ease-out",
                             }}
                           />
@@ -760,8 +779,8 @@ ${
                         <div
                           className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 transition-all duration-500"
                           style={{
-                            opacity: Math.min(liveWattage / 400, 1) * 0.5,
-                            background: `radial-gradient(circle, rgba(59,130,246,${Math.min(liveWattage / 400, 1) * 0.3}) 0%, transparent 70%)`,
+                            opacity: Math.min(totalPowerUsage / 400, 1) * 0.5,
+                            background: `radial-gradient(circle, rgba(59,130,246,${Math.min(totalPowerUsage / 400, 1) * 0.3}) 0%, transparent 70%)`,
                           }}
                         />
 
@@ -769,9 +788,9 @@ ${
                         <div
                           className="absolute inset-0 rounded-full border-2 border-blue-500/30 dark:border-blue-400/30 transition-opacity duration-500"
                           style={{
-                            opacity: liveWattage > 200 ? 0.7 : 0,
-                            transform: `scale(${0.9 + Math.min(liveWattage / 400, 1) * 0.1})`,
-                            animation: liveWattage > 100 ? "pulse 2s infinite" : "none",
+                            opacity: totalPowerUsage > 200 ? 0.7 : 0,
+                            transform: `scale(${0.9 + Math.min(totalPowerUsage / 400, 1) * 0.1})`,
+                            animation: totalPowerUsage > 100 ? "pulse 2s infinite" : "none",
                           }}
                         />
 
@@ -779,11 +798,11 @@ ${
                         <p
                           className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-all duration-300 z-10"
                           style={{
-                            textShadow: `0 0 ${Math.min(liveWattage / 100, 4)}px rgba(59,130,246,${Math.min(liveWattage / 400, 1) * 0.8})`,
-                            transform: `scale(${1 + Math.min(liveWattage / 1000, 0.1)})`,
+                            textShadow: `0 0 ${Math.min(totalPowerUsage / 100, 4)}px rgba(59,130,246,${Math.min(totalPowerUsage / 400, 1) * 0.8})`,
+                            transform: `scale(${1 + Math.min(totalPowerUsage / 1000, 0.1)})`,
                           }}
                         >
-                          {liveWattage}
+                          {totalPowerUsage}
                         </p>
                         <p className="text-sm md:text-base text-gray-600 dark:text-blue-300 drop-shadow-sm z-10">
                           watts
@@ -792,7 +811,7 @@ ${
                     </div>
                     <div className="mt-4 text-center">
                       <p className="text-sm text-gray-600 dark:text-blue-300">
-                        {liveWattage < 100 ? "Low" : liveWattage < 250 ? "Moderate" : "High"} energy consumption
+                        {totalPowerUsage < 100 ? "Low" : totalPowerUsage < 250 ? "Moderate" : "High"} energy consumption
                       </p>
                     </div>
                   </div>
@@ -807,7 +826,8 @@ ${
                         <p className="font-medium text-gray-900 dark:text-white">Cost Savings</p>
                       </div>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                        AED {costSavings !== null && monthlyBudget !== null ? Math.round((monthlyBudget - costSavings)) : "-"}
+                        AED{" "}
+                        {costSavings !== null && monthlyBudget !== null ? Math.round(monthlyBudget - costSavings) : "-"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
