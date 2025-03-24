@@ -677,12 +677,12 @@ ${
                           strokeWidth="8"
                         />
 
-                        {/* Background circle (transparent) */}
+                        {/* Background fill that changes with wattage */}
                         <circle
                           cx="50"
                           cy="50"
                           r="45"
-                          fill="transparent"
+                          fill={`rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.2})`}
                           className="transition-all duration-500 ease-out"
                         />
 
@@ -691,7 +691,8 @@ ${
                           cx="50"
                           cy="50"
                           r="45"
-                          fill="url(#energyGradient)"
+                          fill="none"
+                          stroke="url(#energyGradient)"
                           strokeWidth="8"
                           strokeDasharray="283"
                           strokeDashoffset={283 - 283 * Math.min(liveWattage / 400, 1)}
@@ -739,13 +740,13 @@ ${
                           }}
                         />
 
-                        {/* Dynamic fill that changes with wattage */}
+                        {/* Pulsing ring that appears at higher wattage */}
                         <div
-                          className="absolute bottom-0 inset-x-0 rounded-full bg-gradient-to-t from-blue-500/70 to-blue-400/40 dark:from-blue-400/70 dark:to-blue-500/40 transition-all duration-500 ease-out"
+                          className="absolute inset-0 rounded-full border-2 border-blue-500/30 dark:border-blue-400/30 transition-opacity duration-500"
                           style={{
-                            height: `${Math.min(liveWattage / 400, 1) * 100}%`,
-                            opacity: Math.min(liveWattage / 100, 1),
-                            boxShadow: `0 0 ${Math.min(liveWattage / 100, 10)}px rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.5})`,
+                            opacity: liveWattage > 200 ? 0.7 : 0,
+                            transform: `scale(${0.9 + Math.min(liveWattage / 400, 1) * 0.1})`,
+                            animation: liveWattage > 100 ? "pulse 2s infinite" : "none",
                           }}
                         />
 
