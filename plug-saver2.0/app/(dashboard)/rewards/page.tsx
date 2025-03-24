@@ -280,6 +280,7 @@ export default function RewardsPage() {
           { name: "Taylor Swift", points: 680, rank: 2, avatar: "https://i.pravatar.cc/150?img=29" },
           { name: "You", points: 320, rank: 5, avatar: "https://i.pravatar.cc/150?img=8" },
           { name: "Chris Evans", points: 310, rank: 6, avatar: "https://i.pravatar.cc/150?img=15" },
+          { name: "Lisa Johnson", points: 290, rank: 7, avatar: "https://i.pravatar.cc/150?img=23" },
         ],
         global: [
           { name: "John Smith", points: 980, rank: 1, avatar: "https://i.pravatar.cc/150?img=3" },
@@ -694,7 +695,7 @@ export default function RewardsPage() {
         <div className="absolute -left-20 -top-20 w-40 h-40 rounded-full bg-purple-500/5 group-hover:bg-purple-500/10 blur-3xl transition-all duration-300"></div>
         <div className="absolute -right-20 -bottom-20 w-40 h-40 rounded-full bg-pink-500/5 group-hover:bg-pink-500/10 blur-3xl transition-all duration-300"></div>
 
-        <div className="flex items-center justify-between mb-6 relative">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 relative">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-pink-500/30 to-purple-600/30 p-2.5 rounded-full shadow-inner">
               {getLeaderboardIcon()}
@@ -711,22 +712,22 @@ export default function RewardsPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={leaderboardType === "household" ? "default" : "outline"}
               size="sm"
               onClick={() => setLeaderboardType("household")}
               className={
                 leaderboardType === "household"
-                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md hover:shadow-xl transition-all duration-300"
+                  ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md hover:shadow-xl transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto"
                   : `${
                       isDarkMode
                         ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
                         : "bg-white/40 hover:bg-white/60 text-gray-800 border-white/40"
-                    } transition-all duration-300`
+                    } transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto`
               }
             >
-              <HomeIcon className="w-4 h-4 mr-1" /> Home
+              <HomeIcon className="w-4 h-4 mr-1" /> <span className="sm:inline">Home</span>
             </Button>
             <Button
               variant={leaderboardType === "local" ? "default" : "outline"}
@@ -734,15 +735,15 @@ export default function RewardsPage() {
               onClick={() => setLeaderboardType("local")}
               className={
                 leaderboardType === "local"
-                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-xl transition-all duration-300"
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-xl transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto"
                   : `${
                       isDarkMode
                         ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
                         : "bg-white/40 hover:bg-white/60 text-gray-800 border-white/40"
-                    } transition-all duration-300`
+                    } transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto`
               }
             >
-              <Users className="w-4 h-4 mr-1" /> Local
+              <Users className="w-4 h-4 mr-1" /> <span className="sm:inline">Local</span>
             </Button>
             <Button
               variant={leaderboardType === "global" ? "default" : "outline"}
@@ -750,15 +751,15 @@ export default function RewardsPage() {
               onClick={() => setLeaderboardType("global")}
               className={
                 leaderboardType === "global"
-                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-xl transition-all duration-300"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md hover:shadow-xl transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto"
                   : `${
                       isDarkMode
                         ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
                         : "bg-white/40 hover:bg-white/60 text-gray-800 border-white/40"
-                    } transition-all duration-300`
+                    } transition-all duration-300 text-xs sm:text-sm w-full sm:w-auto`
               }
             >
-              <Globe className="w-4 h-4 mr-1" /> Global
+              <Globe className="w-4 h-4 mr-1" /> <span className="sm:inline">Global</span>
             </Button>
           </div>
         </div>
