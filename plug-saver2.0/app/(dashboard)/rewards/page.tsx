@@ -36,21 +36,22 @@ export default function RewardsPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
-      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      // Only return true if explicitly set to "true" in localStorage
+      return localStorage.getItem("darkMode") === "true"
     }
-    return false
+    return false // Default to light mode
   })
   const [carbonFootprint, setCarbonFootprint] = useState<number | null>(null)
 
   // Load dark mode preference from localStorage on initial render
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("darkMode") === "true"
-    setIsDarkMode(savedDarkMode)
-    // Apply dark mode class to the document element
-    if (savedDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
+    if (typeof window !== "undefined") {
+      const savedDarkMode = localStorage.getItem("darkMode")
+      // Only set dark mode if explicitly set to "true" in localStorage
+      if (savedDarkMode !== null) {
+        setIsDarkMode(savedDarkMode === "true")
+      }
+      // Otherwise, default is already light mode (false)
     }
   }, [])
 
@@ -165,19 +166,19 @@ export default function RewardsPage() {
 
           const localData = Array.isArray(rewards.local)
             ? rewards.local.map((entry: LeaderboardEntry, i: number) => ({
-              name: entry.name,
-              points: entry.points,
-              rank: i + 1,
-              avatar: entry.avatar,
+                name: entry.name,
+                points: entry.points,
+                rank: i + 1,
+                avatar: entry.avatar,
               }))
             : []
 
           const globalData = Array.isArray(rewards.global)
             ? rewards.global.map((entry: LeaderboardEntry, i: number) => ({
-              name: entry.name,
-              points: entry.points,
-              rank: i + 1,
-              avatar: entry.avatar,
+                name: entry.name,
+                points: entry.points,
+                rank: i + 1,
+                avatar: entry.avatar,
               }))
             : []
 

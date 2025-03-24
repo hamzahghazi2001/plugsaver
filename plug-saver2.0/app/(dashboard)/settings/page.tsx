@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -42,10 +41,8 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@supabase/supabase-js"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 
 // Initialize Supabase client
 const supabaseUrl = "https://xgcfvxwrcunwsrvwwjjx.supabase.co"
@@ -88,6 +85,7 @@ export default function SettingsPage() {
   // Accessibility states
   const [isHighContrast, setIsHighContrast] = useState(() => {
     if (typeof window !== "undefined") {
+      // Only return true if explicitly set to "true" in localStorage
       return localStorage.getItem("highContrast") === "true"
     }
     return false
@@ -115,31 +113,28 @@ export default function SettingsPage() {
     // Store the setting in localStorage
     localStorage.setItem("highContrast", isHighContrast.toString())
 
+    // Remove any existing high contrast styles first
+    const existingStyleTag = document.getElementById("high-contrast-style")
+    if (existingStyleTag) {
+      existingStyleTag.remove()
+    }
+
     if (isHighContrast) {
-      // Force dark mode when high contrast is enabled
+      // Only apply high contrast styles when explicitly enabled
       document.documentElement.classList.add("dark")
 
       // Add a style tag for high contrast mode
-      let styleTag = document.getElementById("high-contrast-style")
-      if (!styleTag) {
-        styleTag = document.createElement("style")
-        styleTag.id = "high-contrast-style"
-        document.head.appendChild(styleTag)
-      }
+      const styleTag = document.createElement("style")
+      styleTag.id = "high-contrast-style"
+      document.head.appendChild(styleTag)
 
       // Set yellow text color for common text elements
       styleTag.textContent = `
-        body, h1, h2, h3, h4, h5, h6, p, span, div, button, a, label, input, textarea, select {
-          color: #ffff00 !important;
-        }
-      `
-    } else {
-      // Remove the high contrast style tag when disabled
-      const styleTag = document.getElementById("high-contrast-style")
-      if (styleTag) {
-        styleTag.remove()
+      body, h1, h2, h3, h4, h5, h6, p, span, div, button, a, label, input, textarea, select {
+        color: #ffff00 !important;
       }
-
+    `
+    } else {
       // Only remove dark mode if it wasn't enabled separately
       if (localStorage.getItem("darkMode") !== "true") {
         document.documentElement.classList.remove("dark")
@@ -1163,16 +1158,16 @@ export default function SettingsPage() {
     const [ticketData, setTicketData] = useState({
       subject: "",
       message: "",
-    });
-  
+    })
+
     const handleSubjectChange = (value: string) => {
-      setTicketData({ ...ticketData, subject: value });
-    };
-  
+      setTicketData({ ...ticketData, subject: value })
+    }
+
     const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setTicketData({ ...ticketData, message: e.target.value });
-    };
-  
+      setTicketData({ ...ticketData, message: e.target.value })
+    }
+
     const handleSubmit = async () => {
       try {
         const response = await fetch("/api/auth/support", {
@@ -1185,46 +1180,44 @@ export default function SettingsPage() {
             subject: ticketData.subject,
             message: ticketData.message,
           }),
-        });
-    
+        })
+
         if (!response.ok) {
-          let errorData;
+          let errorData
           try {
-            errorData = await response.json(); // Try to parse the response as JSON
+            errorData = await response.json() // Try to parse the response as JSON
           } catch {
-            errorData = { message: "Invalid server response." };
+            errorData = { message: "Invalid server response." }
           }
-          console.error("API Error Response:", errorData);
-          alert(errorData.message || "Failed to submit ticket.");
-          return;
+          console.error("API Error Response:", errorData)
+          alert(errorData.message || "Failed to submit ticket.")
+          return
         }
-    
-        const result = await response.json();
+
+        const result = await response.json()
         if (result.success) {
-          alert("Ticket submitted successfully.");
-          setTicketData({ subject: "", message: "" });
+          alert("Ticket submitted successfully.")
+          setTicketData({ subject: "", message: "" })
         } else {
-          alert(result.message || "Failed to submit ticket.");
+          alert(result.message || "Failed to submit ticket.")
         }
       } catch (error) {
-        console.error("Error submitting ticket:", error);
-        let errorMessage = "An unknown error occurred.";
+        console.error("Error submitting ticket:", error)
+        let errorMessage = "An unknown error occurred."
         if (error instanceof Error) {
-          errorMessage = error.message;
+          errorMessage = error.message
         } else if (typeof error === "string") {
-          errorMessage = error;
+          errorMessage = error
         }
-        alert(`An error occurred: ${errorMessage}`);
+        alert(`An error occurred: ${errorMessage}`)
       }
-    };
-  
+    }
+
     return (
       <Card className={inDialog ? "w-full max-w-md" : "w-full"}>
         <CardHeader>
           <CardTitle>Support Ticket</CardTitle>
-          <CardDescription>
-            Submit a support ticket and we will get back to you as soon as possible.
-          </CardDescription>
+          <CardDescription>Submit a support ticket and we will get back to you as soon as possible.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -1243,7 +1236,7 @@ export default function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
-  
+
           <div>
             <label htmlFor="message" className="block text-sm font-medium mb-2">
               Message
@@ -1256,14 +1249,14 @@ export default function SettingsPage() {
               onChange={handleMessageChange}
             />
           </div>
-  
+
           <Button className="w-full" onClick={handleSubmit}>
             Submit Ticket
           </Button>
         </CardContent>
       </Card>
-    );
-  };
+    )
+  }
 
   const HouseholdContent = ({ inDialog = true }) => {
     const copyHouseholdCode = () => {
@@ -1829,3 +1822,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+
