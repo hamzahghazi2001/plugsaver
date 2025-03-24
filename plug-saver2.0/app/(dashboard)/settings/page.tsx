@@ -81,6 +81,7 @@ export default function SettingsPage() {
     }
     return false;
   });
+  
 
   // Apply dark mode class to the document element
   useEffect(() => {
@@ -209,13 +210,13 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     dataSharing: {
       usageData: true,
-      locationData: false,
+      locationData: true,
       marketingEmails: true,
     },
     security: {
       twoFactorAuth: false,
       rememberDevice: true,
-      passwordExpiry: "90days",
+
     },
     notifications: {
       appNotifications: true,
@@ -228,17 +229,13 @@ export default function SettingsPage() {
     accessibility: {
       highContrast: false,
       largeText: false,
-      screenReader: false,
-      reduceMotion: false,
       theme: "system",
     },
     household: {
       autoSaving: true,
       smartScheduling: true,
       guestAccess: false,
-      name: "My Home",
-      size: "medium",
-      rooms: 4,
+
     },
   });
 
@@ -369,12 +366,12 @@ export default function SettingsPage() {
   const ProfilePictureContent = () => (
     <>
       <DialogDescription className="text-center mb-4">
-        Upload a new profile picture or select from our collection
+        Upload a new profile picture from your device
       </DialogDescription>
 
       <div className="flex flex-col items-center gap-4 mb-6">
         <Avatar className="w-24 h-24">
-          <AvatarImage src={`${user.avatar}`} /> 
+          <AvatarImage src={`${user.avatar}`} />
           <AvatarFallback>{user.username[0]}</AvatarFallback>
         </Avatar>
 
@@ -386,22 +383,6 @@ export default function SettingsPage() {
           <span>Upload Photo</span>
           <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         </Label>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-md overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500"
-            onClick={() => setUser({ ...user, avatar: `/placeholder.svg?height=80&width=80&text=Avatar${i}` })}
-          >
-            <img
-              src={`/placeholder.svg?height=80&width=80&text=Avatar${i}`}
-              alt={`Avatar ${i}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
       </div>
     </>
   );
@@ -526,7 +507,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-        <div className="pt-5 border-t"/>
+          <div className="pt-5 border-t"/>
           <h4 className="text-sm font-medium mb-3">Account Deletion</h4>
           <Button variant="destructive" className="w-full">
             Request Account Deletion
@@ -546,10 +527,7 @@ export default function SettingsPage() {
             <Label className="text-base">Two-Factor Authentication</Label>
             <p className="text-sm text-gray-400">Add an extra layer of security</p>
           </div>
-          <Switch
-            checked={settings.security.twoFactorAuth}
-            onCheckedChange={(checked) => handleToggleChange("security", "twoFactorAuth", checked)}
-          />
+          <span className="text-sm text-green-500">Enabled</span>
         </div>
 
         <div className="flex items-center justify-between">
@@ -580,17 +558,6 @@ export default function SettingsPage() {
         <div className="space-y-2">
           <Label className="text-base">Notification Channels</Label>
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-purple-500" />
-                <span className="text-sm">App Notifications</span>
-              </div>
-              <Switch
-                checked={settings.notifications.appNotifications}
-                onCheckedChange={(checked) => handleToggleChange("notifications", "appNotifications", checked)}
-              />
-            </div>
-
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-purple-500" />
@@ -629,24 +596,6 @@ export default function SettingsPage() {
                 checked={settings.notifications.tipsAndTricks}
                 onCheckedChange={(checked) => handleToggleChange("notifications", "tipsAndTricks", checked)}
               />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-base">Quiet Hours</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="quiet-start" className="text-sm">
-                Start Time
-              </Label>
-              <Input id="quiet-start" type="time" defaultValue="22:00" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="quiet-end" className="text-sm">
-                End Time
-              </Label>
-              <Input id="quiet-end" type="time" defaultValue="07:00" />
             </div>
           </div>
         </div>
@@ -726,21 +675,7 @@ export default function SettingsPage() {
             </Button>
           )}
   
-          {/* Pending Invitations (Only for Managers) */}
-          {isManager && (
-            <div className="space-y-2 pt-4 border-t">
-              <Label className="text-base">Pending Invitations</Label>
-              <div className="text-sm p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-                <p className="font-medium">sarah@example.com</p>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-gray-500">Sent 2 days ago</p>
-                  <Button variant="link" size="sm" className="h-auto p-0">
-                    Resend
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+
         </div>
 
   
@@ -774,52 +709,61 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [manageMemberPermissions, setManageMemberPermissions] = useState({
-      control: false,
-      configure: false,
+      control: true,
+      configure: true,
     });
   
-    const handleSavePermissions = async () => {
-      setLoading(true);
-      setError(null);
-  
-      try {
-        console.log("Saving permissions for member ID:", memberId);
-        console.log("Manager ID:", managerId);
-        console.log("Household Code:", householdCode);
-        console.log("control:", manageMemberPermissions.control);
-        console.log("configure:", manageMemberPermissions.configure);
-        if (!memberId || !managerId || !householdCode) {
-          throw new Error("Missing required information.");
-        }
-  
-        const response = await fetch("/api/auth/update_permission", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            memberId,
-            managerId,
-            householdCode,
-            canControl: manageMemberPermissions.control,
-            canConfigure: manageMemberPermissions.configure,
-          }),
-        });
-  
-        const data = await response.json();
-  
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to update permissions.");
-        }
-  
-        alert("Permissions updated successfully!");
-        setManageMemberDialogOpen(false);
-      } catch (error) {
-        setError(error instanceof Error ? error.message : "An error occurred.");
-      } finally {
-        setLoading(false);
-      }
-    };
+const handleSavePermissions = async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    console.log("Saving permissions for member ID:", memberId);
+    console.log("Manager ID:", managerId);
+    console.log("Household Code:", householdCode);
+    console.log("control:", manageMemberPermissions.control);
+    console.log("configure:", manageMemberPermissions.configure);
+
+    if (!memberId || !managerId || !householdCode) {
+      throw new Error("Missing required information.");
+    }
+
+    const response = await fetch("/api/auth/update_permission", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        memberId,
+        managerId,
+        householdCode,
+        canControl: manageMemberPermissions.control,
+        canConfigure: manageMemberPermissions.configure,
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to update permissions.");
+    }
+
+    alert("Permissions updated successfully!");
+
+    // Set saveSuccess to true to show the success message
+    setSaveSuccess(true);
+
+    // Reset saveSuccess after a short delay
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 2000); // Reset after 2 seconds
+
+    // Close the dialog
+    setManageMemberDialogOpen(false);
+  } catch (error) {
+    setError(error instanceof Error ? error.message : "An error occurred.");
+  } finally {
+    setLoading(false);
+  }
+};
   
     return (
       <>
@@ -932,10 +876,9 @@ export default function SettingsPage() {
       <DialogDescription className="mb-4">Get help and support</DialogDescription>
 
       <Tabs defaultValue="contact" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="contact" className="space-y-4 pt-4">
@@ -965,15 +908,12 @@ export default function SettingsPage() {
             <p className="text-sm font-medium">Or contact us directly:</p>
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-purple-500" />
-              <a href="mailto:support@plugsaver.com" className="text-sm text-purple-500">
-                support@plugsaver.com
+              <a href="mailto:plugsaver7@gmail.com" className="text-sm text-purple-500">
+              plugsaver7@gmail.com
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-purple-500" />
-              <a href="tel:+97180012345" className="text-sm text-purple-500">
-                +971 800 12345
-              </a>
+              
             </div>
           </div>
         </TabsContent>
@@ -1004,42 +944,12 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
-
-          <Button variant="outline" className="w-full">
-            View All FAQs
-          </Button>
-        </TabsContent>
-
-        <TabsContent value="tutorials" className="space-y-4 pt-4">
-          <div className="space-y-3">
-            {[
-              { title: "Getting Started with Plug Saver", duration: "5 min" },
-              { title: "Connecting Smart Devices", duration: "8 min" },
-              { title: "Understanding Your Dashboard", duration: "6 min" },
-              { title: "Setting Energy-Saving Goals", duration: "4 min" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-md flex items-center justify-center text-purple-500">
-                  <FileQuestion className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{item.title}</p>
-                  <p className="text-xs text-gray-500">{item.duration} video tutorial</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Button variant="outline" className="w-full">
-            View All Tutorials
-          </Button>
         </TabsContent>
       </Tabs>
     </>
   );
 
   const HouseholdContent = () => {
-    // Function to copy the household code to the clipboard
     const copyHouseholdCode = () => {
       if (householdCode) {
         navigator.clipboard.writeText(householdCode).then(() => {
@@ -1047,39 +957,20 @@ export default function SettingsPage() {
         });
       }
     };
-  
+
     return (
       <>
         <DialogDescription className="mb-4">Manage your household settings</DialogDescription>
-  
+
         <div className="space-y-6">
-          {/* Household Name */}
-          <div className="space-y-2">
-            <Label htmlFor="household-name">Household Name</Label>
-            <Input
-              id="household-name"
-              value={settings.household.name}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  household: {
-                    ...settings.household,
-                    name: e.target.value,
-                  },
-                })
-              }
-            />
-          </div>
-  
-          {/* Household Code with Copy Button */}
           <div className="space-y-2">
             <Label htmlFor="household-code">Household Code</Label>
             <div className="relative">
               <Input
                 id="household-code"
-                value={householdCode || "No household code found"} // Use household code from state
-                readOnly // Make the input read-only
-                className="bg-gray-100 cursor-not-allowed pr-10" // Grayed out, disabled, and padding for the button
+                value={householdCode || "No household code found"}
+                readOnly
+                className="bg-gray-100 dark:bg-gray-700 dark:text-white cursor-not-allowed pr-10"
               />
               <button
                 onClick={copyHouseholdCode}
@@ -1102,8 +993,7 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-  
-          {/* Auto-Saving Mode */}
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-base">Auto-Saving Mode</Label>
@@ -1114,10 +1004,7 @@ export default function SettingsPage() {
               onCheckedChange={(checked) => handleToggleChange("household", "autoSaving", checked)}
             />
           </div>
-  
-         
-  
-          {/* Smart Scheduling */}
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-base">Smart Scheduling</Label>
@@ -1186,7 +1073,7 @@ export default function SettingsPage() {
 
         <div className="space-y-2">
           <Label className="text-base">Default Time Period</Label>
-          <RadioGroup defaultValue="week" className="flex gap-3">
+          <RadioGroup defaultValue="day" className="flex gap-3">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="day" id="period-day" />
               <Label htmlFor="period-day">Day</Label>
@@ -1278,14 +1165,7 @@ export default function SettingsPage() {
             <DialogTitle>Profile Picture</DialogTitle>
           </DialogHeader>
           {ProfilePictureContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
+        
         </DialogContent>
       </Dialog>
 
@@ -1312,14 +1192,7 @@ export default function SettingsPage() {
             <DialogTitle>Data Sharing Preferences</DialogTitle>
           </DialogHeader>
           {DataSharingContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
@@ -1329,14 +1202,6 @@ export default function SettingsPage() {
             <DialogTitle>Security and Privacy</DialogTitle>
           </DialogHeader>
           {SecurityContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1366,14 +1231,6 @@ export default function SettingsPage() {
       managerId={managerId} 
       householdCode={householdCode} 
     />
-    <DialogFooter>
-      {saveSuccess && (
-        <p className="text-green-500 flex items-center text-sm">
-          <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-        </p>
-      )}
-      <Button onClick={handleSave}>Save Changes</Button>
-    </DialogFooter>
   </DialogContent>
 </Dialog>
 
@@ -1400,14 +1257,6 @@ export default function SettingsPage() {
             <DialogTitle>Support</DialogTitle>
           </DialogHeader>
           {SupportContent()}
-          <DialogFooter>
-            {saveSuccess && (
-              <p className="text-green-500 flex items-center text-sm">
-                <CheckCircle className="w-4 h-4 mr-1" /> Saved successfully
-              </p>
-            )}
-            <Button onClick={handleSave}>Close</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1496,5 +1345,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-
