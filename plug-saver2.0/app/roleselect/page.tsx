@@ -501,24 +501,6 @@ export default function RoleSelectionPage() {
       {/* Progress Bar Container */}
       <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl w-full max-w-3xl mx-auto mb-8 border border-white/20">
         <div className="flex justify-between items-center relative">
-          {/* Progress Line */}
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
-          <div
-            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 -translate-y-1/2 z-0 transition-all duration-500"
-            style={{
-              width: isProfileSetup
-                ? "100%"
-                : isBudgetSetup
-                  ? "80%"
-                  : isRoleConfirmed
-                    ? householdCode
-                      ? "60%"
-                      : "40%"
-                    : selectedRole
-                      ? "20%"
-                      : "0%",
-            }}
-          ></div>
 
           {/* Progress Step 1 */}
           <div className="flex flex-col items-center z-10">
