@@ -446,7 +446,7 @@ ${
       style={{
         background: isDarkMode
           ? "radial-gradient(circle, rgba(87,119,94,1) 0%, rgba(79,74,116,1) 100%)"
-          : "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
+          : "linear-gradient(0deg, rgba(113,211,240,1) 0%, rgba(45,122,253,1) 100%)",
       }}
     >
       {/* Decorative background elements */}
@@ -677,12 +677,12 @@ ${
                           strokeWidth="8"
                         />
 
-                        {/* Background fill that changes with wattage */}
+                        {/* Background circle (transparent) */}
                         <circle
                           cx="50"
                           cy="50"
                           r="45"
-                          fill={`rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.2})`}
+                          fill="transparent"
                           className="transition-all duration-500 ease-out"
                         />
 
@@ -691,8 +691,7 @@ ${
                           cx="50"
                           cy="50"
                           r="45"
-                          fill="none"
-                          stroke="url(#energyGradient)"
+                          fill="url(#energyGradient)"
                           strokeWidth="8"
                           strokeDasharray="283"
                           strokeDashoffset={283 - 283 * Math.min(liveWattage / 400, 1)}
@@ -740,13 +739,13 @@ ${
                           }}
                         />
 
-                        {/* Pulsing ring that appears at higher wattage */}
+                        {/* Dynamic fill that changes with wattage */}
                         <div
-                          className="absolute inset-0 rounded-full border-2 border-blue-500/30 dark:border-blue-400/30 transition-opacity duration-500"
+                          className="absolute bottom-0 inset-x-0 rounded-full bg-gradient-to-t from-blue-500/70 to-blue-400/40 dark:from-blue-400/70 dark:to-blue-500/40 transition-all duration-500 ease-out"
                           style={{
-                            opacity: liveWattage > 200 ? 0.7 : 0,
-                            transform: `scale(${0.9 + Math.min(liveWattage / 400, 1) * 0.1})`,
-                            animation: liveWattage > 100 ? "pulse 2s infinite" : "none",
+                            height: `${Math.min(liveWattage / 400, 1) * 100}%`,
+                            opacity: Math.min(liveWattage / 100, 1),
+                            boxShadow: `0 0 ${Math.min(liveWattage / 100, 10)}px rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.5})`,
                           }}
                         />
 
