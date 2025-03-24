@@ -315,36 +315,41 @@ def delete_room(household_code: str, user_id: int, room_id: int):
         devices_in_room = supabase.table("devices").select("device_id").eq("room_id", room_id).execute()
         print("Devices in room:", devices_in_room.data)  # Log the devices
 
-        # Step 4: Delete dependent records for each device in the room
+        # Step 4: Update room_id to None for each device in the room
         for device in devices_in_room.data:
             device_id = device["device_id"]
 
-            # Delete analytics records for the device
-            supabase.table("analytics").delete().eq("device_id", device_id).execute()
-            print(f"Deleted analytics records for device {device_id}")
+            # Update room_id to None
+            supabase.table("devices").update({"room_id": None}).eq("device_id", device_id).execute()
 
-            # Delete permissions for the device
-            supabase.table("householdpermissions").delete().eq("device_id", device_id).execute()
-            print(f"Deleted permissions for device {device_id}")
-
-        # Step 5: Delete all devices in the room
-        device_response = supabase.table("devices").delete().eq("room_id", room_id).execute()
-        print("Deleted devices in room:", device_response)
-
-        # Step 6: Delete permissions associated with the room (if any)
+        # Step 5: Delete permissions associated with the room (if any)
         delete_permissions_response = supabase.table("householdpermissions") \
             .delete() \
             .eq("room_id", room_id) \
             .execute()
         print("Deleted permissions for room:", delete_permissions_response)
 
-        # Step 7: Delete the room from the rooms table
+        # Step 6: Delete the room from the rooms table
         room_response = supabase.table("rooms").delete().eq("room_id", room_id).execute()
         if not room_response.data:
             return {"success": False, "message": "Failed to delete room. The room might not exist."}
 
-        return {"success": True, "message": "Room, devices, and associated records deleted successfully."}
+        return {"success": True, "message": "Room and associated records deleted successfully."}
 
     except Exception as e:
         print("Error deleting room:", str(e))  # Log the error
+        return {"success": False, "message": str(e)}
+    
+def device_allocate(room_id: int, device_id: int):
+    try:
+        # Update the room_id for the given device_id
+        response = supabase.table("devices").update({"room_id": room_id}).eq("device_id", device_id).execute()
+        
+        if response.data:
+            return {"success": True, "message": "Device allocated to room successfully."}
+        else:
+            return {"success": False, "message": "Failed to allocate device to room."}
+    
+    except Exception as e:
+        print("Error allocating device to room:", str(e))  # Log the error
         return {"success": False, "message": str(e)}

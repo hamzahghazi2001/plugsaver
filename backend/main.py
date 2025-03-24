@@ -3,7 +3,7 @@ import random
 from app.auth import create_account, registration_verify, email_code_gen, login, login_verify
 from fastapi import FastAPI, HTTPException, Depends, Query, Path, UploadFile, File, Form
 from app.household import create_household, join_household
-from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room
+from app.devicecreation import add_device, get_device_categories, insert_default_categories, add_room, give_permission, delete_device, delete_room, device_allocate
 from app.rewards import Points_and_badges, update_badges, get_rewards, send_results, get_global, get_local, get_household
 from app.feedback import put_feedback, get_feedback, change_feedback_status
 from app.algo import calculate_live_consumption
@@ -856,7 +856,19 @@ async def get_budget_endpoint(user_id: str = Query(...)):
         return {"success": True, "budget": result.data[0]["budget"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-                 
+
+class DeviceReallocation(BaseModel):
+    device_id: int
+    room_id:int
+
+@app.post("/device_allocate")
+async def device_allocate_endpoint(request: DeviceReallocation ):
+    try:
+        device_allocate(request.room_id,request.device_id)
+    except Exception as e:
+        print(f"Error fetching top active devices: {e}")
+        return {"success": False, "message": str(e)} 
+
 # def test_signup():
 #     email = "e@example.com"
 #     password = "securePassword123"
