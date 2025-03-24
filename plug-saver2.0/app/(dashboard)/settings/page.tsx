@@ -1279,7 +1279,7 @@ export default function SettingsPage() {
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl mb-6 md:mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl mb-6 md:mb-8 lg:mb-12">
             <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
               <div className="relative group">
                 <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-3 md:border-4 border-purple-100 dark:border-purple-900 shadow-md">
@@ -1491,7 +1491,7 @@ export default function SettingsPage() {
                 <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
                   <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
                   <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
-                  <SettingsItem icon={Users} label onClick={() => openDialog("notifications")} />
+                  <SettingsItem icon={Users} label="Members" onClick={() => openDialog("notifications")} />
                   <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
                   <SettingsItem
                     icon={Accessibility}
