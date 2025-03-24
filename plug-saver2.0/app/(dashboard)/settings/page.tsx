@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -43,6 +44,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@supabase/supabase-js"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+
 
 // Initialize Supabase client
 const supabaseUrl = "https://xgcfvxwrcunwsrvwwjjx.supabase.co"
@@ -1156,88 +1159,111 @@ export default function SettingsPage() {
     )
   }
 
-  const SupportContent = ({ inDialog = true }) => (
-    <>
-      {inDialog ? (
-        <DialogDescription className="mb-4">Get help and support</DialogDescription>
-      ) : (
-        <p className="text-gray-500 dark:text-gray-400 mb-4">Get help and support</p>
-      )}
-
-      <Tabs defaultValue="contact" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="faq">FAQ</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="contact" className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="support-subject">Subject</Label>
-            <Select defaultValue="technical">
+  const SupportContent = ({ inDialog = true }) => {
+    const [ticketData, setTicketData] = useState({
+      subject: "",
+      message: "",
+    });
+  
+    const handleSubjectChange = (value: string) => {
+      setTicketData({ ...ticketData, subject: value });
+    };
+  
+    const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setTicketData({ ...ticketData, message: e.target.value });
+    };
+  
+    const handleSubmit = async () => {
+      try {
+        const response = await fetch("/api/auth/support", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: "exampleUser",
+            subject: ticketData.subject,
+            message: ticketData.message,
+          }),
+        });
+    
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = await response.json(); // Try to parse the response as JSON
+          } catch {
+            errorData = { message: "Invalid server response." };
+          }
+          console.error("API Error Response:", errorData);
+          alert(errorData.message || "Failed to submit ticket.");
+          return;
+        }
+    
+        const result = await response.json();
+        if (result.success) {
+          alert("Ticket submitted successfully.");
+          setTicketData({ subject: "", message: "" });
+        } else {
+          alert(result.message || "Failed to submit ticket.");
+        }
+      } catch (error) {
+        console.error("Error submitting ticket:", error);
+        let errorMessage = "An unknown error occurred.";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === "string") {
+          errorMessage = error;
+        }
+        alert(`An error occurred: ${errorMessage}`);
+      }
+    };
+  
+    return (
+      <Card className={inDialog ? "w-full max-w-md" : "w-full"}>
+        <CardHeader>
+          <CardTitle>Support Ticket</CardTitle>
+          <CardDescription>
+            Submit a support ticket and we will get back to you as soon as possible.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label htmlFor="subject" className="block text-sm font-medium mb-2">
+              Subject
+            </label>
+            <Select onValueChange={handleSubjectChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="technical">Technical Issue</SelectItem>
-                <SelectItem value="billing">Billing Question</SelectItem>
-                <SelectItem value="feature">Feature Request</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="Technical Issue">Technical Issue</SelectItem>
+                <SelectItem value="Billing Question">Billing Question</SelectItem>
+                <SelectItem value="Feature Request">Feature Request</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="support-message">Message</Label>
-            <Textarea id="support-message" placeholder="Describe your issue..." className="min-h-[120px]" />
+  
+          <div>
+            <label htmlFor="message" className="block text-sm font-medium mb-2">
+              Message
+            </label>
+            <Textarea
+              id="message"
+              placeholder="Describe your issue..."
+              className="min-h-[120px]"
+              value={ticketData.message}
+              onChange={handleMessageChange}
+            />
           </div>
-
-          <Button className="w-full">Submit Ticket</Button>
-
-          <div className="pt-4 space-y-3">
-            <p className="text-sm font-medium">Or contact us directly:</p>
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-purple-500" />
-              <a href="mailto:plugsaver7@gmail.com" className="text-sm text-purple-500">
-                plugsaver7@gmail.com
-              </a>
-            </div>
-            <div className="flex items-center gap-2"></div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="faq" className="space-y-4 pt-4">
-          <div className="space-y-3">
-            {[
-              {
-                q: "How is my energy usage calculated?",
-                a: "Your energy usage is calculated based on real-time data from your connected devices and smart meters.",
-              },
-              {
-                q: "Can I connect devices from different manufacturers?",
-                a: "Yes, Plug Saver supports a wide range of smart devices from various manufacturers.",
-              },
-              {
-                q: "How accurate are the cost estimates?",
-                a: "Our cost estimates are highly accurate as they use real-time electricity rates from your utility provider.",
-              },
-              {
-                q: "How do I reset my password?",
-                a: "You can reset your password by clicking on 'Forgot Password' on the login screen.",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="p-3 backdrop-blur-md bg-white/40 dark:bg-gray-800/40 rounded-md border border-white/50 dark:border-gray-700/50"
-              >
-                <p className="font-medium text-sm">{item.q}</p>
-                <p className="text-xs text-gray-500 mt-1">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </>
-  )
+  
+          <Button className="w-full" onClick={handleSubmit}>
+            Submit Ticket
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const HouseholdContent = ({ inDialog = true }) => {
     const copyHouseholdCode = () => {
@@ -1803,4 +1829,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
