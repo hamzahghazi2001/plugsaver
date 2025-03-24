@@ -138,7 +138,7 @@ const useThemeStyles = () => {
     // Background styles
     pageBackground: isDarkMode
       ? "radial-gradient(circle, rgba(87,119,94,1) 0%, rgba(79,74,116,1) 100%)"
-      : "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
+      : "linear-gradient(0deg, rgba(113,211,240,1) 0%, rgba(45,122,253,1) 100%)",
 
     // Rest of the styles remain unchanged
     cardStyle: isDarkMode
@@ -662,15 +662,15 @@ export default function DevicesPage() {
         "Sound System": [20, 100],
         Projector: [100, 300],
         Refrigerator: [100, 250],
-        Microwave: [700, 1200],
-        "Coffee Maker": [800, 1500],
-        Toaster: [800, 1500],
+        Microwave: [70, 120],
+        "Coffee Maker": [80, 150],
+        Toaster: [80, 150],
         "Slow Cooker": [200, 300],
-        Oven: [1000, 3000],
+        Oven: [100, 300],
         Stove: [1000, 3000],
         Blender: [300, 700],
         "Sandwich Maker": [500, 800],
-        "Air Fryer": [800, 1500],
+        "Air Fryer": [80, 150],
         "Food Processor": [200, 500],
         Computer: [150, 300],
         Laptop: [50, 100],
@@ -683,11 +683,11 @@ export default function DevicesPage() {
         Fan: [50, 100],
         "Air Purifier": [30, 80],
         Thermostat: [5, 15],
-        "Air Conditioner": [1000, 3500],
+        "Air Conditioner": [700, 1000],
         Heater: [800, 2000],
         Humidifier: [30, 70],
         "Water Heater": [3000, 4500],
-        "Hair Dryer": [1200, 1875],
+        "Hair Dryer": [120, 187],
         "Electric Toothbrush": [2, 5],
         "Smart Plug": [5, 15],
         "Smart Lock": [2, 5],
@@ -1100,8 +1100,8 @@ export default function DevicesPage() {
             </div>
           ) : (
             <div className="mt-6 bg-white/5 rounded-xl p-4 border border-white/10 text-center">
-              <p className="text-gray-300 mb-1">No active devices detected</p>
-              <p className="text-xs text-gray-400">Turn on devices to monitor energy consumption</p>
+              <p className="text-white-300 mb-1">No active devices detected</p>
+              <p className="text-xs text-white-400">Turn on devices to monitor energy consumption</p>
             </div>
           )}
           {/* Add a tip section at the bottom
@@ -1220,7 +1220,7 @@ export default function DevicesPage() {
                           {/* Room information */}
                           <div className="flex items-center gap-2 text-sm">
                             <Home className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-300">{room || "No Room Assigned"}</span>
+                            <span className="text-white-300">{room || "No Room Assigned"}</span>
                             {needsRoomAssignment && (
                               <Badge
                                 variant="outline"
@@ -1321,7 +1321,7 @@ export default function DevicesPage() {
                         <Plus className="w-7 h-7 text-blue-400 group-hover:text-blue-300 transition-transform duration-500 group-hover:rotate-180" />
                       </div>
                       <span className="font-semibold text-xl">Add New Device</span>
-                      <span className="text-sm text-gray-400 mt-1 text-center">
+                      <span className="text-sm text-white-400 mt-1 text-center">
                         Connect a smart device to start saving energy
                       </span>
                     </div>
@@ -1934,7 +1934,7 @@ function AddDeviceDialog({
                     </div>
                   ) : (
                     <div className="w-full space-y-2">
-                      <p className="text-sm text-black mb-2">
+                      <p className="font-medium text-gray-800">
                         {isScanning
                           ? `Scanning... (${foundDevices.length} device${foundDevices.length !== 1 ? "s" : ""} found)`
                           : `Select a device to pair (${foundDevices.filter((d) => d.status === "Available").length} available):`}
