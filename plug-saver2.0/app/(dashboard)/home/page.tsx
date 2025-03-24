@@ -3,12 +3,11 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Zap, Lamp, Speaker, Tv, Computer, Fan, RefrigeratorIcon, Settings, Sun, Moon } from "lucide-react"
+import { Zap, Lamp, Speaker, Tv, Computer, Fan, RefrigeratorIcon, Settings, Sun, Moon, Home, Plug } from "lucide-react"
 
 // UI & Icons
 import { Button } from "@/components/ui/button"
 import {
-  Plug,
   Scan,
   Lightbulb,
   LampDesk,
@@ -222,6 +221,10 @@ export default function HomePage() {
   const [userAvatar, setUserAvatar] = useState<string>("/placeholder.svg?height=40&width=40")
   const [userName, setUserName] = useState<string>("User")
 
+  // Add a new state variable for monthly budget after the other state variables
+  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null) // Placeholder budget
+  const [budgetUsed, setBudgetUsed] = useState<number>(0) // Track used budget
+
   // Load dark mode preference from localStorage on initial render
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode") === "true"
@@ -331,11 +334,11 @@ export default function HomePage() {
 
   // Glass card style
   const glassCardStyle = `p-5 rounded-xl transition-all duration-300 overflow-hidden relative group
-  ${
-    isDarkMode
-      ? "backdrop-blur-lg bg-gray-900/40 border border-gray-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
-      : "backdrop-blur-lg bg-white/60 border border-white/50 shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.25)]"
-  }`
+${
+  isDarkMode
+    ? "backdrop-blur-lg bg-gray-900/40 border border-gray-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
+    : "bg-white/80 border border-white/50 shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.25)]"
+}`
 
   // Fetch top active rooms
   const fetchTopActiveRooms = async () => {
@@ -424,7 +427,18 @@ export default function HomePage() {
     fetchTopActiveRooms()
     fetchTopActiveDevices()
     fetchEfficiencyMetrics()
-  }, [])
+
+    // Calculate budget usage based on electricity usage (simulated for now)
+    // In a real app, you would get this from your backend
+    const calculateBudgetUsage = () => {
+      // Simulate budget calculation based on electricity usage
+      // Assuming 1 kWh costs about 0.5 AED
+      const estimatedCost = (electricityUsage || 0) * 0.5
+      setBudgetUsed(estimatedCost)
+    }
+
+    calculateBudgetUsage()
+  }, [electricityUsage])
 
   return (
     <div
@@ -613,6 +627,12 @@ export default function HomePage() {
               50% { transform: translateY(3%) translateX(-3%); }
               75% { transform: translateY(-2%) translateX(5%); }
             }
+
+            @keyframes pulse {
+              0% { opacity: 0.3; transform: scale(0.95); }
+              50% { opacity: 0.7; transform: scale(1.05); }
+              100% { opacity: 0.3; transform: scale(0.95); }
+            }
           `}</style>
 
           {/* Dashboard overview */}
@@ -622,27 +642,31 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`w-full rounded-2xl overflow-hidden ${glassCardStyle}`}
+              className="w-full rounded-2xl overflow-hidden backdrop-blur-xl bg-white/30 dark:bg-gray-900/20 border border-white/40 dark:border-gray-700/30 shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               <div className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 p-2.5 rounded-lg">
-                      <Zap className="w-6 h-6 text-white" />
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400 p-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
+                      <Zap className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Current Usage</h2>
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Current Usage</h2>
+                      <p className="text-sm text-gray-600 dark:text-blue-300">Real-time energy monitoring</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-white/30 dark:bg-gray-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm">
-                    <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  <div className="flex items-center gap-3 bg-white/30 dark:bg-gray-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm border border-white/20 dark:border-gray-600/20 animate-pulse-subtle">
+                    <span className="inline-block w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
                     <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Left column - Circular progress */}
-                  <div className="flex justify-center md:justify-start">
-                    <div className="relative w-36 h-36 md:w-48 md:h-48">
-                      <svg className="w-full h-full -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left column - Energy visualization */}
+                  <div className="flex flex-col justify-center items-center">
+                    <div className="relative w-48 h-48">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        {/* Background circle */}
                         <circle
                           cx="50"
                           cy="50"
@@ -652,109 +676,185 @@ export default function HomePage() {
                           className="dark:stroke-white/10"
                           strokeWidth="8"
                         />
+
+                        {/* Background fill that changes with wattage */}
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill={`rgba(59, 130, 246, ${Math.min(liveWattage / 400, 1) * 0.2})`}
+                          className="transition-all duration-500 ease-out"
+                        />
+
+                        {/* Main progress indicator with improved visibility */}
                         <circle
                           cx="50"
                           cy="50"
                           r="45"
                           fill="none"
-                          stroke="url(#circleGradient)"
+                          stroke="url(#energyGradient)"
                           strokeWidth="8"
                           strokeDasharray="283"
-                          strokeDashoffset={283 - (283 * currentUsage.budgetUsed) / 100}
+                          strokeDashoffset={283 - 283 * Math.min(liveWattage / 400, 1)}
                           strokeLinecap="round"
+                          className="transition-all duration-500 ease-out"
+                          style={{
+                            filter: "drop-shadow(0 0 3px rgba(59, 130, 246, 0.5))",
+                          }}
                         />
+
+                        {/* Animated dot that moves along the circle */}
+                        {liveWattage > 20 && (
+                          <circle
+                            cx="50"
+                            cy="5"
+                            r="3"
+                            fill="#3B82F6"
+                            style={{
+                              transformOrigin: "50px 50px",
+                              transform: `rotate(${Math.min(liveWattage / 400, 1) * 360}deg)`,
+                              transition: "transform 0.5s ease-out",
+                            }}
+                          />
+                        )}
+
                         <defs>
-                          <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#3B82F6" /> {/* blue-500 */}
-                            <stop offset="100%" stopColor="#06B6D4" /> {/* cyan-500 */}
+                          <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#3B82F6" />
+                            <stop offset="100%" stopColor="#06B6D4" />
                           </linearGradient>
+                          <radialGradient id="circleGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                            <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8" />
+                            <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.4" />
+                          </radialGradient>
                         </defs>
                       </svg>
-                      <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                          {currentUsage.budgetUsed}%
+
+                      <div className="absolute inset-0 flex items-center justify-center flex-col rounded-full backdrop-blur-sm bg-white/10 dark:bg-gray-900/10 overflow-hidden">
+                        {/* Animated background that responds to wattage */}
+                        <div
+                          className="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 transition-all duration-500"
+                          style={{
+                            opacity: Math.min(liveWattage / 400, 1) * 0.5,
+                            background: `radial-gradient(circle, rgba(59,130,246,${Math.min(liveWattage / 400, 1) * 0.3}) 0%, transparent 70%)`,
+                          }}
+                        />
+
+                        {/* Pulsing ring that appears at higher wattage */}
+                        <div
+                          className="absolute inset-0 rounded-full border-2 border-blue-500/30 dark:border-blue-400/30 transition-opacity duration-500"
+                          style={{
+                            opacity: liveWattage > 200 ? 0.7 : 0,
+                            transform: `scale(${0.9 + Math.min(liveWattage / 400, 1) * 0.1})`,
+                            animation: liveWattage > 100 ? "pulse 2s infinite" : "none",
+                          }}
+                        />
+
+                        {/* Wattage display with dynamic styling */}
+                        <p
+                          className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white transition-all duration-300 z-10"
+                          style={{
+                            textShadow: `0 0 ${Math.min(liveWattage / 100, 4)}px rgba(59,130,246,${Math.min(liveWattage / 400, 1) * 0.8})`,
+                            transform: `scale(${1 + Math.min(liveWattage / 1000, 0.1)})`,
+                          }}
+                        >
+                          {liveWattage}
                         </p>
-                        <p className="text-sm md:text-base text-gray-500 dark:text-blue-300">of budget</p>
+                        <p className="text-sm md:text-base text-gray-600 dark:text-blue-300 drop-shadow-sm z-10">
+                          watts
+                        </p>
                       </div>
+                    </div>
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-600 dark:text-blue-300">
+                        {liveWattage < 100 ? "Low" : liveWattage < 250 ? "Moderate" : "High"} energy consumption
+                      </p>
                     </div>
                   </div>
 
-                  {/* Middle column - Cost and usage details */}
-                  <div className="flex flex-col justify-center items-center md:items-start space-y-6">
-                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Cost Savings</p>
+                  {/* Right column - Key metrics */}
+                  <div className="flex flex-col justify-center space-y-6">
+                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-5 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full transform hover:scale-102 transition-all duration-300 shadow-md">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-700/50">
+                          <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                        </div>
+                        <p className="font-medium text-gray-900 dark:text-white">Cost Savings</p>
+                      </div>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                         AED {costSavings !== null ? Math.round(costSavings) : "-"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
-                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Electricity Usage</p>
-                      <p className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
+
+                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-5 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full transform hover:scale-102 transition-all duration-300 shadow-md">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-full bg-cyan-100 dark:bg-cyan-700/50">
+                          <Zap className="w-5 h-5 text-cyan-600 dark:text-cyan-300" />
+                        </div>
+                        <p className="font-medium text-gray-900 dark:text-white">Electricity Usage</p>
+                      </div>
+                      <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                         {electricityUsage !== null ? `${electricityUsage} kWh` : "-"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
                   </div>
-
-                  {/* Right column - Additional stats */}
-                  <div className="flex flex-col justify-center space-y-6">
-                    <div className="bg-white/30 dark:bg-gray-800/30 p-4 rounded-xl border border-white/30 dark:border-gray-700/30 backdrop-blur-sm shadow-sm">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-700/50">
-                          <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                        </div>
-                        <p className="font-medium text-gray-900 dark:text-white">Monthly Budget</p>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white ml-2">
-                        AED {currentUsage.budgetGoal}
-                      </p>
-                    </div>
-
-                    <div className="bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-600 dark:text-blue-300 font-medium">Budget Progress</span>
-                        <span className="text-gray-600 dark:text-blue-300">
-                          AED {currentUsage.amount} / {currentUsage.budgetGoal}
-                        </span>
-                      </div>
-                      <div className="h-3 bg-white/30 dark:bg-blue-950/50 rounded-full overflow-hidden backdrop-blur-sm">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${currentUsage.budgetUsed}%` }}
-                          transition={{ duration: 1, delay: 0.5 }}
-                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-green-400 rounded-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
-
               {/* Bottom stats bar */}
-              <div className="bg-white/30 dark:bg-gray-900/40 border-t border-white/30 dark:border-gray-800/30 p-5 md:p-6 backdrop-blur-sm">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
-                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Daily Average</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      AED {(Number.parseFloat(currentUsage.amount) / 30).toFixed(2)}
-                    </p>
+              <div className="bg-white/20 dark:bg-gray-900/20 border-t border-white/20 dark:border-gray-800/20 p-5 md:p-6 backdrop-blur-xl">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="flex items-center gap-4 bg-white/10 dark:bg-gray-800/10 p-4 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-2xl hover:bg-white/20 dark:hover:bg-gray-700/20 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 dark:bg-blue-600/20 flex items-center justify-center">
+                      <Plug className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Active Devices</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {topActiveDevices?.filter((d) => d.active).length || 0}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {topActiveDevices?.filter((d) => d.active).length === 1 ? "device" : "devices"} currently in use
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
-                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Projected Monthly</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      AED {((Number.parseFloat(currentUsage.amount) * 30) / new Date().getDate()).toFixed(2)}
-                    </p>
+
+                  <div className="flex items-center gap-4 bg-white/10 dark:bg-gray-800/10 p-4 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-2xl hover:bg-white/20 dark:hover:bg-gray-700/20 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/20 dark:bg-purple-600/20 flex items-center justify-center">
+                      <Home className="w-6 h-6 text-purple-500 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Total Rooms</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{topActiveRooms?.length || 0}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {topActiveRooms?.length === 1 ? "room" : "rooms"} connected
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
-                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Active Devices</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {topActiveDevices?.filter((d) => d.active).length}
-                    </p>
-                  </div>
-                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
-                    <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Total Rooms</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{topActiveRooms?.length || 0}</p>
+
+                  {/* New Monthly Budget Card */}
+                  <div className="flex items-center gap-4 bg-white/10 dark:bg-gray-800/10 p-4 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-2xl hover:bg-white/20 dark:hover:bg-gray-700/20 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-full bg-green-500/20 dark:bg-green-600/20 flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-green-500 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-blue-300">Monthly Budget</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {budgetUsed.toFixed(0)}/
+                        {monthlyBudget ? monthlyBudget : <span className="text-gray-400 dark:text-gray-500">--</span>}{" "}
+                        AED
+                      </p>
+                      <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 dark:bg-green-400 transition-all duration-500 ease-in-out"
+                          style={{ width: `${monthlyBudget ? Math.min((budgetUsed / monthlyBudget) * 100, 100) : 0}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {monthlyBudget ? Math.round((budgetUsed / monthlyBudget) * 100) : "--"}% of budget used
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -915,3 +1015,4 @@ export default function HomePage() {
     </div>
   )
 }
+
