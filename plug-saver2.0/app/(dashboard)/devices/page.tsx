@@ -1,16 +1,29 @@
 "use client"
-import jsQR from "jsqr";
-
-import dynamic from "next/dynamic";
-import QrScanner from "react-qr-scanner";
-
+import jsQR from "jsqr"
+import QrScanner from "react-qr-scanner"
 
 import type React from "react"
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Home, Zap, Plus, Lamp, Speaker, Tv, Computer, Fan, Filter, Trash2, RefrigeratorIcon, Settings, LucideProps } from "lucide-react"
+import {
+  Home,
+  Zap,
+  Plus,
+  Lamp,
+  Speaker,
+  Tv,
+  Computer,
+  Fan,
+  Filter,
+  Trash2,
+  RefrigeratorIcon,
+  Settings,
+  type LightbulbIcon as LucideProps,
+  Sun,
+  Moon,
+} from "lucide-react"
 import { motion } from "framer-motion"
 
 // New imports for dialogs, forms, tabs and alerts
@@ -94,23 +107,109 @@ import {
   Dumbbell,
 } from "lucide-react"
 
+// New imports for dialogs, forms, tabs and alerts
+
+// Add this custom hook at the top of the file, after the imports but before the component definitions
+
+// Custom hook to manage theme styles
+const useThemeStyles = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDarkMode = localStorage.getItem("darkMode")
+      setIsDarkMode(storedDarkMode === "true")
+    }
+  }, [])
+
+  // Apply dark mode class to the document element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("darkMode", isDarkMode.toString())
+    }
+  }, [isDarkMode])
+
+  // Define different styles for light and dark modes
+  const styles = {
+    // Background styles
+    pageBackground: isDarkMode
+      ? "radial-gradient(circle, rgba(87,119,94,1) 0%, rgba(79,74,116,1) 100%)"
+      : "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
+
+    // Rest of the styles remain unchanged
+    cardStyle: isDarkMode
+      ? "bg-gray-800 text-gray-100 shadow-lg"
+      : "gradient-card p-5 overflow-hidden relative bg-white/20 backdrop-blur-md border border-white/30 shadow-xl hover:shadow-2xl",
+
+    // Device card styles
+    deviceCardStyle: (isActive: boolean, needsRoomAssignment: boolean) => {
+      const baseStyle = isDarkMode
+        ? `gradient-card p-0 overflow-hidden transition-all duration-300 hover:shadow-xl group backdrop-blur-md bg-gray-800/80 text-gray-100 border border-gray-700 ${
+            needsRoomAssignment ? "border-2 border-yellow-500" : ""
+          }`
+        : `gradient-card p-0 overflow-hidden transition-all duration-300 hover:shadow-xl group backdrop-blur-md bg-white/20 border border-white/30 ${
+            needsRoomAssignment ? "border-2 border-yellow-500" : ""
+          }`
+
+      const headerStyle = isDarkMode
+        ? isActive
+          ? "bg-gray-700/90 backdrop-blur-md"
+          : "bg-gray-800/90 backdrop-blur-md"
+        : isActive
+          ? "bg-blue-50/50 border-blue-200/50 backdrop-blur-md"
+          : "bg-white/30 border-white/30 backdrop-blur-md"
+
+      return { baseStyle, headerStyle }
+    },
+
+    // Room card styles
+    roomCardStyle: (isSelected: boolean) =>
+      isDarkMode
+        ? `gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl bg-gray-800 text-gray-100 border border-gray-700 ${
+            isSelected ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-900/30 to-blue-800/10" : ""
+          }`
+        : `gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl ${
+            isSelected
+              ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-100/50 to-blue-50/30"
+              : "bg-white/30 backdrop-blur-md border border-white/30"
+          }`,
+
+    // Add device card style
+    addDeviceCardStyle: isDarkMode
+      ? "gradient-card p-5 h-64 cursor-pointer transition-all duration-300 border border-dashed border-white/20 hover:shadow-2xl group bg-gray-800 text-gray-100 border border-gray-700"
+      : "gradient-card p-5 h-64 cursor-pointer transition-all duration-300 border border-dashed border-white/30 bg-white/20 backdrop-blur-md hover:shadow-2xl group",
+
+    // Section container style
+    sectionStyle: isDarkMode
+      ? "bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700"
+      : "bg-white/20 backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/30",
+  }
+
+  return { isDarkMode, setIsDarkMode, styles }
+}
+
 // Add these interfaces at the top of the file, after the imports
 interface Device {
-  id: number;
-  name: string;
-  room: string | null;
-  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
-  power: string;
-  isOn: boolean;
-  type?: string;
-  needsRoomAssignment?: boolean;
-  consumptionLimit?: number;
+  id: number
+  name: string
+  room: string | null
+  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+  power: string
+  isOn: boolean
+  type?: string
+  needsRoomAssignment?: boolean
+  consumptionLimit?: number
   schedule?: {
-    enabled: boolean;
-    startTime: string;
-    endTime: string;
-    days: string[];
-  };
+    enabled: boolean
+    startTime: string
+    endTime: string
+    days: string[]
+  }
 }
 
 interface Room {
@@ -120,14 +219,14 @@ interface Room {
 }
 
 interface FoundDevice {
-  id: number,
+  id: number
   name: string
   status: "Available" | "Paired"
 }
 
 interface DeviceIcon {
-  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
-  name: string;
+  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+  name: string
 }
 
 // Map icon names to components
@@ -184,11 +283,13 @@ const iconMap: Record<string, React.ElementType> = {
 
 // Update the DevicesPage component
 export default function DevicesPage() {
-  // Add these state variables to the DevicesPage component:
+  // Add the theme hook at the top of the component
+  const { isDarkMode, setIsDarkMode, styles } = useThemeStyles()
+
   const [editDeviceDialogOpen, setEditDeviceDialogOpen] = useState<boolean>(false)
-  const [userId, setUserId] = useState<number | null>(null);
-  const [roomId, setRoomId] = useState<number | null>(null);
-  const [deviceId, setDeviceId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null)
+  const [roomId, setRoomId] = useState<number | null>(null)
+  const [deviceId, setDeviceId] = useState<number | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<FoundDevice | null>(null)
   const [currentEditingDevice, setCurrentEditingDevice] = useState<Device | null>(null)
@@ -203,7 +304,7 @@ export default function DevicesPage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter();
+  const router = useRouter()
 
   const deviceIcons: DeviceIcon[] = [
     { icon: Lamp, name: "Desk Lamp" },
@@ -270,11 +371,9 @@ export default function DevicesPage() {
     },
   })
 
-
-
   // Add this CSS animation for subtle pulse effect
   useEffect(() => {
-    const style = document.createElement("style");
+    const style = document.createElement("style")
     style.innerHTML = `
     @keyframes pulse-subtle {
       0% { opacity: 1; }
@@ -284,16 +383,16 @@ export default function DevicesPage() {
     .animate-pulse-subtle {
       animation: pulse-subtle 2s infinite ease-in-out;
     }
-  `;
-    document.head.appendChild(style);
+  `
+    document.head.appendChild(style)
     return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+      document.head.removeChild(style)
+    }
+  }, [])
 
   // Add this CSS animation for slow pulse effect
   useEffect(() => {
-    const style = document.createElement("style");
+    const style = document.createElement("style")
     style.innerHTML = `
     @keyframes pulse-slow {
       0% { opacity: 0.5; }
@@ -303,143 +402,140 @@ export default function DevicesPage() {
     .animate-pulse-slow {
       animation: pulse-slow 4s infinite ease-in-out;
     }
-  `;
-    document.head.appendChild(style);
+  `
+    document.head.appendChild(style)
     return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+      document.head.removeChild(style)
+    }
+  }, [])
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id");
-    const storedEmail = localStorage.getItem("email");
-    const storedHouseholdCode = localStorage.getItem("household_code");
+    const storedUserId = localStorage.getItem("user_id")
+    const storedEmail = localStorage.getItem("email")
+    const storedHouseholdCode = localStorage.getItem("household_code")
 
     if (storedUserId) {
-      setUserId(Number(storedUserId));
+      setUserId(Number(storedUserId))
     } else {
-      router.push("/login");
+      router.push("/login")
     }
 
     if (storedHouseholdCode) {
-      setHouseholdCode(storedHouseholdCode);
+      setHouseholdCode(storedHouseholdCode)
     } else if (storedEmail) {
-      setHouseholdCode(storedEmail);
+      setHouseholdCode(storedEmail)
     }
-
-  }, [router]);
-
-
+  }, [router])
 
   // Load rooms from localStorage on mount
   useEffect(() => {
     const fetchData = async () => {
-      await fetchRooms();
-      await fetchDevices();
-    };
-    if (userId && householdCode) {
-      fetchData();
+      await fetchRooms()
+      await fetchDevices()
     }
-  }, [userId, householdCode]);
+    if (userId && householdCode) {
+      fetchData()
+    }
+  }, [userId, householdCode])
 
   // Fetch rooms from the backend
   const fetchRooms = async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`);
+      setIsLoading(true)
+      const response = await fetch(`/api/auth/rooms?household_code=${householdCode}`)
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success && data.rooms) {
         // Ensure that each room has a room_id property
         const roomsWithId = data.rooms.map((room: any) => {
           if (!room.room_id) {
-            console.error("Room is missing room_id:", room);
+            console.error("Room is missing room_id:", room)
           }
-          return room;
-        });
+          return room
+        })
 
-        setRooms(roomsWithId);
-        localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)));
+        setRooms(roomsWithId)
+        localStorage.setItem("plugSaver_rooms", JSON.stringify(data.rooms.map((r: Room) => r.room_name)))
       } else {
-        console.error("Failed to fetch rooms:", data.message);
+        console.error("Failed to fetch rooms:", data.message)
       }
     } catch (error) {
-      console.error("Error fetching rooms:", error);
+      console.error("Error fetching rooms:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Fetch devices from the backend
   const fetchDevices = async () => {
-    console.log("Fetching devices...");
+    console.log("Fetching devices...")
     try {
-      setIsLoading(true); // Ensure this is correctly set
-      const response = await fetch(`/api/auth/devices?household_code=${householdCode}`);
+      setIsLoading(true) // Ensure this is correctly set
+      const response = await fetch(`/api/auth/devices?household_code=${householdCode}`)
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success && data.devices) {
         // Transform backend device data to match our frontend Device interface
-        console.log("user id:", userId); // Log the fetched devices
+        console.log("user id:", userId) // Log the fetched devices
         const transformedDevices = await Promise.all(
           data.devices.map(async (device: any) => {
-            let roomName = "Unknown Room"; // Default room name
+            let roomName = "Unknown Room" // Default room name
 
             // Fetch the room name if room_id is available
-            console.log(" Room ID:", device.room_id); // Log the room ID
+            console.log(" Room ID:", device.room_id) // Log the room ID
             if (device.room_id) {
               try {
-                const roomResponse = await fetch(
-                  `/api/auth/getroomname?room_id=${encodeURIComponent(device.room_id)}`
-                );
-                const roomData = await roomResponse.json();
+                const roomResponse = await fetch(`/api/auth/getroomname?room_id=${encodeURIComponent(device.room_id)}`)
+                const roomData = await roomResponse.json()
                 if (roomData.success) {
-                  roomName = roomData.room_name;
+                  roomName = roomData.room_name
                 }
               } catch (err) {
-                console.error("Error fetching room name:", err);
+                console.error("Error fetching room name:", err)
               }
             }
 
             // Get the icon component based on the icon name or use a default
-            let iconComponent: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>> = Plug; // Default icon
+            let iconComponent: React.ForwardRefExoticComponent<
+              Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+            > = Plug // Default icon
             if (typeof device.icon === "string") {
               try {
                 // Parse the JSON string to get the icon name
-                const iconData = JSON.parse(device.icon);
-                const iconName = iconData.name; // Extract the icon name
+                const iconData = JSON.parse(device.icon)
+                const iconName = iconData.name // Extract the icon name
 
                 // Find the corresponding icon component from the deviceIcons array
-                const iconObj = deviceIcons.find((di) => di.name === iconName);
+                const iconObj = deviceIcons.find((di) => di.name === iconName)
                 if (iconObj) {
-                  iconComponent = iconObj.icon; // Use the found icon
+                  iconComponent = iconObj.icon // Use the found icon
                 }
               } catch (error) {
-                console.error("Error parsing icon JSON:", error);
+                console.error("Error parsing icon JSON:", error)
               }
             }
 
-            let activeDays = [];
+            let activeDays = []
             if (typeof device.active_days === "string") {
-              activeDays = device.active_days.split(",");
+              activeDays = device.active_days.split(",")
             } else if (Array.isArray(device.active_days)) {
-              activeDays = device.active_days;
+              activeDays = device.active_days
             } else {
-              activeDays = [];
+              activeDays = []
             }
 
-            localStorage.setItem("device_id", device.device_id);
-            console.log("Room Name:", roomName); // Log the room name
+            localStorage.setItem("device_id", device.device_id)
+            console.log("Room Name:", roomName) // Log the room name
 
             return {
               id: device.device_id,
@@ -457,105 +553,99 @@ export default function DevicesPage() {
                 endTime: device.active_time_end || "22:00",
                 days: activeDays,
               },
-            };
-          })
-        );
+            }
+          }),
+        )
 
-        console.log("Transformed Devices:", transformedDevices); // Log transformed devices
-        setDevices(transformedDevices);
+        console.log("Transformed Devices:", transformedDevices) // Log transformed devices
+        setDevices(transformedDevices)
       } else {
-        console.error("Failed to fetch devices:", data.message);
+        console.error("Failed to fetch devices:", data.message)
       }
     } catch (error) {
-      console.error("Error fetching devices:", error);
+      console.error("Error fetching devices:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Add a new device
   const addDevice = (newDevice: Device) => {
     setDevices([...devices, newDevice])
   }
   useEffect(() => {
-    const storedDeviceId = localStorage.getItem("device_id");
+    const storedDeviceId = localStorage.getItem("device_id")
     if (storedDeviceId) {
-      setDeviceId(Number(storedDeviceId));
+      setDeviceId(Number(storedDeviceId))
     }
-  }, []);
+  }, [])
 
-  const [errorMessages, setErrorMessages] = useState<Record<number, string>>({});
-
+  const [errorMessages, setErrorMessages] = useState<Record<number, string>>({})
 
   // Remove a device
   const removeDevice = async (deviceId: number) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
-      console.log("Sending DELETE request with the following data:");
-      console.log("Device ID:", deviceId);
-      console.log("Household Code:", householdCode);
-      console.log("User ID:", userId);
+      console.log("Sending DELETE request with the following data:")
+      console.log("Device ID:", deviceId)
+      console.log("Household Code:", householdCode)
+      console.log("User ID:", userId)
 
+      const response = await fetch(`/api/auth/devices`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          device_id: deviceId,
+          household_code: householdCode,
+          user_id: userId,
+        }),
+      })
 
-      const response = await fetch(
-        `/api/auth/devices`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            device_id: deviceId,
-            household_code: householdCode,
-            user_id: userId,
-          }),
-        });
-
-        const data = await response.json();  
+      const data = await response.json()
 
       if (!response.ok || !data.sucess) {
         setErrorMessages((prev) => ({
           ...prev,
           [deviceId]: data.message || "Failed to delete device.",
-        }));
-        return;
-       
+        }))
+        return
       }
 
-
-      console.log("Backend response:", data);
+      console.log("Backend response:", data)
 
       if (data.success) {
         // Remove the device from our devices state
-        setDevices(devices.filter((device) => device.id !== deviceId));
+        setDevices(devices.filter((device) => device.id !== deviceId))
         setErrorMessages((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[deviceId]; // Remove the error message for this device
-          return newErrors;
-        });
+          const newErrors = { ...prev }
+          delete newErrors[deviceId] // Remove the error message for this device
+          return newErrors
+        })
       } else {
-        console.error("Failed to remove device:", data.message);
-        setError(data.message);
+        console.error("Failed to remove device:", data.message)
+        setError(data.message)
       }
     } catch (error) {
-      console.error("Error removing device:", error);
+      console.error("Error removing device:", error)
       setErrorMessages((prev) => ({
         ...prev,
         [deviceId]: "An error occurred while deleting the device.",
-      }));
+      }))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Toggle device on/off state
   const toggleDevice = async (deviceId: number) => {
-    const device = devices.find((d) => d.id === deviceId);
-    if (!device) return;
+    const device = devices.find((d) => d.id === deviceId)
+    if (!device) return
 
-    const newIsOn = !device.isOn;
-    let newPower = device.power;
+    const newIsOn = !device.isOn
+    let newPower = device.power
 
     if (newIsOn) {
       // Define power ranges for different device icons (values in Watts)
@@ -564,73 +654,69 @@ export default function DevicesPage() {
         "Light Bulb": [3, 15],
         "Floor Lamp": [10, 30],
         "Table Lamp": [5, 25],
-        "TV": [50, 150],
-        "Radio": [10, 50],
-        "Speaker": [5, 20],
-        "Headphones": [1, 5],
+        TV: [50, 150],
+        Radio: [10, 50],
+        Speaker: [5, 20],
+        Headphones: [1, 5],
         "Game Console": [70, 200],
-        "Monitor": [20, 60],
+        Monitor: [20, 60],
         "Sound System": [20, 100],
-        "Projector": [100, 300],
-        "Refrigerator": [100, 250],
-        "Microwave": [700, 1200],
+        Projector: [100, 300],
+        Refrigerator: [100, 250],
+        Microwave: [700, 1200],
         "Coffee Maker": [800, 1500],
-        "Toaster": [800, 1500],
+        Toaster: [800, 1500],
         "Slow Cooker": [200, 300],
-        "Oven": [1000, 3000],
-        "Stove": [1000, 3000],
-        "Blender": [300, 700],
+        Oven: [1000, 3000],
+        Stove: [1000, 3000],
+        Blender: [300, 700],
         "Sandwich Maker": [500, 800],
         "Air Fryer": [800, 1500],
         "Food Processor": [200, 500],
-        "Computer": [150, 300],
-        "Laptop": [50, 100],
-        "Printer": [20, 50],
-        "Scanner": [20, 50],
-        "Router": [10, 30],
+        Computer: [150, 300],
+        Laptop: [50, 100],
+        Printer: [20, 50],
+        Scanner: [20, 50],
+        Router: [10, 30],
         "WiFi Extender": [5, 15],
         "CPU/Server": [200, 500],
         "External Drive": [10, 30],
-        "Fan": [50, 100],
+        Fan: [50, 100],
         "Air Purifier": [30, 80],
-        "Thermostat": [5, 15],
+        Thermostat: [5, 15],
         "Air Conditioner": [1000, 3500],
-        "Heater": [800, 2000],
-        "Humidifier": [30, 70],
+        Heater: [800, 2000],
+        Humidifier: [30, 70],
         "Water Heater": [3000, 4500],
         "Hair Dryer": [1200, 1875],
         "Electric Toothbrush": [2, 5],
         "Smart Plug": [5, 15],
         "Smart Lock": [2, 5],
-        "Doorbell": [1, 5],
+        Doorbell: [1, 5],
         "Security Camera": [5, 15],
         "Alarm System": [10, 30],
         "Battery Charger": [10, 30],
         "Power Tool": [100, 300],
         "Exercise Equipment": [100, 300],
-      };
+      }
 
       // Default range if icon is not recognized
-      let minPower = 10;
-      let maxPower = 200;
+      let minPower = 10
+      let maxPower = 200
 
       // Find the matching icon in the deviceIcons array
-      const matchingIcon = deviceIcons.find((iconObj) => iconObj.icon === device.icon);
+      const matchingIcon = deviceIcons.find((iconObj) => iconObj.icon === device.icon)
       if (matchingIcon && iconPowerRanges[matchingIcon.name]) {
-        [minPower, maxPower] = iconPowerRanges[matchingIcon.name];
+        ;[minPower, maxPower] = iconPowerRanges[matchingIcon.name]
       }
 
       // Generate a random power value within the determined range
-      newPower = `${Math.floor(Math.random() * (maxPower - minPower + 1) + minPower)}W`;
+      newPower = `${Math.floor(Math.random() * (maxPower - minPower + 1) + minPower)}W`
     } else {
-      newPower = "0W";
+      newPower = "0W"
     }
     // Optimistically update the UI
-    setDevices(
-      devices.map((d) =>
-        d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d
-      )
-    );
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d)))
 
     try {
       // Send the updated state to the backend
@@ -640,45 +726,39 @@ export default function DevicesPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower, householdCode, userId }), // Include power in the request
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
 
       if (!response.ok || !data.success) {
         // Revert the optimistic update if the request fails
-        setDevices(
-          devices.map((d) =>
-            d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d
-          )
-        );
+        setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d)))
         setErrorMessages((prev) => ({
           ...prev,
           [deviceId]: data.message || "Failed to toggle.",
-        }));
-        return;
+        }))
+        return
       }
-
-
     } catch (error) {
-      console.error("Error toggling device:", error);
-      setError("An error occurred while toggling the device");
+      console.error("Error toggling device:", error)
+      setError("An error occurred while toggling the device")
     }
-  };
+  }
 
   // Add a new room
   const handleAddRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!roomName) {
-      setError("Please enter a room name");
-      return;
+      setError("Please enter a room name")
+      return
     }
 
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
-      console.log("Sending POST request with the following data:");
-      console.log("Room Name:", roomName);
-      console.log("Household Code:", householdCode);
+      console.log("Sending POST request with the following data:")
+      console.log("Room Name:", roomName)
+      console.log("Household Code:", householdCode)
 
       const response = await fetch("/api/auth/rooms", {
         method: "POST",
@@ -690,16 +770,15 @@ export default function DevicesPage() {
           room_name: roomName,
           household_code: householdCode,
         }),
-      });
-      const data = await response.json();
+      })
+      const data = await response.json()
 
       if (!response.ok || !data.success) {
-        setError(data.detail || "Failed to add room.");
-        return;
+        setError(data.detail || "Failed to add room.")
+        return
       }
 
-
-      console.log("Backend response:", data);
+      console.log("Backend response:", data)
 
       if (data.success) {
         // Add the new room to our rooms state
@@ -707,43 +786,40 @@ export default function DevicesPage() {
           room_id: data.room_id,
           room_name: roomName,
           household_code: householdCode,
-        };
+        }
 
-        setRooms([...rooms, newRoom]);
+        setRooms([...rooms, newRoom])
 
         // Update localStorage
-        localStorage.setItem(
-          "plugSaver_rooms",
-          JSON.stringify([...rooms, newRoom].map((r) => r.room_name))
-        );
-        localStorage.setItem("room_id", data.room_id);
+        localStorage.setItem("plugSaver_rooms", JSON.stringify([...rooms, newRoom].map((r) => r.room_name)))
+        localStorage.setItem("room_id", data.room_id)
 
         // Reset the input field and close the dialog
-        setRoomName("");
-        setIsDialogOpen(false);
+        setRoomName("")
+        setIsDialogOpen(false)
       } else {
-        console.error("Failed to add room:", data.message);
-        setError(data.message);
+        console.error("Failed to add room:", data.message)
+        setError(data.message)
       }
     } catch (error) {
-      console.error("Error adding room:", error);
-      setError("An error occurred while adding the room");
+      console.error("Error adding room:", error)
+      setError("An error occurred while adding the room")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    const storedRoomId = localStorage.getItem("room_id");
+    const storedRoomId = localStorage.getItem("room_id")
     if (storedRoomId) {
-      setRoomId(Number(storedRoomId));
+      setRoomId(Number(storedRoomId))
     }
-  }, []);
+  }, [])
 
   // Delete a room
   const handleDeleteRoom = async (roomId: number, roomName: string) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
       const response = await fetch(`/api/auth/rooms`, {
         method: "DELETE",
@@ -755,129 +831,127 @@ export default function DevicesPage() {
           household_code: householdCode,
           user_id: userId,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
-    if (!response.ok || !data.success) {
+      if (!response.ok || !data.success) {
         setErrorMessages((prev) => ({
           ...prev,
           [roomId]: data.detail || "Failed to delete room.",
-        }));
-        return;
-        return;
+        }))
+        return
+        return
       }
-
-
 
       if (data.success) {
         // Remove the room from our rooms state
-        setRooms(rooms.filter((r) => r.room_id !== roomId));
+        setRooms(rooms.filter((r) => r.room_id !== roomId))
         setErrorMessages((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[roomId]; // Remove the error message for this room
-          return newErrors;
-        });
+          const newErrors = { ...prev }
+          delete newErrors[roomId] // Remove the error message for this room
+          return newErrors
+        })
 
         // Update localStorage
         localStorage.setItem(
           "plugSaver_rooms",
           JSON.stringify(rooms.filter((r) => r.room_id !== roomId).map((r) => r.room_name)),
-        );
+        )
 
         // Mark devices in this room as needing reassignment
         setDevices(
           devices.map((device) =>
             device.room === roomName ? { ...device, room: null, needsRoomAssignment: true } : device,
           ),
-        );
+        )
 
         // Reset selected room if it was the deleted one
         if (selectedRoom === roomName) {
-          setSelectedRoom(null);
+          setSelectedRoom(null)
         }
       } else {
-        console.error("Failed to delete room:", data.message);
-        setError(data.message);
+        console.error("Failed to delete room:", data.message)
+        setError(data.message)
       }
     } catch (error) {
-      console.error("Error deleting room:", error);
+      console.error("Error deleting room:", error)
       setErrorMessages((prev) => ({
         ...prev,
         [roomId]: "An error occurred while deleting the device.",
-      }));
+      }))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Assign a device to a room
   const assignDeviceToRoom = async (deviceId: number, roomName: string) => {
-    console.log(`Attempting to assign device ${deviceId} to room ${roomName}`);  // Log the request
+    console.log(`Attempting to assign device ${deviceId} to room ${roomName}`) // Log the request
 
-    const device = devices.find((d) => d.id === deviceId);
+    const device = devices.find((d) => d.id === deviceId)
     if (!device) {
-      console.error(`Device ${deviceId} not found in the local state`);  // Log if device not found
-      return;
+      console.error(`Device ${deviceId} not found in the local state`) // Log if device not found
+      return
     }
 
-    const room = rooms.find((r) => r.room_name === roomName);
+    const room = rooms.find((r) => r.room_name === roomName)
     if (!room) {
-      console.error(`Room ${roomName} not found in the local state`);  // Log if room not found
-      return;
+      console.error(`Room ${roomName} not found in the local state`) // Log if room not found
+      return
     }
 
     // Optimistically update the UI
-    console.log("Optimistically updating the UI...");  // Log optimistic update
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)));
+    console.log("Optimistically updating the UI...") // Log optimistic update
+    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, room: roomName, needsRoomAssignment: false } : d)))
 
     try {
-      console.log("Sending request to backend to assign device to room...");  // Log the API call
+      console.log("Sending request to backend to assign device to room...") // Log the API call
       const response = await fetch(`/api/auth/devices/${deviceId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          room_id: room.room_id,  // Use room.room_id
+          room_id: room.room_id, // Use room.room_id
         }),
-      });
+      })
 
-      console.log("Received response from backend:", response);  // Log the response
+      console.log("Received response from backend:", response) // Log the response
 
       if (!response.ok) {
-        console.error("Backend returned an error:", response.status, response.statusText);  // Log the error
+        console.error("Backend returned an error:", response.status, response.statusText) // Log the error
         // Revert the optimistic update if the request fails
         setDevices(
           devices.map((d) =>
             d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
           ),
-        );
-        throw new Error(`HTTP error! status: ${response.status}`);
+        )
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const data = await response.json();
-      console.log("Backend response data:", data);  // Log the response data
+      const data = await response.json()
+      console.log("Backend response data:", data) // Log the response data
 
       if (!data.success) {
-        console.error("Failed to assign device to room:", data.message);  // Log the failure
+        console.error("Failed to assign device to room:", data.message) // Log the failure
         // Revert the optimistic update if the request fails
         setDevices(
           devices.map((d) =>
             d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
           ),
-        );
-        setError(data.message);
+        )
+        setError(data.message)
       } else {
-        console.log("Device assigned to room successfully");  // Log success
+        console.log("Device assigned to room successfully") // Log success
         // Re-fetch devices to ensure the UI reflects the latest state
-        await fetchDevices();
+        await fetchDevices()
       }
     } catch (error) {
-      console.error("Error assigning device to room:", error);  // Log any exceptions
-      setError("An error occurred while assigning the device to a room");
+      console.error("Error assigning device to room:", error) // Log any exceptions
+      setError("An error occurred while assigning the device to a room")
     }
-  };
+  }
 
   // Filter devices by selected room
   const filteredDevices = selectedRoom ? devices.filter((device) => device.room === selectedRoom) : devices
@@ -888,6 +962,9 @@ export default function DevicesPage() {
     const powerValue = device.power ? Number.parseInt(device.power) : 0
     return sum + (isNaN(powerValue) ? 0 : powerValue)
   }, 0)
+
+  // Remove the redeclarations of isDarkMode, setIsDarkMode, and styles
+  // const { isDarkMode, setIsDarkMode, styles } = useThemeStyles()
 
   // Loading state
   if (isLoading && devices.length === 0 && rooms.length === 0) {
@@ -904,9 +981,23 @@ export default function DevicesPage() {
     )
   }
 
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+  }
+
   return (
-    <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--gradient-devices)" }}>
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Devices</h1>
+    <div className="min-h-screen p-6 md:p-10" style={{ background: styles.pageBackground }}>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Devices</h1>
+        <Button
+          size="icon"
+          variant="outline"
+          className="rounded-full backdrop-blur-md bg-white/10 border-white/20"
+          onClick={toggleDarkMode}
+        >
+          {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
+      </div>
 
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -926,7 +1017,9 @@ export default function DevicesPage() {
         {/* <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-xl -z-10 border border-white/10 shadow-xl"></div> */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-20 rounded-xl"></div>
         {/* Energy Consumption Card */}
-        <Card className="gradient-card md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative bg-white border-blue-500/20 shadow-lg">
+        <Card
+          className={`${styles.cardStyle} md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative border-blue-500/20`}
+        >
           {/* Enhanced decorative background elements */}
           <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl animate-pulse-slow"></div>
           <div className="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl"></div>
@@ -974,7 +1067,6 @@ export default function DevicesPage() {
                 </div>
               </div>
             </div>
-
           </div>
 
           {totalConsumption > 0 ? (
@@ -982,7 +1074,9 @@ export default function DevicesPage() {
               <div className="flex justify-between mb-2">
                 <p className="text-xs text-gray-400 font-medium">Usage Level</p>
                 <div className="flex items-center gap-1">
-                  <p className="text-xs font-medium text-blue-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
+                  <p className="text-xs font-medium text-blue-300">
+                    {Math.min(Math.round(totalConsumption / 10), 100)}%
+                  </p>
                   {Math.min(Math.round(totalConsumption / 10), 100) > 70 && (
                     <span className="text-xs text-yellow-300 bg-yellow-500/20 px-1.5 py-0.5 rounded-full">High</span>
                   )}
@@ -1020,7 +1114,6 @@ export default function DevicesPage() {
               <span className="text-blue-300 font-medium">Energy Tip:</span> Devices in standby mode can consume up to 10% of your home's energy. Consider using smart plugs to completely turn off devices when not in use.
             </p>
           </div> */}
-
         </Card>
         <section className="space-y-8 md:col-span-2 lg:col-span-3">
           {/* Devices Section - Updated Layout */}
@@ -1077,10 +1170,8 @@ export default function DevicesPage() {
                       className="pl-10 bg-white/10 border border-white/20 text-white w-[180px] h-10 rounded-md transition-all duration-300 focus:w-[240px]"
                     />
                   </div>
-
                 )}
               </div>
-
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredDevices.length > 0 ? (
@@ -1093,10 +1184,7 @@ export default function DevicesPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <Card
-                        className={`gradient-card p-0 overflow-hidden transition-all duration-300 hover:shadow-xl group ${needsRoomAssignment ? "border-2 border-yellow-500" : ""
-                          }`}
-                      >
+                      <Card className={styles.deviceCardStyle(isOn, needsRoomAssignment).baseStyle}>
                         {/* Card Header with status indicator */}
                         <div
                           className={`p-4 ${isOn ? "bg-white-500/20" : "bg-gray-700/30"} transition-colors duration-300`}
@@ -1104,8 +1192,9 @@ export default function DevicesPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-full flex items-center justify-center ${isOn ? "bg-blue-500/40" : "bg-gray-600/40"
-                                  }`}
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  isOn ? "bg-blue-500/40" : "bg-gray-600/40"
+                                }`}
                               >
                                 <Icon className={`w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`} />
                               </div>
@@ -1126,8 +1215,6 @@ export default function DevicesPage() {
                             />
                           </div>
                         </div>
-
-
 
                         {/* Card Body */}
                         <div className="p-4 space-y-3">
@@ -1160,8 +1247,8 @@ export default function DevicesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setCurrentEditingDevice(devices.find((d) => d.id === id)!);
-                                setEditDeviceDialogOpen(true);
+                                setCurrentEditingDevice(devices.find((d) => d.id === id)!)
+                                setEditDeviceDialogOpen(true)
                               }}
                               className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded-full w-8 h-8 p-0"
                             >
@@ -1176,7 +1263,7 @@ export default function DevicesPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
-
+                          <br></br>
                           {errorMessages[id] && (
                             <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mt-2 text-sm">
                               {errorMessages[id]}
@@ -1199,7 +1286,6 @@ export default function DevicesPage() {
                               </Select>
                             </div>
                           )}
-
                         </div>
                       </Card>
                     </motion.div>
@@ -1224,16 +1310,12 @@ export default function DevicesPage() {
               )}
               {rooms.length > 0 ? (
                 <motion.div
-
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: filteredDevices.length * 0.05 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <Card
-                    className="gradient-card p-5 h-64 cursor-pointer transition-all duration-300 border border-dashed border-white/20 hover:shadow-2xl group"
-                    onClick={() => setAddDeviceDialogOpen(true)}
-                  >
+                  <Card className={styles.addDeviceCardStyle} onClick={() => setAddDeviceDialogOpen(true)}>
                     <div className="flex flex-col items-center justify-center h-full py-8">
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center mb-4 shadow-inner group-hover:shadow-2xl transition-all duration-300">
                         {/* Increased rotation angle and added smoother transition */}
@@ -1246,8 +1328,6 @@ export default function DevicesPage() {
                     </div>
                   </Card>
                 </motion.div>
-
-
               ) : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1318,19 +1398,13 @@ export default function DevicesPage() {
               </Dialog>
             </div>
 
-            <div className="mb-6">
-              {/* Keep your existing room filter buttons */}
-            </div>
+            <div className="mb-6">{/* Keep your existing room filter buttons */}</div>
 
             {rooms.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {rooms.map((room, index) => {
-                  const deviceCount = devices.filter(
-                    (device) => device.room === room.room_name
-                  ).length;
-                  const activeDevices = devices.filter(
-                    (device) => device.room === room.room_name && device.isOn
-                  ).length;
+                  const deviceCount = devices.filter((device) => device.room === room.room_name).length
+                  const activeDevices = devices.filter((device) => device.room === room.room_name && device.isOn).length
                   return (
                     <motion.div
                       key={room.room_id}
@@ -1339,24 +1413,19 @@ export default function DevicesPage() {
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       whileHover={{ y: -4 }}
                     >
-                      <Card
-                        className={`gradient-card p-5 text-center transition-all duration-300 hover:shadow-xl ${selectedRoom === room.room_name
-                          ? "ring-2 ring-blue-500 bg-gradient-to-br from-blue-900/30 to-blue-800/10"
-                          : "bg-gradient-to-br from-white-900/20 to-white-800/10"
-                          }`}
-                      >
+                      <Card className={styles.roomCardStyle(selectedRoom === room.room_name)}>
                         <div className="flex flex-col items-center">
                           <div
-                            className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner ${selectedRoom === room.room_name
-                              ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30"
-                              : "bg-gradient-to-br from-purple-500/20 to-purple-600/20"
-                              }`}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 shadow-inner ${
+                              selectedRoom === room.room_name
+                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30"
+                                : "bg-gradient-to-br from-purple-500/20 to-purple-600/20"
+                            }`}
                           >
                             <Home
-                              className={`w-7 h-7 ${selectedRoom === room.room_name
-                                ? "text-blue-300"
-                                : "text-white-300"
-                                }`}
+                              className={`w-7 h-7 ${
+                                selectedRoom === room.room_name ? "text-blue-300" : "text-white-300"
+                              }`}
                             />
                           </div>
                           <p className="font-medium text-lg mb-1">{room.room_name}</p>
@@ -1369,7 +1438,6 @@ export default function DevicesPage() {
                                 {activeDevices} active
                               </Badge>
                             )}
-
                           </div>
                           <div className="flex gap-2 w-full justify-center">
                             <Button
@@ -1392,15 +1460,13 @@ export default function DevicesPage() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Are you sure you want to delete this room?
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle>Are you sure you want to delete this room?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     {deviceCount > 0 ? (
                                       <>
                                         This room has {deviceCount} device
-                                        {deviceCount !== 1 ? "s" : ""} assigned to it.
-                                        If you delete this room, these devices will need to be manually reassigned.
+                                        {deviceCount !== 1 ? "s" : ""} assigned to it. If you delete this room, these
+                                        devices will need to be manually reassigned.
                                       </>
                                     ) : (
                                       "This action cannot be undone."
@@ -1415,7 +1481,6 @@ export default function DevicesPage() {
                                   >
                                     Delete
                                   </AlertDialogAction>
-
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
@@ -1423,13 +1488,13 @@ export default function DevicesPage() {
                         </div>
 
                         {errorMessages[room.room_id] && (
-                            <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mt-2 text-sm">
-                              {errorMessages[room.room_id]}
-                            </div>
-                          )}
+                          <div className="text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mt-2 text-sm">
+                            {errorMessages[room.room_id]}
+                          </div>
+                        )}
                       </Card>
                     </motion.div>
-                  );
+                  )
                 })}
               </div>
             ) : (
@@ -1495,71 +1560,70 @@ function AddDeviceDialog({
   const [error, setError] = useState<string | null>(null)
   const [pairedDevices, setPairedDevices] = useState<Device[]>([])
   const [householdCode, setHouseholdCode] = useState<string | null>(null)
-  const [userId, setUserId] = useState<number | null>(null);
-  const [scanSuccess, setScanSuccess] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [userId, setUserId] = useState<number | null>(null)
+  const [scanSuccess, setScanSuccess] = useState<boolean>(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
+    const file = event.target?.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
     reader.onload = (e) => {
-      const img = new Image();
+      const img = new Image()
       img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const context = canvas.getContext("2d");
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const context = canvas.getContext("2d")
         if (!context) {
-          setError("Could not get canvas context");
-          return;
+          setError("Could not get canvas context")
+          return
         }
-        context.drawImage(img, 0, 0, img.width, img.height);
-        const imageData = context.getImageData(0, 0, img.width, img.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        context.drawImage(img, 0, 0, img.width, img.height)
+        const imageData = context.getImageData(0, 0, img.width, img.height)
+        const code = jsQR(imageData.data, imageData.width, imageData.height)
         if (code) {
-          const scannedText = code.data;
-          const smartPlugIdRegex = /^\d{4}$/;
+          const scannedText = code.data
+          const smartPlugIdRegex = /^\d{4}$/
           if (smartPlugIdRegex.test(scannedText)) {
-            setError(null);
-            setScanSuccess(true);
+            setError(null)
+            setScanSuccess(true)
             setSelectedDevice({
-              id: parseInt(scannedText, 10),
+              id: Number.parseInt(scannedText, 10),
               name: `Smart Plug ${scannedText}`,
               status: "Paired",
-            });
+            })
             // Delay for visual feedback before moving on
             setTimeout(() => {
-              setCurrentStep(1);
-            }, 1500);
+              setCurrentStep(1)
+            }, 1500)
           } else {
-            setError("Uploaded QR code did not contain a valid 4-digit smart plug ID");
+            setError("Uploaded QR code did not contain a valid 4-digit smart plug ID")
           }
         } else {
-          setError("No QR code found in the uploaded image");
+          setError("No QR code found in the uploaded image")
         }
-      };
-      if (e.target && typeof e.target.result === "string") {
-        img.src = e.target.result;
       }
-    };
-    reader.readAsDataURL(file);
-  };
-
+      if (e.target && typeof e.target.result === "string") {
+        img.src = e.target.result
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id");
+    const storedUserId = localStorage.getItem("user_id")
     if (storedUserId) {
-      setUserId(Number(storedUserId)); // Convert the string to a number
+      setUserId(Number(storedUserId)) // Convert the string to a number
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    const storedHouseholdCode = localStorage.getItem("household_code");
+    const storedHouseholdCode = localStorage.getItem("household_code")
     if (storedHouseholdCode) {
-      setHouseholdCode(storedHouseholdCode);
+      setHouseholdCode(storedHouseholdCode)
     }
-  }, []);
+  }, [])
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -1632,7 +1696,6 @@ function AddDeviceDialog({
     { icon: BatteryCharging, name: "Battery Charger" },
     { icon: Wrench, name: "Power Tool" },
     { icon: Dumbbell, name: "Exercise Equipment" },
-
   ]
 
   const deviceTypeOptions = [
@@ -1664,7 +1727,7 @@ function AddDeviceDialog({
     setError(null)
 
     // Preserve paired devices instead of clearing all devices
-    const pairedDevices = foundDevices.filter(device => device.status === "Paired")
+    const pairedDevices = foundDevices.filter((device) => device.status === "Paired")
     setFoundDevices(pairedDevices)
 
     const totalDevices = Math.floor(Math.random() * 5) + 5 // Random number of devices (5-9)
@@ -1705,23 +1768,23 @@ function AddDeviceDialog({
   // Update the onSubmit function
   const onSubmit = async (data: any) => {
     if (!selectedDevice) {
-      setError("No device selected");
-      return;
+      setError("No device selected")
+      return
     }
 
     if (!userId) {
-      setError("User ID not found. Please log in again.");
-      return;
+      setError("User ID not found. Please log in again.")
+      return
     }
 
     // Find the selected icon object
-    const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0];
+    const selectedIconObj = deviceIcons.find((i) => i.name === data.icon) || deviceIcons[0]
 
     // Find the room object based on the room name
-    const selectedRoom = rooms.find((r) => r.room_name === data.room);
+    const selectedRoom = rooms.find((r) => r.room_name === data.room)
     if (!selectedRoom) {
-      setError("Selected room not found");
-      return;
+      setError("Selected room not found")
+      return
     }
 
     // Prepare the device data for the API
@@ -1745,7 +1808,7 @@ function AddDeviceDialog({
         endTime: data.endTime,
         days: data.days,
       },
-    };
+    }
 
     try {
       const response = await fetch("/api/auth/devices", {
@@ -1754,17 +1817,16 @@ function AddDeviceDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(deviceData),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (!response.ok || !result.success) {
-        setError(result.detail || "Failed to add device");
-        return;
+        setError(result.detail || "Failed to add device")
+        return
       }
 
-
-      console.log(result.device_id);
+      console.log(result.device_id)
 
       if (result.success) {
         // Add the new device to our devices state
@@ -1783,26 +1845,25 @@ function AddDeviceDialog({
             endTime: data.endTime,
             days: data.days,
           },
-        };
-        localStorage.setItem("device_id", result.device_id);
+        }
+        localStorage.setItem("device_id", result.device_id)
 
-        onDeviceAdded(newDevice);
-
+        onDeviceAdded(newDevice)
 
         // Reset form and close dialog
-        setOpen(false);
-        setCurrentStep(0);
-        setSelectedDevice(null);
-        form.reset();
-        if (setIsEditMode) setIsEditMode(false);
+        setOpen(false)
+        setCurrentStep(0)
+        setSelectedDevice(null)
+        form.reset()
+        if (setIsEditMode) setIsEditMode(false)
       } else {
-        setError(result.detail || "Failed to add device");
+        setError(result.detail || "Failed to add device")
       }
     } catch (error) {
-      console.error("Error adding device:", error);
-      setError("An error occurred while adding the device");
+      console.error("Error adding device:", error)
+      setError("An error occurred while adding the device")
     }
-  };
+  }
 
   const steps = [
     { title: "Discover Device", description: "Scan for nearby smart plugs or scan a QR code" },
@@ -1833,12 +1894,13 @@ function AddDeviceDialog({
               className={`flex flex-col items-center ${index === currentStep ? "text-pink-500" : "text-gray-400"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${index === currentStep
-                  ? "bg-pink-500 text-white"
-                  : index < currentStep
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-200 text-gray-500"
-                  }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
+                  index === currentStep
+                    ? "bg-pink-500 text-white"
+                    : index < currentStep
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                }`}
               >
                 {index < currentStep ? index + 1 : index + 1}
               </div>
@@ -1885,10 +1947,11 @@ function AddDeviceDialog({
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           onClick={() => device.status === "Available" && selectDevice(device)}
-                          className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${device.status === "Paired"
-                            ? "border-green-500 bg-green-50/10 cursor-not-allowed"
-                            : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
-                            }`}
+                          className={`p-3 border rounded-lg flex items-center justify-between cursor-pointer ${
+                            device.status === "Paired"
+                              ? "border-green-500 bg-green-50/10 cursor-not-allowed"
+                              : "border-blue-200 bg-blue-50/10 hover:bg-blue-100/20"
+                          }`}
                         >
                           <div className="flex items-center gap-3">
                             <Plug className={device.status === "Paired" ? "text-green-500" : "text-blue-500"} />
@@ -1930,38 +1993,34 @@ function AddDeviceDialog({
                       delay={300}
                       onScan={(result: any) => {
                         if (result) {
-                          const scannedText = result.text;
-                          const smartPlugIdRegex = /^\d{4}$/;
+                          const scannedText = result.text
+                          const smartPlugIdRegex = /^\d{4}$/
                           if (smartPlugIdRegex.test(scannedText)) {
-                            setError(null);
-                            setScanSuccess(true);
+                            setError(null)
+                            setScanSuccess(true)
                             setSelectedDevice({
-                              id: parseInt(scannedText, 10),
+                              id: Number.parseInt(scannedText, 10),
                               name: `Smart Plug ${scannedText}`,
                               status: "Paired",
-                            });
+                            })
                             // Delay for visual feedback before moving on
                             setTimeout(() => {
-                              setCurrentStep(1);
-                            }, 1500);
+                              setCurrentStep(1)
+                            }, 1500)
                           } else {
-                            setError("QR code did not contain a valid 4-digit smart plug ID");
+                            setError("QR code did not contain a valid 4-digit smart plug ID")
                           }
                         }
                       }}
                       onError={(error: any) => {
-                        console.error(error);
-                        setError("Error accessing the camera");
+                        console.error(error)
+                        setError("Error accessing the camera")
                       }}
                       style={{ width: "100%" }}
                     />
                   </div>
                   {error && <p className="text-red-500 mt-2">{error}</p>}
-                  {scanSuccess && (
-                    <p className="text-green-500 mt-2 flex items-center">
-                      Scan successful!
-                    </p>
-                  )}
+                  {scanSuccess && <p className="text-green-500 mt-2 flex items-center">Scan successful!</p>}
                   <div className="mt-4">
                     <Button
                       variant="outline"
@@ -2078,10 +2137,11 @@ function AddDeviceDialog({
                             <div
                               key={iconObj.name}
                               onClick={() => field.onChange(iconObj.name)}
-                              className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${field.value === iconObj.name
-                                ? "bg-blue-900/70 border border-blue-400 text-white"
-                                : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
-                                }`}
+                              className={`p-2 rounded-md cursor-pointer flex flex-col items-center ${
+                                field.value === iconObj.name
+                                  ? "bg-blue-900/70 border border-blue-400 text-white"
+                                  : "bg-gray-800/70 border border-gray-700 text-gray-200 hover:bg-gray-700/70 hover:border-gray-500"
+                              }`}
                             >
                               <IconComponent className="w-6 h-6 mb-1 text-white" />
                               <span className="text-xs text-center truncate w-full font-medium">{iconObj.name}</span>
@@ -2222,10 +2282,11 @@ function AddDeviceDialog({
                             return (
                               <div
                                 key={day}
-                                className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-gray-200/20 text-gray-500"
-                                  }`}
+                                className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
+                                  field.value?.includes(dayLower)
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-200/20 text-gray-500"
+                                }`}
                                 onClick={() => {
                                   const updatedDays = field.value?.includes(dayLower)
                                     ? field.value.filter((d: string) => d !== dayLower)
@@ -2304,9 +2365,9 @@ function AddDeviceDialog({
                       <p className="font-medium text-gray-800">
                         {form.watch("days")?.length
                           ? form
-                            .watch("days")
-                            .map((d: string) => d.substring(0, 3))
-                            .join(", ")
+                              .watch("days")
+                              .map((d: string) => d.substring(0, 3))
+                              .join(", ")
                           : "None selected"}
                       </p>
                     </div>
@@ -2351,10 +2412,10 @@ function EditDeviceDialog({
   onDeviceUpdated: (device: Device) => void
 }) {
   const [error, setError] = useState<string | null>(null)
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null)
   const [householdCode, setHouseholdCode] = useState<string | null>(null)
 
-  const deviceId = device?.id;
+  const deviceId = device?.id
 
   const form = useForm({
     defaultValues: {
@@ -2367,18 +2428,18 @@ function EditDeviceDialog({
   })
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id");
+    const storedUserId = localStorage.getItem("user_id")
     if (storedUserId) {
-      setUserId(Number(storedUserId)); // Convert the string to a number
+      setUserId(Number(storedUserId)) // Convert the string to a number
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    const storedHouseholdCode = localStorage.getItem("household_code");
+    const storedHouseholdCode = localStorage.getItem("household_code")
     if (storedHouseholdCode) {
-      setHouseholdCode(storedHouseholdCode);
+      setHouseholdCode(storedHouseholdCode)
     }
-  }, []);
+  }, [])
 
   // Update form values when device changes
   useEffect(() => {
@@ -2409,7 +2470,6 @@ function EditDeviceDialog({
         },
       }
 
-
       // Update the device in the backend
       const response = await fetch(`/api/auth/editdevices`, {
         method: "PUT",
@@ -2438,8 +2498,6 @@ function EditDeviceDialog({
         setError(result.detail || "Failed to update device")
         return
       }
-
-
 
       if (result.success) {
         // Update the device in the UI
@@ -2572,10 +2630,11 @@ function EditDeviceDialog({
                           return (
                             <div
                               key={day}
-                              className={`px-3 py-1 rounded-full text-sm cursor-pointer ${field.value?.includes(dayLower)
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200/20 text-gray-500"
-                                }`}
+                              className={`px-3 py-1 rounded-full text-sm cursor-pointer ${
+                                field.value?.includes(dayLower)
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-200/20 text-gray-500"
+                              }`}
                               onClick={() => {
                                 const updatedDays = field.value?.includes(dayLower)
                                   ? field.value.filter((d: string) => d !== dayLower)
@@ -2614,3 +2673,4 @@ function EditDeviceDialog({
     </Dialog>
   )
 }
+

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Zap, Lamp, Speaker, Tv, Computer, Fan, RefrigeratorIcon, Settings } from "lucide-react"
+import { Zap, Lamp, Speaker, Tv, Computer, Fan, RefrigeratorIcon, Settings, Sun, Moon } from "lucide-react"
 
 // UI & Icons
 import { Button } from "@/components/ui/button"
@@ -65,6 +65,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // -----------------------------------------------------------------
 // 1) PLACEHOLDER DATA FOR BACKEND INTEGRATION
@@ -202,7 +203,7 @@ export default function HomePage() {
   // Current tip index for rotating tips
   const [currentTip, setCurrentTip] = useState(0)
 
-  // Simulated “live wattage” for demonstration
+  // Simulated "live wattage" for demonstration
   const [liveWattage, setLiveWattage] = useState(0)
 
   // Determine screen sizes for responsiveness
@@ -210,9 +211,50 @@ export default function HomePage() {
   const [isTablet, setIsTablet] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
 
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("darkMode") === "true"
+    }
+    return false
+  })
+
+  const [userAvatar, setUserAvatar] = useState<string>("/placeholder.svg?height=40&width=40")
+  const [userName, setUserName] = useState<string>("User")
+
+  // Load dark mode preference from localStorage on initial render
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem("darkMode") === "true"
+    setIsDarkMode(savedDarkMode)
+    // Apply dark mode class to the document element
+    if (savedDarkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [])
+
+  // Save dark mode preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("darkMode", isDarkMode.toString())
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [isDarkMode])
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev)
+  }
+
   // State for top active devices and rooms
   const [topActiveDevices, setTopActiveDevices] = useState<Device[]>([])
   const [topActiveRooms, setTopActiveRooms] = useState<Room[]>([])
+
+  // State for electricity usage and cost savings from efficiency metrics
+  const [electricityUsage, setElectricityUsage] = useState<number | null>(null)
+  const [costSavings, setCostSavings] = useState<number | null>(null)
 
   // Watch for screen-size changes
   useEffect(() => {
@@ -227,7 +269,7 @@ export default function HomePage() {
     return () => window.removeEventListener("resize", checkScreenSize)
   }, [])
 
-  // Simulate live wattage (you’d replace this with real-time data from your backend)
+  // Simulate live wattage (you'd replace this with real-time data from your backend)
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveWattage((prev) => {
@@ -254,14 +296,46 @@ export default function HomePage() {
 
   // Example logout handler
   const handleLogout = async () => {
-    // In real scenario, you’d call your logout endpoint
+    // In real scenario, you'd call your logout endpoint
     await fetch("/api/auth/logout", { method: "POST" })
     router.push("/login")
   }
 
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem("user_id")
+      if (!userId) return
+
+      try {
+        const response = await fetch(`/api/auth/profile_pic?user_id=${encodeURIComponent(userId)}`)
+        const result = await response.json()
+
+        if (result.success && result.avatar_url) {
+          setUserAvatar(result.avatar_url)
+        }
+
+        // Also fetch user details to get the name
+        const userResponse = await fetch(`/api/auth/get_user_details?user_id=${userId}`)
+        const userData = await userResponse.json()
+
+        if (userData.success && userData.user.name) {
+          setUserName(userData.user.name)
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
+
   // Glass card style
-  const glassCardStyle =
-    "bg-white/20 backdrop-blur-md border border-white/30 shadow-xl dark:bg-blue-900/20 dark:border-blue-300/20"
+  const glassCardStyle = `p-5 rounded-xl transition-all duration-300 overflow-hidden relative group
+  ${
+    isDarkMode
+      ? "backdrop-blur-lg bg-gray-900/40 border border-gray-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
+      : "backdrop-blur-lg bg-white/60 border border-white/50 shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.25)]"
+  }`
 
   // Fetch top active rooms
   const fetchTopActiveRooms = async () => {
@@ -318,14 +392,49 @@ export default function HomePage() {
       console.error("Error fetching top active devices:", error)
     }
   }
+
+  const fetchEfficiencyMetrics = async () => {
+    try {
+      const householdCode = localStorage.getItem("household_code")
+      if (!householdCode) {
+        console.error("Household code not found in local storage")
+        return
+      }
+
+      const response = await fetch(`/api/auth/efficiency_metrics?household_code=${householdCode}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch efficiency metrics")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        console.log("Efficiency metrics data:", data.data.data)
+        setElectricityUsage(data.data.data.electricityUsage)
+        setCostSavings(data.data.data.costSavings)
+      } else {
+        console.error("Error fetching efficiency metrics:", data.message)
+      }
+    } catch (error) {
+      console.error("Error fetching efficiency metrics:", error)
+    }
+  }
+
   // Fetch data on component mount
   useEffect(() => {
     fetchTopActiveRooms()
     fetchTopActiveDevices()
+    fetchEfficiencyMetrics()
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-blue-800 overflow-x-hidden">
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        background: isDarkMode
+          ? "radial-gradient(circle, rgba(87,119,94,1) 0%, rgba(79,74,116,1) 100%)"
+          : "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
+      }}
+    >
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-[10%] w-72 h-72 bg-blue-200/20 dark:bg-blue-400/10 rounded-full blur-3xl"></div>
@@ -338,7 +447,11 @@ export default function HomePage() {
         {/* Header */}
         <header
           className="backdrop-blur-sm border-b border-gray-200 dark:border-white/10 sticky top-0 z-20"
-          style={{ background: "radial-gradient(circle, rgba(174,238,189,0.7) 0%, rgba(159,148,233,0.7) 100%)" }}
+          style={{
+            background: isDarkMode
+              ? "rgba(87,119,94,0.7)"
+              : "radial-gradient(circle, rgba(174,238,189,0.7) 0%, rgba(159,148,233,0.7) 100%)",
+          }}
         >
           <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -358,13 +471,26 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center">
+              <Button
+                size="icon"
+                variant="outline"
+                className="rounded-full backdrop-blur-md bg-white/10 border-white/20 mr-2"
+                onClick={toggleDarkMode}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-10 h-10 rounded-full p-0 bg-gray-100 dark:bg-blue-800/50 border border-gray-200 dark:border-blue-700/50"
+                    className="w-10 h-10 rounded-full p-0 overflow-hidden bg-transparent hover:bg-gray-100/10 dark:hover:bg-blue-800/70"
                   >
-                    <img src="/placeholder.svg?height=40&width=40" alt="User" className="w-8 h-8 rounded-full" />
+                    <Avatar className="w-full h-full border border-gray-200 dark:border-blue-700/50">
+                      <AvatarImage src={userAvatar} alt={userName} />
+                      <AvatarFallback className="bg-gray-100 dark:bg-blue-800/50 text-gray-800 dark:text-blue-100">
+                        {userName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
@@ -390,12 +516,7 @@ export default function HomePage() {
         </header>
 
         {/* Main content area */}
-        <div
-          className="max-w-7xl mx-auto px-4 py-6 relative overflow-hidden"
-          style={{
-            background: "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
-          }}
-        >
+        <div className="max-w-7xl mx-auto px-4 py-6 relative overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute top-10 right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 left-10 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
@@ -460,7 +581,7 @@ export default function HomePage() {
               <div
                 className="absolute w-[40%] h-[40%] rounded-full blur-[80px] opacity-[0.03] dark:opacity-[0.04] animate-[drift_25s_ease-in-out_infinite]"
                 style={{
-                  background: "radial-gradient(circle, rgba(147, 197, 253, 0.8) 0%, transparent 70%)",
+                  background: "radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)",
                   top: "20%",
                   left: "10%",
                 }}
@@ -468,7 +589,7 @@ export default function HomePage() {
               <div
                 className="absolute w-[50%] h-[50%] rounded-full blur-[100px] opacity-[0.03] dark:opacity-[0.04] animate-[drift_30s_ease-in-out_infinite_reverse]"
                 style={{
-                  background: "radial-gradient(circle, rgba(167, 243, 208, 0.8) 0%, transparent 70%)",
+                  background: "radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, transparent 70%)",
                   bottom: "10%",
                   right: "15%",
                   animationDelay: "-5s",
@@ -511,7 +632,7 @@ export default function HomePage() {
                     </div>
                     <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Current Usage</h2>
                   </div>
-                  <div className="flex items-center gap-3 bg-white/30 dark:bg-blue-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center gap-3 bg-white/30 dark:bg-gray-700/30 px-4 py-2 rounded-full self-start md:self-auto backdrop-blur-sm shadow-sm">
                     <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     <p className="text-sm font-medium text-green-600 dark:text-green-300">Live {liveWattage}W</p>
                   </div>
@@ -527,7 +648,7 @@ export default function HomePage() {
                           cy="50"
                           r="45"
                           fill="none"
-                          stroke="rgba(255,255,255,0.2)"
+                          stroke="rgba(0,0,0,0.1)"
                           className="dark:stroke-white/10"
                           strokeWidth="8"
                         />
@@ -544,8 +665,8 @@ export default function HomePage() {
                         />
                         <defs>
                           <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" className="text-blue-500" stopColor="currentColor" />
-                            <stop offset="100%" className="text-cyan-500" stopColor="currentColor" />
+                            <stop offset="0%" stopColor="#3B82F6" /> {/* blue-500 */}
+                            <stop offset="100%" stopColor="#06B6D4" /> {/* cyan-500 */}
                           </linearGradient>
                         </defs>
                       </svg>
@@ -560,23 +681,25 @@ export default function HomePage() {
 
                   {/* Middle column - Cost and usage details */}
                   <div className="flex flex-col justify-center items-center md:items-start space-y-6">
-                    <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Current Cost</p>
+                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full">
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Cost Savings</p>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                        AED {currentUsage.amount}
+                        AED {costSavings !== null ? Math.round(costSavings) : "-"}
                       </p>
+                      <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
-                    <div className="text-center md:text-left bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm w-full">
-                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Energy Used</p>
+                    <div className="text-center md:text-left bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm w-full">
+                      <p className="text-sm text-gray-600 dark:text-blue-300 mb-1">Electricity Usage</p>
                       <p className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white">
-                        {currentUsage.kwh} kWh
+                        {electricityUsage !== null ? `${electricityUsage} kWh` : "-"}
                       </p>
+                      <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>
                   </div>
 
                   {/* Right column - Additional stats */}
                   <div className="flex flex-col justify-center space-y-6">
-                    <div className="bg-white/30 dark:bg-blue-800/30 p-4 rounded-xl border border-white/30 dark:border-blue-700/30 backdrop-blur-sm shadow-sm">
+                    <div className="bg-white/30 dark:bg-gray-800/30 p-4 rounded-xl border border-white/30 dark:border-gray-700/30 backdrop-blur-sm shadow-sm">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-700/50">
                           <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-300" />
@@ -588,7 +711,7 @@ export default function HomePage() {
                       </p>
                     </div>
 
-                    <div className="bg-white/20 dark:bg-blue-800/20 p-4 rounded-xl border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
+                    <div className="bg-white/20 dark:bg-gray-800/20 p-4 rounded-xl border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-600 dark:text-blue-300 font-medium">Budget Progress</span>
                         <span className="text-gray-600 dark:text-blue-300">
@@ -609,27 +732,27 @@ export default function HomePage() {
               </div>
 
               {/* Bottom stats bar */}
-              <div className="bg-white/30 dark:bg-blue-900/40 border-t border-white/30 dark:border-blue-800/30 p-5 md:p-6 backdrop-blur-sm">
+              <div className="bg-white/30 dark:bg-gray-900/40 border-t border-white/30 dark:border-gray-800/30 p-5 md:p-6 backdrop-blur-sm">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
+                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Daily Average</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       AED {(Number.parseFloat(currentUsage.amount) / 30).toFixed(2)}
                     </p>
                   </div>
-                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
+                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Projected Monthly</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       AED {((Number.parseFloat(currentUsage.amount) * 30) / new Date().getDate()).toFixed(2)}
                     </p>
                   </div>
-                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
+                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Active Devices</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {topActiveDevices?.filter((d) => d.active).length}
                     </p>
                   </div>
-                  <div className="text-center bg-white/20 dark:bg-blue-800/20 p-3 rounded-lg border border-white/20 dark:border-blue-700/20 backdrop-blur-sm">
+                  <div className="text-center bg-white/20 dark:bg-gray-800/20 p-3 rounded-lg border border-white/20 dark:border-gray-700/20 backdrop-blur-sm">
                     <p className="text-xs text-gray-500 dark:text-blue-300 mb-1">Total Rooms</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">{topActiveRooms?.length || 0}</p>
                   </div>
@@ -653,7 +776,7 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-blue-700/50"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-gray-700/50"
                     onClick={fetchTopActiveDevices}
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -666,14 +789,14 @@ export default function HomePage() {
                       whileHover={{ x: 5 }}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
                         device.active
-                          ? "bg-blue-50/50 border-blue-200/50 dark:bg-blue-700/30 dark:border-blue-600/50 backdrop-blur-sm"
-                          : "bg-white/30 border-white/30 dark:bg-blue-800/30 dark:border-blue-700/30 backdrop-blur-sm"
+                          ? "bg-blue-50/50 border-blue-200/50 dark:bg-gray-700/30 dark:border-gray-600/50 backdrop-blur-sm"
+                          : "bg-white/30 border-white/30 dark:bg-gray-800/30 dark:border-gray-700/30 backdrop-blur-sm"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            device.active ? "bg-blue-100/70 dark:bg-blue-600/50" : "bg-white/50 dark:bg-blue-800/50"
+                            device.active ? "bg-blue-100/70 dark:bg-blue-600/50" : "bg-white/50 dark:bg-gray-800/50"
                           }`}
                         >
                           {React.createElement(device.icon, {
@@ -710,7 +833,7 @@ export default function HomePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-blue-700/50"
+                    className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-blue-300 dark:hover:text-white hover:bg-white/20 dark:hover:bg-gray-700/50"
                     onClick={fetchTopActiveRooms}
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -721,7 +844,7 @@ export default function HomePage() {
                     <motion.div
                       key={index}
                       whileHover={{ y: -5 }}
-                      className="bg-white/30 dark:bg-blue-800/30 p-4 rounded-lg border border-white/30 dark:border-blue-700/30 flex flex-col items-center backdrop-blur-sm"
+                      className="bg-white/30 dark:bg-gray-800/30 p-4 rounded-lg border border-white/30 dark:border-gray-700/30 flex flex-col items-center backdrop-blur-sm"
                     >
                       <div className="w-12 h-12 rounded-full bg-white/50 dark:bg-blue-700/30 flex items-center justify-center mb-2">
                         {React.createElement(room.icon, { className: "w-6 h-6 text-gray-500 dark:text-blue-300" })}
@@ -762,7 +885,7 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.5 }}
-              className="bg-white/30 dark:bg-blue-700/20 rounded-xl p-4 border border-white/30 dark:border-blue-600/30 backdrop-blur-sm"
+              className="bg-white/30 dark:bg-gray-700/20 rounded-xl p-4 border border-white/30 dark:border-gray-600/30 backdrop-blur-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="flex-1">
@@ -792,4 +915,3 @@ export default function HomePage() {
     </div>
   )
 }
-

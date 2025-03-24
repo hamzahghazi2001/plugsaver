@@ -756,7 +756,7 @@ async def get_top_active_rooms(household_code: str = Query(...)):
 async def get_top_active_devices(household_code: str = Query(...)):
     try:
         # Fetch all devices for the household
-        devices_result = supabase.table("devices").select("device_id, device_name, power, icon").eq("household_code", household_code).execute()
+        devices_result = supabase.table("devices").select("device_id, device_name, power, icon, isOn").eq("household_code", household_code).execute()
         if not devices_result.data:
             return {"success": False, "message": "No devices found for this household."}
 
@@ -764,13 +764,16 @@ async def get_top_active_devices(household_code: str = Query(...)):
         devices_with_power = []
         for device in devices_result.data:
             power_str = device["power"]  # e.g., "44W"
+            isOn = device["isOn"]
             power = int(power_str[:-1]) if power_str and power_str[-1] == "W" else 0  # Remove "W" and convert to int
             icon_name = device["icon"].get("name", "plug")  # Extract the "name" field from the JSONB icon object
             devices_with_power.append({
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "power": power,
+                "active" : isOn,
                 "icon": icon_name  # Send only the icon name
+
             })
 
         # Sort devices by power in descending order and get the top 4

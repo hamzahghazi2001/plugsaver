@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Smartphone, LayoutDashboard, Award, Settings } from "lucide-react"
@@ -14,6 +15,33 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname()
+  const [userName, setUserName] = useState<string>("User")
+  const [userEmail, setUserEmail] = useState<string>("user@example.com")
+
+  // Fetch user details on component mount
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const userId = localStorage.getItem("user_id")
+      if (!userId) return
+
+      try {
+        const response = await fetch(`/api/auth/get_user_details?user_id=${userId}`)
+        const data = await response.json()
+
+        if (data.success) {
+          // Update the user state with fetched details
+          setUserName(data.user.name || "User")
+          setUserEmail(data.user.email || "user@example.com")
+        } else {
+          console.error("Failed to fetch user details:", data.message)
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error)
+      }
+    }
+
+    fetchUserDetails()
+  }, [])
 
   return (
     <>
@@ -120,11 +148,11 @@ export function Navigation() {
         <div className="p-4 border-t border-gray-700/50">
           <div className="flex items-center space-x-3 px-3 py-2 text-sm text-gray-400">
             <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-              <span className="text-xs font-medium">U</span>
+              <span className="text-xs font-medium">{userName.charAt(0)}</span>
             </div>
             <div>
-              <p className="text-gray-300">Demo User</p>
-              <p className="text-xs">demo@example.com</p>
+              <p className="text-gray-300">{userName}</p>
+              <p className="text-xs">{userEmail}</p>
             </div>
           </div>
         </div>
