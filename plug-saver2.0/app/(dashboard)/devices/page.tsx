@@ -714,8 +714,12 @@ export default function DevicesPage() {
     } else {
       newPower = "0W"
     }
+
+    // Store the power value in the device's data for consistency
+    const updatedDevice = { ...device, isOn: newIsOn, power: newPower }
+
     // Optimistically update the UI
-    setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: newIsOn, power: newPower } : d)))
+    setDevices(devices.map((d) => (d.id === deviceId ? updatedDevice : d)))
 
     try {
       // Send the updated state to the backend
@@ -724,7 +728,13 @@ export default function DevicesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ deviceId, isOn: newIsOn, power: newPower, householdCode, userId }), // Include power in the request
+        body: JSON.stringify({
+          deviceId,
+          isOn: newIsOn,
+          power: newPower,
+          householdCode,
+          userId,
+        }),
       })
       const data = await response.json()
 
@@ -740,6 +750,8 @@ export default function DevicesPage() {
     } catch (error) {
       console.error("Error toggling device:", error)
       setError("An error occurred while toggling the device")
+      // Revert the optimistic update if there's an error
+      setDevices(devices.map((d) => (d.id === deviceId ? { ...d, isOn: !newIsOn, power: device.power } : d)))
     }
   }
 
@@ -1059,19 +1071,7 @@ export default function DevicesPage() {
                     <span className="text-sm ml-1 text-gray-400">W</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mr-3 shadow-inner">
-                  <Tv className="w-6 h-6 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-300 uppercase tracking-wide">This Month</p>
-                  <div className="flex items-baseline">
-                    <p className="text-2xl font-bold">0</p>
-                    <span className="text-sm ml-1 text-gray-400">kWh</span>
-                  </div>
-                </div>
+             
               </div>
             </div>
           </div>
