@@ -2,6 +2,7 @@ from supabase import create_client
 import app.config as config
 from operator import itemgetter
 import json
+import random
 
 supabase = create_client(config.SUPABASE_URL,config.SUPABASE_KEY)
 
@@ -110,13 +111,17 @@ def get_rewards(rewards_id):
 def send_results(sent_list):
     sorted_list = []
     for x in sent_list:
-        name = supabase.table('users').select('name').eq('user_id', x.get('rewards_id')).execute()
-        record = {"name": name.data[0].get('name'), "points": x.get('points')}
+        nameandpfp = supabase.table('users').select('name, avatar').eq('user_id', x.get('rewards_id')).execute()
+        avatar = nameandpfp.data[0].get('avatar')
+        if avatar == "NULL":
+            avatar = "/placeholder.svg"
+        record = {"avatar": nameandpfp.data[0].get('avatar'), "name": nameandpfp.data[0].get('name'), "points": x.get('points')}
         sorted_list.append(record)
     
     # Ensure the list has at least 4 entries, filling with empty data if necessary
     while len(sorted_list) < 4:
-        record = {"name": "No more people", "points": 0}
+        rand = random.randint(1, 100)
+        record = {"avatar": "https://i.pravatar.cc/150?img="+ str(rand) , "name": "No more people", "points": 0}
         sorted_list.insert(0, record)
     
     return [sorted_list[-1], sorted_list[-2], sorted_list[-3], sorted_list[-4]]

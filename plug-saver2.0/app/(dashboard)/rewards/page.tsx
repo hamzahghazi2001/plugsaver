@@ -156,25 +156,28 @@ export default function RewardsPage() {
 
           const householdData = Array.isArray(rewards.household)
             ? rewards.household.map((entry: LeaderboardEntry, i: number) => ({
-                ...entry,
+                name: entry.name,
+                points: entry.points,
                 rank: i + 1,
-                avatar: `https://i.pravatar.cc/150?img=${i + 5}`,
+                avatar: entry.avatar,
               }))
             : []
 
           const localData = Array.isArray(rewards.local)
             ? rewards.local.map((entry: LeaderboardEntry, i: number) => ({
-                ...entry,
-                rank: i + 1,
-                avatar: `https://i.pravatar.cc/150?img=${i + 20}`,
+              name: entry.name,
+              points: entry.points,
+              rank: i + 1,
+              avatar: entry.avatar,
               }))
             : []
 
           const globalData = Array.isArray(rewards.global)
             ? rewards.global.map((entry: LeaderboardEntry, i: number) => ({
-                ...entry,
-                rank: i + 1,
-                avatar: `https://i.pravatar.cc/150?img=${i + 30}`,
+              name: entry.name,
+              points: entry.points,
+              rank: i + 1,
+              avatar: entry.avatar,
               }))
             : []
 
@@ -277,7 +280,6 @@ export default function RewardsPage() {
           { name: "Taylor Swift", points: 680, rank: 2, avatar: "https://i.pravatar.cc/150?img=29" },
           { name: "You", points: 320, rank: 5, avatar: "https://i.pravatar.cc/150?img=8" },
           { name: "Chris Evans", points: 310, rank: 6, avatar: "https://i.pravatar.cc/150?img=15" },
-          { name: "Lisa Johnson", points: 290, rank: 7, avatar: "https://i.pravatar.cc/150?img=23" },
         ],
         global: [
           { name: "John Smith", points: 980, rank: 1, avatar: "https://i.pravatar.cc/150?img=3" },
