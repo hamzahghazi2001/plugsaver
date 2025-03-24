@@ -1017,8 +1017,16 @@ export default function DevicesPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-20 rounded-xl"></div>
         {/* Energy Consumption Card */}
         <Card
-          className={`${styles.cardStyle} md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative border-blue-500/20`}
+          className={`${styles.cardStyle} md:col-span-2 lg:col-span-3 p-5 overflow-hidden relative ${
+            isDarkMode
+              ? "border-blue-500/20"
+              : "bg-white/40 backdrop-blur-2xl border-2 border-white/60 shadow-xl hover:shadow-2xl transition-all duration-300"
+          }`}
         >
+          {/* Add frost overlay for light mode only */}
+          {!isDarkMode && (
+            <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-blue-50/30 -z-10 pointer-events-none"></div>
+          )}
           {/* Enhanced decorative background elements */}
           <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-blue-500/10 blur-2xl animate-pulse-slow"></div>
           <div className="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl"></div>
