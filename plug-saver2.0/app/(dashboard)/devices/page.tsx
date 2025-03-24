@@ -1056,7 +1056,7 @@ export default function DevicesPage() {
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
-              <h2 className="text-sm text-black-300">Energy Consumption</h2>
+            <h2 className="text-xl font-semibold">Energy Consumption</h2>
               <p className="text-sm text-black-300">Current device usage</p>
             </div>
 
