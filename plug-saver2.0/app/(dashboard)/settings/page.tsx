@@ -82,6 +82,21 @@ export default function SettingsPage() {
     return false
   })
 
+  // Accessibility states
+  const [isHighContrast, setIsHighContrast] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("highContrast") === "true"
+    }
+    return false
+  })
+
+  const [isLargeText, setIsLargeText] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("largeText") === "true"
+    }
+    return false
+  })
+
   // Apply dark mode class to the document element
   useEffect(() => {
     if (isDarkMode) {
@@ -92,9 +107,93 @@ export default function SettingsPage() {
     localStorage.setItem("darkMode", isDarkMode.toString())
   }, [isDarkMode])
 
+  // Apply high contrast mode - simplified to just apply dark mode with yellow text
+  useEffect(() => {
+    // Store the setting in localStorage
+    localStorage.setItem("highContrast", isHighContrast.toString())
+
+    if (isHighContrast) {
+      // Force dark mode when high contrast is enabled
+      document.documentElement.classList.add("dark")
+
+      // Add a style tag for high contrast mode
+      let styleTag = document.getElementById("high-contrast-style")
+      if (!styleTag) {
+        styleTag = document.createElement("style")
+        styleTag.id = "high-contrast-style"
+        document.head.appendChild(styleTag)
+      }
+
+      // Set yellow text color for common text elements
+      styleTag.textContent = `
+        body, h1, h2, h3, h4, h5, h6, p, span, div, button, a, label, input, textarea, select {
+          color: #ffff00 !important;
+        }
+      `
+    } else {
+      // Remove the high contrast style tag when disabled
+      const styleTag = document.getElementById("high-contrast-style")
+      if (styleTag) {
+        styleTag.remove()
+      }
+
+      // Only remove dark mode if it wasn't enabled separately
+      if (localStorage.getItem("darkMode") !== "true") {
+        document.documentElement.classList.remove("dark")
+      }
+    }
+  }, [isHighContrast])
+
+  // Apply large text mode - fixed size of 18px
+  useEffect(() => {
+    // Store the setting in localStorage
+    localStorage.setItem("largeText", isLargeText.toString())
+
+    // Add or remove the large text style
+    let styleTag = document.getElementById("large-text-style")
+
+    if (isLargeText) {
+      if (!styleTag) {
+        styleTag = document.createElement("style")
+        styleTag.id = "large-text-style"
+        document.head.appendChild(styleTag)
+      }
+
+      // Set fixed 18px size for text elements
+      styleTag.textContent = `
+        body, p, span, div, button, a, label, input, textarea, select {
+          font-size: 18px !important;
+        }
+        h1 { font-size: 32px !important; }
+        h2 { font-size: 28px !important; }
+        h3 { font-size: 24px !important; }
+        h4 { font-size: 22px !important; }
+        h5 { font-size: 20px !important; }
+        h6 { font-size: 18px !important; }
+        .text-xs { font-size: 14px !important; }
+        .text-sm { font-size: 16px !important; }
+      `
+    } else {
+      // Remove the style tag when large text is disabled
+      if (styleTag) {
+        styleTag.remove()
+      }
+    }
+  }, [isLargeText])
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev)
+  }
+
+  // Toggle high contrast mode
+  const toggleHighContrast = () => {
+    setIsHighContrast((prev) => !prev)
+  }
+
+  // Toggle large text mode
+  const toggleLargeText = () => {
+    setIsLargeText((prev) => !prev)
   }
 
   useEffect(() => {
@@ -223,8 +322,8 @@ export default function SettingsPage() {
       tipsAndTricks: true,
     },
     accessibility: {
-      highContrast: false,
-      largeText: false,
+      highContrast: isHighContrast,
+      largeText: isLargeText,
       theme: "system",
     },
     household: {
@@ -734,14 +833,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-5 border-t">
-  <Button 
-    variant="outline" 
-    className="w-full"
-    onClick={() => router.push('/changepassword')}
-  >
-    Change Password
-  </Button>
-</div>
+          <Button variant="outline" className="w-full" onClick={() => router.push("/changepassword")}>
+            Change Password
+          </Button>
+        </div>
       </div>
     </>
   )
@@ -810,7 +905,6 @@ export default function SettingsPage() {
   }: { managerId: number | null; householdCode: string | null; inDialog?: boolean }) => {
     const loggedInUserId = localStorage.getItem("user_id") // Get the logged-in user's ID
     const isManager = user.role === "manager" // Check if the logged-in user is a manager
-    //const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null); // Track the selected member ID
 
     const handleManageClick = (memberId: number) => {
       setSelectedMemberId(Number(memberId)) // Set the selected member ID
@@ -827,7 +921,7 @@ export default function SettingsPage() {
 
         <div className="space-y-6">
           {/* Current User (Logged-In User) */}
-          <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+          <div className="flex items-center justify-between backdrop-blur-md bg-white/40 dark:bg-gray-800/40 p-3 rounded-md border border-white/50 dark:border-gray-700/50">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={user.avatar} />
@@ -847,7 +941,7 @@ export default function SettingsPage() {
               .map((member) => (
                 <div
                   key={member.user_id}
-                  className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 rounded-md"
+                  className="flex items-center justify-between backdrop-blur-md bg-white/40 dark:bg-gray-800/40 p-3 rounded-md border border-white/50 dark:border-gray-700/50"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
@@ -912,10 +1006,27 @@ export default function SettingsPage() {
   }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [manageMemberPermissions, setManageMemberPermissions] = useState({
-      control: true,
-      configure: true,
+
+    // Load permissions from localStorage or use defaults
+    const [manageMemberPermissions, setManageMemberPermissions] = useState(() => {
+      if (typeof window !== "undefined" && memberId) {
+        const savedPermissions = localStorage.getItem(`member_permissions_${memberId}`)
+        if (savedPermissions) {
+          return JSON.parse(savedPermissions)
+        }
+      }
+      return {
+        control: true,
+        configure: true,
+      }
     })
+
+    // Save permissions to localStorage whenever they change
+    useEffect(() => {
+      if (typeof window !== "undefined" && memberId) {
+        localStorage.setItem(`member_permissions_${memberId}`, JSON.stringify(manageMemberPermissions))
+      }
+    }, [manageMemberPermissions, memberId])
 
     const handleSavePermissions = async () => {
       setLoading(true)
@@ -1014,15 +1125,8 @@ export default function SettingsPage() {
     )
   }
 
+  // Update the AccessibilityContent component to use direct state management
   const AccessibilityContent = ({ inDialog = true }) => {
-    // Handle theme change
-    const handleThemeChange = (value: string) => {
-      if (value === "light") {
-        setIsDarkMode(false) // Disable dark mode
-      } else if (value === "dark") {
-        setIsDarkMode(true) // Enable dark mode
-      }
-    }
     return (
       <>
         {inDialog ? (
@@ -1035,26 +1139,18 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-base">High Contrast</Label>
-              <p className="text-sm text-gray-400">Increase color contrast</p>
+              <p className="text-sm text-gray-400">Increase color contrast with yellow text on dark background</p>
             </div>
-            <Switch
-              checked={settings.accessibility.highContrast}
-              onCheckedChange={(checked) => handleToggleChange("accessibility", "highContrast", checked)}
-            />
+            <Switch checked={isHighContrast} onCheckedChange={toggleHighContrast} />
           </div>
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label className="text-base">Large Text</Label>
-              <p className="text-sm text-gray-400">Increase text size</p>
+              <p className="text-sm text-gray-400">Increase text size throughout the application</p>
             </div>
-            <Switch
-              checked={settings.accessibility.largeText}
-              onCheckedChange={(checked) => handleToggleChange("accessibility", "largeText", checked)}
-            />
+            <Switch checked={isLargeText} onCheckedChange={toggleLargeText} />
           </div>
-
-       
         </div>
       </>
     )
@@ -1129,7 +1225,10 @@ export default function SettingsPage() {
                 a: "You can reset your password by clicking on 'Forgot Password' on the login screen.",
               },
             ].map((item, i) => (
-              <div key={i} className="p-3 bg-gray-100 dark:bg-gray-800 rounded-md">
+              <div
+                key={i}
+                className="p-3 backdrop-blur-md bg-white/40 dark:bg-gray-800/40 rounded-md border border-white/50 dark:border-gray-700/50"
+              >
                 <p className="font-medium text-sm">{item.q}</p>
                 <p className="text-xs text-gray-500 mt-1">{item.a}</p>
               </div>
@@ -1223,59 +1322,56 @@ export default function SettingsPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-4">Customize your dashboard and widgets</p>
       )}
 
-      
-
-        <div className="space-y-3">
-          <Label className="text-base">Visible Widgets</Label>
-
-          <div className="space-y-2">
-            {[
-              { id: "energy-usage", label: "Energy Usage", enabled: true },
-              { id: "active-devices", label: "Active Devices", enabled: true },
-              { id: "savings-chart", label: "Savings Chart", enabled: true },
-              { id: "energy-tips", label: "Energy Saving Tips", enabled: true },
-              { id: "carbon-footprint", label: "Carbon Footprint", enabled: true },
-            ].map((widget) => (
-              <div
-                key={widget.id}
-                className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded-md"
-              >
-                <span className="text-sm">{widget.label}</span>
-                <Switch defaultChecked={widget.enabled} />
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="space-y-3">
+        <Label className="text-base">Visible Widgets</Label>
 
         <div className="space-y-2">
-          <Label className="text-base">Default Time Period</Label>
-          <RadioGroup defaultValue="day" className="flex gap-3">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="day" id="period-day" />
-              <Label htmlFor="period-day">Day</Label>
+          {[
+            { id: "energy-usage", label: "Energy Usage", enabled: true },
+            { id: "active-devices", label: "Active Devices", enabled: true },
+            { id: "savings-chart", label: "Savings Chart", enabled: true },
+            { id: "energy-tips", label: "Energy Saving Tips", enabled: true },
+            { id: "carbon-footprint", label: "Carbon Footprint", enabled: true },
+          ].map((widget) => (
+            <div
+              key={widget.id}
+              className="flex items-center justify-between p-2 backdrop-blur-md bg-white/40 dark:bg-gray-800/40 rounded-md border border-white/50 dark:border-gray-700/50"
+            >
+              <span className="text-sm">{widget.label}</span>
+              <Switch defaultChecked={widget.enabled} />
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="week" id="period-week" />
-              <Label htmlFor="period-week">Week</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="month" id="period-month" />
-              <Label htmlFor="period-month">Month</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="year" id="period-year" />
-              <Label htmlFor="period-year">Year</Label>
-            </div>
-          </RadioGroup>
+          ))}
         </div>
-      
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-base">Default Time Period</Label>
+        <RadioGroup defaultValue="day" className="flex gap-3">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="day" id="period-day" />
+            <Label htmlFor="period-day">Day</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="week" id="period-week" />
+            <Label htmlFor="period-week">Week</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="month" id="period-month" />
+            <Label htmlFor="period-month">Month</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="year" id="period-year" />
+            <Label htmlFor="period-year">Year</Label>
+          </div>
+        </RadioGroup>
+      </div>
     </>
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Updated Header Section */}
-      <div className="bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:to-purple-900/30 pb-16 relative overflow-hidden min-h-[200px]">
+    <div className="min-h-screen bg-gradient-to-b from-purple-500 via-purple-400 to-purple-100 dark:from-purple-900 dark:via-purple-800 dark:to-purple-900/30">
+      {/* Updated Header Section - Now the gradient spans the entire page */}
+      <div className="relative overflow-hidden min-h-[200px] pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 relative z-10">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
@@ -1288,7 +1384,7 @@ export default function SettingsPage() {
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl mb-6 md:mb-8 lg:mb-12">
+          <div className="rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-lg bg-white/60 dark:bg-gray-900/40 border border-white/50 dark:border-gray-700/50 shadow-[0_4px_20px_rgba(255,255,255,0.2)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.25)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transform transition-all duration-300 mb-6 md:mb-8 lg:mb-12">
             <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
               <div className="relative group">
                 <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-3 md:border-4 border-purple-100 dark:border-purple-900 shadow-md">
@@ -1323,14 +1419,14 @@ export default function SettingsPage() {
 
       {/* Updated Settings Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 lg:-mt-24 pb-16">
-        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 mb-8 border border-purple-100 dark:border-purple-900/50 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 transform transition-all duration-300 hover:shadow-2xl overflow-hidden">
+        <div className="relative rounded-xl shadow-xl p-6 mb-8 backdrop-blur-lg bg-white/60 dark:bg-gray-900/40 border border-white/50 dark:border-gray-700/50 shadow-[0_4px_20px_rgba(255,255,255,0.2)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.25)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transform transition-all duration-300 overflow-hidden">
           {/* Decorative Background Elements */}
           <div className="absolute -top-4 -left-4 w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
           <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-purple-100 dark:bg-purple-900/30 rounded-full blur-xl opacity-70"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-gradient-to-r from-purple-50/30 via-transparent to-purple-50/30 dark:from-purple-900/10 dark:via-transparent dark:to-purple-900/10 rounded-full blur-3xl -z-10"></div>
-          <div className="md:grid md:grid-cols-12 md:divide-x dark:divide-gray-700">
+          <div className="md:grid md:grid-cols-12">
             {/* Sidebar for desktop */}
-            <div className="hidden md:block md:col-span-3 lg:col-span-3 bg-gray-50 dark:bg-gray-900/50">
+            <div className="hidden md:block md:col-span-3 lg:col-span-3 backdrop-blur-md bg-white/40 dark:bg-gray-900/30 rounded-xl">
               <nav className="py-6 px-4">
                 <div className="space-y-8">
                   <div>
@@ -1341,8 +1437,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "profilePicture"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("profilePicture")}
                       >
@@ -1352,8 +1448,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "personalInfo"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("personalInfo")}
                       >
@@ -1363,8 +1459,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "dataSharing"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("dataSharing")}
                       >
@@ -1381,8 +1477,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "security"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("security")}
                       >
@@ -1392,8 +1488,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "notifications"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("notifications")}
                       >
@@ -1403,8 +1499,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "members"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("members")}
                       >
@@ -1414,8 +1510,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "accessibility"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("accessibility")}
                       >
@@ -1425,8 +1521,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "support"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("support")}
                       >
@@ -1436,8 +1532,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "household"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("household")}
                       >
@@ -1447,8 +1543,8 @@ export default function SettingsPage() {
                       <button
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md ${
                           activeDialog === "dashboard"
-                            ? "bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-100"
-                            : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            ? "bg-purple-100/70 text-purple-900 dark:bg-purple-500/20 dark:text-purple-100 backdrop-blur-sm"
+                            : "text-gray-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-800/50 backdrop-blur-sm"
                         }`}
                         onClick={() => openDialog("dashboard")}
                       >
@@ -1480,7 +1576,7 @@ export default function SettingsPage() {
                   </span>
                   Profile
                 </h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                <div className="space-y-1 backdrop-blur-md bg-white/40 dark:bg-gray-900/30 rounded-lg overflow-hidden border border-white/50 dark:border-gray-700/50">
                   <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
                   <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
                   <SettingsItem
@@ -1497,7 +1593,7 @@ export default function SettingsPage() {
                   </span>
                   Account and App
                 </h2>
-                <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
+                <div className="space-y-1 backdrop-blur-md bg-white/40 dark:bg-gray-900/30 rounded-lg overflow-hidden border border-white/50 dark:border-gray-700/50">
                   <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
                   <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
                   <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
@@ -1543,7 +1639,7 @@ export default function SettingsPage() {
                     ].map((item) => (
                       <button
                         key={item.dialog}
-                        className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        className="flex flex-col items-center p-4 backdrop-blur-lg bg-white/60 dark:bg-gray-800/40 rounded-lg border border-white/50 dark:border-gray-700/50 hover:bg-white/70 dark:hover:bg-gray-700/60 transition-colors shadow-[0_2px_10px_rgba(255,255,255,0.1)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_15px_rgba(255,255,255,0.2)] dark:hover:shadow-[0_4px_15px_rgba(0,0,0,0.2)]"
                         onClick={() => openDialog(item.dialog)}
                       >
                         <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-3">
@@ -1560,7 +1656,6 @@ export default function SettingsPage() {
                     <div>
                       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Profile Picture</h2>
                       <ProfilePictureContent inDialog={false} />
-                      
                     </div>
                   )}
                   {activeDialog === "personalInfo" && (
@@ -1585,7 +1680,6 @@ export default function SettingsPage() {
                         Data Sharing Preferences
                       </h2>
                       <DataSharingContent inDialog={false} />
-                      
                     </div>
                   )}
                   {activeDialog === "security" && (
@@ -1594,7 +1688,6 @@ export default function SettingsPage() {
                         Security and Privacy
                       </h2>
                       <SecurityContent inDialog={false} />
-                      
                     </div>
                   )}
                   {activeDialog === "notifications" && (
@@ -1615,21 +1708,18 @@ export default function SettingsPage() {
                     <div>
                       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Members</h2>
                       <MembersContent inDialog={false} managerId={managerId} householdCode={householdCode} />
-                    
                     </div>
                   )}
                   {activeDialog === "accessibility" && (
                     <div>
                       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Accessibility</h2>
                       <AccessibilityContent inDialog={false} />
-                      
                     </div>
                   )}
                   {activeDialog === "support" && (
                     <div>
                       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Support</h2>
                       <SupportContent inDialog={false} />
-                    
                     </div>
                   )}
                   {activeDialog === "household" && (
@@ -1666,6 +1756,50 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Dialogs for mobile view */}
+      <Dialog
+        open={activeDialog !== null && window.innerWidth < 768}
+        onOpenChange={(open) => !open && setActiveDialog(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {activeDialog === "profilePicture" && "Profile Picture"}
+              {activeDialog === "personalInfo" && "Personal Information"}
+              {activeDialog === "dataSharing" && "Data Sharing Preferences"}
+              {activeDialog === "security" && "Security and Privacy"}
+              {activeDialog === "notifications" && "Notifications"}
+              {activeDialog === "members" && "Members"}
+              {activeDialog === "accessibility" && "Accessibility"}
+              {activeDialog === "support" && "Support"}
+              {activeDialog === "household" && "Household"}
+              {activeDialog === "dashboard" && "Dashboard"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {activeDialog === "profilePicture" && <ProfilePictureContent />}
+          {activeDialog === "personalInfo" && <PersonalInfoContent />}
+          {activeDialog === "dataSharing" && <DataSharingContent />}
+          {activeDialog === "security" && <SecurityContent />}
+          {activeDialog === "notifications" && <NotificationsContent />}
+          {activeDialog === "members" && <MembersContent managerId={managerId} householdCode={householdCode} />}
+          {activeDialog === "accessibility" && <AccessibilityContent />}
+          {activeDialog === "support" && <SupportContent />}
+          {activeDialog === "household" && <HouseholdContent />}
+          {activeDialog === "dashboard" && <DashboardContent />}
+
+          <DialogFooter>
+            {saveSuccess && (
+              <p className="text-green-500 dark:text-green-300 flex items-center text-sm font-medium">
+                <CheckCircle className="w-4 h-4 mr-1 animate-pulse dark:text-green-300 dark:drop-shadow-[0_0_3px_rgba(134,239,172,0.5)]" />
+                <span className="dark:drop-shadow-[0_0_2px_rgba(134,239,172,0.3)]">Saved successfully</span>
+              </p>
+            )}
+            <Button onClick={handleSave}>{activeDialog === "support" ? "Close" : "Save Changes"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
