@@ -213,26 +213,10 @@ export default function RoleSelectionPage() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email") // Get email from query params
   const nameFromUrl = searchParams.get("name") // Get name from query params
-  // Update the state initializations to check localStorage first
-  const [selectedRole, setSelectedRole] = useState<"manager" | "member" | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("selectedRole") as "manager" | "member" | null
-    }
-    return null
-  })
+  const [selectedRole, setSelectedRole] = useState<"manager" | "member" | null>(null)
   const [householdCode, setHouseholdCode] = useState("")
-  const [isRoleConfirmed, setIsRoleConfirmed] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("isRoleConfirmed") === "true"
-    }
-    return false
-  })
-  const [isProfileSetup, setIsProfileSetup] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("isProfileSetup") === "true"
-    }
-    return false
-  })
+  const [isRoleConfirmed, setIsRoleConfirmed] = useState(false)
+  const [isProfileSetup, setIsProfileSetup] = useState(false) // New state for profile setup
   const [loading, setLoading] = useState(false)
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [user, setUser] = useState<{ avatar: string | null }>({ avatar: null })
@@ -248,12 +232,7 @@ export default function RoleSelectionPage() {
   })
   const [country, setCountry] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("") // New state for date of birth
-  const [isBudgetSetup, setIsBudgetSetup] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("isBudgetSetup") === "true"
-    }
-    return false
-  })
+  const [isBudgetSetup, setIsBudgetSetup] = useState(false) // New state for budget setup
   const [budget, setBudget] = useState<number>(500) // Default budget value
   const [isTransitioning, setIsTransitioning] = useState(false)
 
@@ -322,19 +301,6 @@ export default function RoleSelectionPage() {
     }
   }
 
-  // Update the handleConfirmRole function
-  const handleConfirmRole = () => {
-    if (selectedRole) {
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setIsRoleConfirmed(true)
-        localStorage.setItem("isRoleConfirmed", "true")
-        setIsTransitioning(false)
-      }, 1000) // Simulate loading for 1 second
-    }
-  }
-
-  // Update the handleContinueClick function to save state to localStorage
   const handleContinueClick = async () => {
     if (!email) {
       alert("Email not found. Please try again.")
@@ -357,8 +323,7 @@ export default function RoleSelectionPage() {
 
         if (data.success) {
           localStorage.setItem("household_code", householdCode)
-          setIsBudgetSetup(true)
-          localStorage.setItem("isBudgetSetup", "true")
+          setIsBudgetSetup(true) // Move to budget setup instead of profile setup
         } else {
           alert(data.message || "Failed to create household.")
         }
@@ -381,8 +346,7 @@ export default function RoleSelectionPage() {
 
         if (data.success) {
           localStorage.setItem("household_code", householdCode)
-          setIsProfileSetup(true)
-          localStorage.setItem("isProfileSetup", "true")
+          setIsProfileSetup(true) // Move to profile setup
         } else {
           alert(data.message || "Failed to join household.")
         }
@@ -397,46 +361,33 @@ export default function RoleSelectionPage() {
     }
   }
 
-  // Update the handleBudgetConfirm function
-  const handleBudgetConfirm = () => {
-    setIsTransitioning(true)
-    // Save budget to localStorage
-    localStorage.setItem("household_budget", budget.toString())
-    // Simulate loading for 1 second
-    setTimeout(() => {
-      // Move to profile setup
-      setIsProfileSetup(true)
-      localStorage.setItem("isProfileSetup", "true")
-      setIsTransitioning(false)
-    }, 1000)
+  const handleConfirmRole = () => {
+    if (selectedRole) {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setIsRoleConfirmed(true)
+        setIsTransitioning(false)
+      }, 1000) // Simulate loading for 1 second
+    }
   }
 
-  // Update the handleBackToRoleSelection function
   const handleBackToRoleSelection = () => {
     setIsTransitioning(true)
     setTimeout(() => {
       if (isProfileSetup) {
         setIsProfileSetup(false)
-        localStorage.setItem("isProfileSetup", "false")
         if (selectedRole === "manager") {
           setIsBudgetSetup(true)
-          localStorage.setItem("isBudgetSetup", "true")
         } else {
           setIsBudgetSetup(false)
-          localStorage.setItem("isBudgetSetup", "false")
           setIsRoleConfirmed(true)
-          localStorage.setItem("isRoleConfirmed", "true")
         }
       } else if (isBudgetSetup) {
         setIsBudgetSetup(false)
-        localStorage.setItem("isBudgetSetup", "false")
         setIsRoleConfirmed(true)
-        localStorage.setItem("isRoleConfirmed", "true")
       } else {
         setIsRoleConfirmed(false)
-        localStorage.setItem("isRoleConfirmed", "false")
         setSelectedRole(null)
-        localStorage.removeItem("selectedRole")
       }
       setIsTransitioning(false)
     }, 800) // Slightly shorter loading time for going back
@@ -543,6 +494,46 @@ export default function RoleSelectionPage() {
     }
   }
 
+  const handleBudgetConfirm = async () => {
+    setIsTransitioning(true);
+    
+    try {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+  
+      const response = await fetch("/api/auth/set_budget", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          budget: budget
+        }),
+      });
+  
+      const result = await response.json();
+  
+      if (!result.success) {
+        throw new Error(result.message || "Failed to save budget");
+      }
+  
+      // Save budget to localStorage as fallback
+      localStorage.setItem("household_budget", budget.toString());
+      
+      // Move to profile setup
+      setIsProfileSetup(true);
+      localStorage.setItem("isProfileSetup", "true");
+    } catch (error) {
+      console.error("Error saving budget:", error);
+      alert("An error occurred while saving the budget. Please try again.");
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
+
   const handleBudgetChange = (value: number) => {
     // Ensure the value is within range
     const newValue = Math.min(Math.max(0, value), 1000)
@@ -561,27 +552,6 @@ export default function RoleSelectionPage() {
     if (savedDateOfBirth) setDateOfBirth(savedDateOfBirth)
     if (savedCountry) setCountry(savedCountry)
   }, [nameFromUrl])
-
-  // Add useEffect hooks to save state changes to localStorage
-  useEffect(() => {
-    if (selectedRole) {
-      localStorage.setItem("selectedRole", selectedRole)
-    } else {
-      localStorage.removeItem("selectedRole")
-    }
-  }, [selectedRole])
-
-  useEffect(() => {
-    localStorage.setItem("isRoleConfirmed", isRoleConfirmed.toString())
-  }, [isRoleConfirmed])
-
-  useEffect(() => {
-    localStorage.setItem("isProfileSetup", isProfileSetup.toString())
-  }, [isProfileSetup])
-
-  useEffect(() => {
-    localStorage.setItem("isBudgetSetup", isBudgetSetup.toString())
-  }, [isBudgetSetup])
 
   return (
     <div

@@ -422,18 +422,43 @@ ${
     }
   }
 
+  const fetchMonthlyBudget = async () => {
+    try {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) {
+        console.error("User ID not found in local storage");
+        return;
+      }
+  
+      const response = await fetch(`/api/auth/set_budget?user_id=${userId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch budget");
+      }
+  
+      const data = await response.json();
+      if (data.success && data.budget !== undefined) {
+        setMonthlyBudget(data.budget);
+      } else {
+        console.error("Error fetching budget:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching budget:", error);
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     fetchTopActiveRooms()
     fetchTopActiveDevices()
     fetchEfficiencyMetrics()
+    fetchMonthlyBudget();
 
     // Calculate budget usage based on electricity usage (simulated for now)
     // In a real app, you would get this from your backend
     const calculateBudgetUsage = () => {
       // Simulate budget calculation based on electricity usage
       // Assuming 1 kWh costs about 0.5 AED
-      const estimatedCost = (electricityUsage || 0) * 0.5
+      const estimatedCost = (electricityUsage || 0) * 0.29
       setBudgetUsed(estimatedCost)
     }
 
@@ -782,7 +807,7 @@ ${
                         <p className="font-medium text-gray-900 dark:text-white">Cost Savings</p>
                       </div>
                       <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                        AED {costSavings !== null ? Math.round(costSavings) : "-"}
+                        AED {costSavings !== null && monthlyBudget !== null ? Math.round((monthlyBudget - costSavings)) : "-"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-blue-200 mt-1">This month</p>
                     </div>

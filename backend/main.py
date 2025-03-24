@@ -822,8 +822,40 @@ async def get_rewards_endpoint(rewards_id: str = Query(...)):
             status_code=500,
             content={"success": False, "message": f"An error occurred: {str(e)}"}
         )
+    
+# Add this to main.py with the other endpoints
+class SetBudgetRequest(BaseModel):
+    user_id: str
+    budget: float
 
+@app.post("/set_budget")
+async def set_budget_endpoint(request: SetBudgetRequest):
+    try:
+        # Update the user's budget in the database
+        update_result = supabase.from_("users").update({
+            "budget": request.budget
+        }).eq("user_id", request.user_id).execute()
 
+        if not update_result.data:
+            raise HTTPException(status_code=500, detail="Failed to update user budget")
+
+        return {"success": True, "message": "Budget updated successfully", "budget": request.budget}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add this to main.py
+@app.get("/get_budget")
+async def get_budget_endpoint(user_id: str = Query(...)):
+    try:
+        # Fetch the user's budget from the database
+        result = supabase.from_("users").select("budget").eq("user_id", user_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {"success": True, "budget": result.data[0]["budget"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
                  
 # def test_signup():
 #     email = "e@example.com"
