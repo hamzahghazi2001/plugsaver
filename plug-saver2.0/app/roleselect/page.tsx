@@ -212,6 +212,7 @@ export default function RoleSelectionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") // Get email from query params
+  const nameFromUrl = searchParams.get("name") // Get name from query params
   const [selectedRole, setSelectedRole] = useState<"manager" | "member" | null>(null)
   const [householdCode, setHouseholdCode] = useState("")
   const [isRoleConfirmed, setIsRoleConfirmed] = useState(false)
@@ -220,9 +221,11 @@ export default function RoleSelectionPage() {
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [user, setUser] = useState<{ avatar: string | null }>({ avatar: null })
   const [username, setUsername] = useState(() => {
-    // Check if we're in the browser environment
+    // First prioritize name from URL (registration)
+    if (nameFromUrl) return nameFromUrl
+
+    // Then check localStorage if we're in the browser
     if (typeof window !== "undefined") {
-      // Try to get username from localStorage, default to "Username" if not found
       return localStorage.getItem("username") || "Username"
     }
     return "Username"
@@ -231,6 +234,7 @@ export default function RoleSelectionPage() {
   const [dateOfBirth, setDateOfBirth] = useState("") // New state for date of birth
   const [isBudgetSetup, setIsBudgetSetup] = useState(false) // New state for budget setup
   const [budget, setBudget] = useState<number>(500) // Default budget value
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   // Redirect if email is missing
   useEffect(() => {
@@ -239,6 +243,13 @@ export default function RoleSelectionPage() {
       router.push("/register")
     }
   }, [email, router])
+
+  // Update username when nameFromUrl changes
+  useEffect(() => {
+    if (nameFromUrl) {
+      setUsername(nameFromUrl)
+    }
+  }, [nameFromUrl])
 
   useEffect(() => {
     const fetchHouseholdCode = async () => {
@@ -296,6 +307,8 @@ export default function RoleSelectionPage() {
       return
     }
 
+    setIsTransitioning(true)
+
     if (selectedRole === "manager" && householdCode) {
       try {
         const response = await fetch("/api/auth/create_household", {
@@ -316,6 +329,8 @@ export default function RoleSelectionPage() {
         }
       } catch (err) {
         alert("An error occurred. Please try again.")
+      } finally {
+        setIsTransitioning(false)
       }
     } else if (selectedRole === "member" && householdCode) {
       try {
@@ -337,34 +352,45 @@ export default function RoleSelectionPage() {
         }
       } catch (err) {
         alert("An error occurred. Please try again.")
+      } finally {
+        setIsTransitioning(false)
       }
     } else {
+      setIsTransitioning(false)
       alert("Please complete the required steps.")
     }
   }
 
   const handleConfirmRole = () => {
     if (selectedRole) {
-      setIsRoleConfirmed(true)
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setIsRoleConfirmed(true)
+        setIsTransitioning(false)
+      }, 1000) // Simulate loading for 1 second
     }
   }
 
   const handleBackToRoleSelection = () => {
-    if (isProfileSetup) {
-      setIsProfileSetup(false)
-      if (selectedRole === "manager") {
-        setIsBudgetSetup(true)
-      } else {
+    setIsTransitioning(true)
+    setTimeout(() => {
+      if (isProfileSetup) {
+        setIsProfileSetup(false)
+        if (selectedRole === "manager") {
+          setIsBudgetSetup(true)
+        } else {
+          setIsBudgetSetup(false)
+          setIsRoleConfirmed(true)
+        }
+      } else if (isBudgetSetup) {
         setIsBudgetSetup(false)
         setIsRoleConfirmed(true)
+      } else {
+        setIsRoleConfirmed(false)
+        setSelectedRole(null)
       }
-    } else if (isBudgetSetup) {
-      setIsBudgetSetup(false)
-      setIsRoleConfirmed(true)
-    } else {
-      setIsRoleConfirmed(false)
-      setSelectedRole(null)
-    }
+      setIsTransitioning(false)
+    }, 800) // Slightly shorter loading time for going back
   }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -433,6 +459,7 @@ export default function RoleSelectionPage() {
   }, [])
 
   const handleConfirmProfile = async () => {
+    setIsTransitioning(true)
     try {
       const response = await fetch("/api/auth/setup_profile", {
         method: "POST",
@@ -462,14 +489,21 @@ export default function RoleSelectionPage() {
       }
     } catch (err) {
       alert("An error occurred. Please try again.")
+    } finally {
+      setIsTransitioning(false)
     }
   }
 
   const handleBudgetConfirm = () => {
+    setIsTransitioning(true)
     // Save budget to localStorage
     localStorage.setItem("household_budget", budget.toString())
-    // Move to profile setup
-    setIsProfileSetup(true)
+    // Simulate loading for 1 second
+    setTimeout(() => {
+      // Move to profile setup
+      setIsProfileSetup(true)
+      setIsTransitioning(false)
+    }, 1000)
   }
 
   const handleBudgetChange = (value: number) => {
@@ -485,10 +519,11 @@ export default function RoleSelectionPage() {
     const savedDateOfBirth = localStorage.getItem("date_of_birth")
     const savedCountry = localStorage.getItem("country")
 
-    if (savedUsername) setUsername(savedUsername)
+    // Only use localStorage values if we don't have a name from URL
+    if (!nameFromUrl && savedUsername) setUsername(savedUsername)
     if (savedDateOfBirth) setDateOfBirth(savedDateOfBirth)
     if (savedCountry) setCountry(savedCountry)
-  }, [])
+  }, [nameFromUrl])
 
   return (
     <div
@@ -501,7 +536,6 @@ export default function RoleSelectionPage() {
       {/* Progress Bar Container */}
       <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl w-full max-w-3xl mx-auto mb-8 border border-white/20">
         <div className="flex justify-between items-center relative">
-
           {/* Progress Step 1 */}
           <div className="flex flex-col items-center z-10">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center text-white font-bold shadow-md">
@@ -514,10 +548,10 @@ export default function RoleSelectionPage() {
           <div className="flex flex-col items-center z-10">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
-                selectedRole
-                  ? "bg-gradient-to-r from-blue-400 to-blue-600"
-                  : isRoleConfirmed
-                    ? "bg-gradient-to-r from-green-400 to-green-500"
+                isRoleConfirmed
+                  ? "bg-gradient-to-r from-green-400 to-green-500"
+                  : selectedRole
+                    ? "bg-gradient-to-r from-blue-400 to-blue-600"
                     : "bg-gray-300"
               }`}
             >
@@ -530,10 +564,10 @@ export default function RoleSelectionPage() {
           <div className="flex flex-col items-center z-10">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
-                householdCode
-                  ? "bg-gradient-to-r from-blue-400 to-blue-600"
-                  : isProfileSetup
-                    ? "bg-gradient-to-r from-green-400 to-green-500"
+                isProfileSetup
+                  ? "bg-gradient-to-r from-green-400 to-green-500"
+                  : householdCode
+                    ? "bg-gradient-to-r from-blue-400 to-blue-600"
                     : "bg-gray-300"
               }`}
             >
@@ -547,10 +581,10 @@ export default function RoleSelectionPage() {
             <div className="flex flex-col items-center z-10">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
-                  isBudgetSetup
-                    ? "bg-gradient-to-r from-blue-400 to-blue-600"
-                    : isProfileSetup
-                      ? "bg-gradient-to-r from-green-400 to-green-500"
+                  isProfileSetup
+                    ? "bg-gradient-to-r from-green-400 to-green-500"
+                    : isBudgetSetup
+                      ? "bg-gradient-to-r from-blue-400 to-blue-600"
                       : "bg-gray-300"
                 }`}
               >
@@ -603,7 +637,7 @@ export default function RoleSelectionPage() {
                   Household Manager
                 </div>
                 <p className={`text-sm ${selectedRole === "manager" ? "text-white/80" : "text-gray-600"}`}>
-                  Create and manage your household's energy usage
+                  Create and manage your household
                 </p>
               </div>
 
@@ -623,7 +657,7 @@ export default function RoleSelectionPage() {
                   Household Member
                 </div>
                 <p className={`text-sm ${selectedRole === "member" ? "text-white/80" : "text-gray-600"}`}>
-                  Join an existing household with an invite code
+                  Join an existing household
                 </p>
               </div>
             </div>
@@ -740,7 +774,7 @@ export default function RoleSelectionPage() {
             </h1>
 
             <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-md">
-              <div className="text-blue-600 text-4xl font-bold">AED{budget}</div>
+              <div className="text-blue-600 text-4xl font-bold">AED {budget}</div>
             </div>
 
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
@@ -750,7 +784,7 @@ export default function RoleSelectionPage() {
             {/* Budget Input and Slider */}
             <div className="space-y-6 mb-8">
               <div className="flex items-center gap-4">
-                <span className="text-gray-700 font-medium">AED</span>
+                <span className="text-gray-700 font-medium">AED </span>
                 <Input
                   type="number"
                   min="0"
@@ -970,6 +1004,15 @@ export default function RoleSelectionPage() {
           </div>
         )}
       </div>
+      {/* Loading Overlay */}
+      {isTransitioning && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/90 dark:bg-gray-800 p-8 rounded-2xl shadow-xl flex flex-col items-center">
+            <div className="w-16 h-16 border-4 border-t-transparent border-blue-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-lg font-medium text-gray-800 dark:text-white">Loading...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

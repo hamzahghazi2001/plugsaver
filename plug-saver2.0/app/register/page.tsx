@@ -1,6 +1,6 @@
-
-
 "use client"
+
+import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -21,16 +21,47 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [referralCode, setReferralCode] = useState("")
   const [showReferralModal, setShowReferralModal] = useState(false)
+  const [passwordError, setPasswordError] = useState<string>("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const validatePassword = (password: string) => {
+    // Check for minimum length of 6 characters
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long"
+    }
+
+    // Check for at least one number
+    if (!/\d/.test(password)) {
+      return "Password must contain at least one number"
+    }
+
+    // Check for at least one special character
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return "Password must contain at least one special character"
+    }
+
+    return "" // Return empty string if password is valid
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
+    setPasswordError("")
     setLoading(true)
 
     const formData = new FormData(event.currentTarget)
     const password = formData.get("password") as string
     const confirmPassword = formData.get("confirmPassword") as string
-    const name = formData.get("name") as string;
+    const name = formData.get("name") as string
+
+    // Validate password
+    const validationError = validatePassword(password)
+    if (validationError) {
+      setPasswordError(validationError)
+      setLoading(false)
+      return
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
@@ -51,14 +82,16 @@ export default function RegisterPage() {
           confirmpass: confirmPassword,
           name,
         }),
-      });
+      })
 
       const data = await response.json()
 
       if (data.success) {
         //setShow2FAModal(true)
         //startTimer()
-        router.push(`/verify?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`);
+        router.push(
+          `/verify?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`,
+        )
       } else {
         setError(data.error || "An error occurred")
       }
@@ -104,19 +137,19 @@ export default function RegisterPage() {
           email,
           userverifycode: twoFACode,
         }),
-      });
-  
-      const data = await response.json();
-  
+      })
+
+      const data = await response.json()
+
       if (data.success) {
-        router.push("/roleselect"); // Redirect to role selection page
+        router.push("/roleselect") // Redirect to role selection page
       } else {
-        setError(data.error || "Verification failed");
+        setError(data.error || "Verification failed")
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError("An error occurred. Please try again.")
     }
-  };
+  }
 
   const handleReferralSubmit = () => {
     console.log("Referral Code Submitted:", referralCode)
@@ -129,6 +162,14 @@ export default function RegisterPage() {
       setTwoFACode(value)
       setIsCodeValid(value.length === 6)
     }
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword)
   }
 
   return (
@@ -177,25 +218,47 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Password"
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 pr-10"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {passwordError && <p className="text-sm text-red-500 text-left">{passwordError}</p>}
+            <p className="text-xs text-gray-500 text-left">
+              Password must be at least 6 characters long, contain at least 1 number and 1 special character.
+            </p>
           </div>
 
           <div className="space-y-2">
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm Password"
-              required
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400 pr-10"
+              />
+              <button
+                type="button"
+                onClick={toggleConfirmPasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 cursor-pointer"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center justify-center space-x-2">
@@ -242,10 +305,7 @@ export default function RegisterPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center relative">
             {/* Close Button */}
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
-            >
+            <button onClick={handleCloseModal} className="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
               ×
             </button>
 
@@ -270,16 +330,11 @@ export default function RegisterPage() {
             </Button>
 
             <div className="text-sm text-gray-600 mt-4">
-              {timeLeft > 0
-                ? `Request new code in ${timeLeft} seconds`
-                : "Didn't receive the code?"}
+              {timeLeft > 0 ? `Request new code in ${timeLeft} seconds` : "Didn't receive the code?"}
             </div>
 
             {timeLeft === 0 && (
-              <button
-                onClick={handleResendCode}
-                className="text-blue-600 hover:text-blue-500 font-semibold mt-2"
-              >
+              <button onClick={handleResendCode} className="text-blue-600 hover:text-blue-500 font-semibold mt-2">
                 Request New Code
               </button>
             )}
@@ -322,3 +377,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+
