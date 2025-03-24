@@ -2,7 +2,7 @@
 import jsQR from "jsqr"
 import QrScanner from "react-qr-scanner"
 
-import React from "react"
+import type React from "react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
@@ -20,7 +20,6 @@ import {
   Trash2,
   RefrigeratorIcon,
   Settings,
-  type LightbulbIcon as LucideProps,
   Sun,
   Moon,
 } from "lucide-react"
@@ -194,11 +193,12 @@ const useThemeStyles = () => {
 }
 
 // Add these interfaces at the top of the file, after the imports
+// Change the Device interface to use React.ElementType for the icon property
 interface Device {
   id: number
   name: string
   room: string | null
-  icon: React.ForwardRefExoticComponent<Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+  icon: React.ElementType
   power: string
   isOn: boolean
   type?: string
@@ -212,6 +212,12 @@ interface Device {
   }
 }
 
+// Also update the DeviceIcon interface
+interface DeviceIcon {
+  icon: React.ElementType
+  name: string
+}
+
 interface Room {
   room_id: number
   room_name: string
@@ -222,11 +228,6 @@ interface FoundDevice {
   id: number
   name: string
   status: "Available" | "Paired"
-}
-
-interface DeviceIcon {
-  icon: React.ForwardRefExoticComponent<Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
-  name: string
 }
 
 // Map icon names to components
@@ -506,9 +507,7 @@ export default function DevicesPage() {
             }
 
             // Get the icon component based on the icon name or use a default
-            let iconComponent: React.ForwardRefExoticComponent<
-              Omit<typeof LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
-            > = Plug // Default icon
+            let iconComponent: React.ElementType = Plug // Default icon
             if (typeof device.icon === "string") {
               try {
                 // Parse the JSON string to get the icon name
@@ -1196,9 +1195,7 @@ export default function DevicesPage() {
                                   isOn ? "bg-blue-500/40" : "bg-gray-600/40"
                                 }`}
                               >
-                                {React.createElement(Icon, {
-                                  className: `w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`,
-                                })}
+                                <Icon className={`w-5 h-5 ${isOn ? "text-blue-100" : "text-white-300"}`} />
                               </div>
                               <div>
                                 <h3 className="font-bold text-lg">{name}</h3>
