@@ -23,6 +23,8 @@ import {
   UserPlus,
   FileQuestion,
   Settings,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -410,30 +412,201 @@ export default function SettingsPage() {
   const PersonalInfoContent = ({ inDialog = true }) => {
     // Comprehensive list of all countries
     const countries = [
-      "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-      "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
-      "Côte d'Ivoire", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Congo-Brazzaville)", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
-      "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica", "Dominican Republic",
-      "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
-      "Fiji", "Finland", "France",
-      "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
-      "Haiti", "Holy See", "Honduras", "Hungary",
-      "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-      "Jamaica", "Japan", "Jordan",
-      "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
-      "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
-      "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar (Burma)",
-      "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+      "Afghanistan",
+      "Albania",
+      "Algeria",
+      "Andorra",
+      "Angola",
+      "Antigua and Barbuda",
+      "Argentina",
+      "Armenia",
+      "Australia",
+      "Austria",
+      "Azerbaijan",
+      "Bahamas",
+      "Bahrain",
+      "Bangladesh",
+      "Barbados",
+      "Belarus",
+      "Belgium",
+      "Belize",
+      "Benin",
+      "Bhutan",
+      "Bolivia",
+      "Bosnia and Herzegovina",
+      "Botswana",
+      "Brazil",
+      "Brunei",
+      "Bulgaria",
+      "Burkina Faso",
+      "Burundi",
+      "Côte d'Ivoire",
+      "Cabo Verde",
+      "Cambodia",
+      "Cameroon",
+      "Canada",
+      "Central African Republic",
+      "Chad",
+      "Chile",
+      "China",
+      "Colombia",
+      "Comoros",
+      "Congo (Congo-Brazzaville)",
+      "Costa Rica",
+      "Croatia",
+      "Cuba",
+      "Cyprus",
+      "Czechia",
+      "Democratic Republic of the Congo",
+      "Denmark",
+      "Djibouti",
+      "Dominica",
+      "Dominican Republic",
+      "Ecuador",
+      "Egypt",
+      "El Salvador",
+      "Equatorial Guinea",
+      "Eritrea",
+      "Estonia",
+      "Eswatini",
+      "Ethiopia",
+      "Fiji",
+      "Finland",
+      "France",
+      "Gabon",
+      "Gambia",
+      "Georgia",
+      "Germany",
+      "Ghana",
+      "Greece",
+      "Grenada",
+      "Guatemala",
+      "Guinea",
+      "Guinea-Bissau",
+      "Guyana",
+      "Haiti",
+      "Holy See",
+      "Honduras",
+      "Hungary",
+      "Iceland",
+      "India",
+      "Indonesia",
+      "Iran",
+      "Iraq",
+      "Ireland",
+      "Israel",
+      "Italy",
+      "Jamaica",
+      "Japan",
+      "Jordan",
+      "Kazakhstan",
+      "Kenya",
+      "Kiribati",
+      "Kuwait",
+      "Kyrgyzstan",
+      "Laos",
+      "Latvia",
+      "Lebanon",
+      "Lesotho",
+      "Liberia",
+      "Libya",
+      "Liechtenstein",
+      "Lithuania",
+      "Luxembourg",
+      "Madagascar",
+      "Malawi",
+      "Malaysia",
+      "Maldives",
+      "Mali",
+      "Malta",
+      "Marshall Islands",
+      "Mauritania",
+      "Mauritius",
+      "Mexico",
+      "Micronesia",
+      "Moldova",
+      "Monaco",
+      "Mongolia",
+      "Montenegro",
+      "Morocco",
+      "Mozambique",
+      "Myanmar (Burma)",
+      "Namibia",
+      "Nauru",
+      "Nepal",
+      "Netherlands",
+      "New Zealand",
+      "Nicaragua",
+      "Niger",
+      "Nigeria",
+      "North Korea",
+      "North Macedonia",
+      "Norway",
       "Oman",
-      "Pakistan", "Palau", "Palestine State", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+      "Pakistan",
+      "Palau",
+      "Palestine State",
+      "Panama",
+      "Papua New Guinea",
+      "Paraguay",
+      "Peru",
+      "Philippines",
+      "Poland",
+      "Portugal",
       "Qatar",
-      "Romania", "Russia", "Rwanda",
-      "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
-      "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
-      "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States of America", "Uruguay", "Uzbekistan",
-      "Vanuatu", "Venezuela", "Vietnam",
+      "Romania",
+      "Russia",
+      "Rwanda",
+      "Saint Kitts and Nevis",
+      "Saint Lucia",
+      "Saint Vincent and the Grenadines",
+      "Samoa",
+      "San Marino",
+      "Sao Tome and Principe",
+      "Saudi Arabia",
+      "Senegal",
+      "Serbia",
+      "Seychelles",
+      "Sierra Leone",
+      "Singapore",
+      "Slovakia",
+      "Slovenia",
+      "Solomon Islands",
+      "Somalia",
+      "South Africa",
+      "South Korea",
+      "South Sudan",
+      "Spain",
+      "Sri Lanka",
+      "Sudan",
+      "Suriname",
+      "Sweden",
+      "Switzerland",
+      "Syria",
+      "Tajikistan",
+      "Tanzania",
+      "Thailand",
+      "Timor-Leste",
+      "Togo",
+      "Tonga",
+      "Trinidad and Tobago",
+      "Tunisia",
+      "Turkey",
+      "Turkmenistan",
+      "Tuvalu",
+      "Uganda",
+      "Ukraine",
+      "United Arab Emirates",
+      "United Kingdom",
+      "United States of America",
+      "Uruguay",
+      "Uzbekistan",
+      "Vanuatu",
+      "Venezuela",
+      "Vietnam",
       "Yemen",
-      "Zambia", "Zimbabwe",
+      "Zambia",
+      "Zimbabwe",
     ]
 
     return (
@@ -467,10 +640,7 @@ export default function SettingsPage() {
 
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
-            <Select
-              value={user.country}
-              onValueChange={(value) => setUser({ ...user, country: value })}
-            >
+            <Select value={user.country} onValueChange={(value) => setUser({ ...user, country: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your country" />
               </SelectTrigger>
@@ -580,11 +750,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="pt-5 border-t">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push("/changepassword")}
-          >
+          <Button variant="outline" className="w-full" onClick={() => router.push("/changepassword")}>
             Change Password
           </Button>
         </div>
@@ -980,8 +1146,19 @@ export default function SettingsPage() {
                 onClick={copyHouseholdCode}
                 className="absolute inset-y-0 right-0 flex items-center px-3 bg-gray-100 hover:bg-gray-200 rounded-r-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
               </button>
             </div>
@@ -1094,20 +1271,20 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Settings</h1>
             <Button
+              size="icon"
               variant="outline"
-              size="sm"
-              className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm"
+              className="rounded-full backdrop-blur-md bg-white/10 border-white/20"
               onClick={toggleDarkMode}
             >
-              {isDarkMode ? "Light Mode" : "Dark Mode"}
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-5 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl">
-            <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 md:p-6 shadow-lg backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90 border border-white/20 dark:border-gray-700/30 transform transition-all duration-300 hover:shadow-xl mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
               <div className="relative group">
-                <Avatar className="w-20 h-20 md:w-24 md:h-24 border-4 border-purple-100 dark:border-purple-900 shadow-md">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-3 md:border-4 border-purple-100 dark:border-purple-900 shadow-md">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-xl">
+                  <AvatarFallback className="bg-purple-100 text-purple-600 font-semibold text-lg md:text-xl">
                     {user.username[0]}
                   </AvatarFallback>
                 </Avatar>
@@ -1115,17 +1292,17 @@ export default function SettingsPage() {
                   className="absolute inset-0 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   onClick={() => openDialog("profilePicture")}
                 >
-                  <Camera className="w-6 h-6" />
+                  <Camera className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
               </div>
-              <div className="text-center md:text-left">
-                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-xl md:text-2xl">{user.username}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
-                <div className="flex items-center justify-center md:justify-start mt-2 gap-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+              <div className="text-center md:text-left mt-2 md:mt-0">
+                <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-lg md:text-2xl">{user.username}</h2>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Personal Information</p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start mt-1 md:mt-2 gap-1 md:gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                     {user.role}
                   </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                     {user.country}
                   </span>
                 </div>
@@ -1297,7 +1474,11 @@ export default function SettingsPage() {
                 <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
                   <SettingsItem icon={User} label="Profile Picture" onClick={() => openDialog("profilePicture")} />
                   <SettingsItem icon={Info} label="Personal Information" onClick={() => openDialog("personalInfo")} />
-                  <SettingsItem icon={Share2} label="Data Sharing Preferences" onClick={() => openDialog("dataSharing")} />
+                  <SettingsItem
+                    icon={Share2}
+                    label="Data Sharing Preferences"
+                    onClick={() => openDialog("dataSharing")}
+                  />
                 </div>
               </section>
               <section>
@@ -1310,8 +1491,13 @@ export default function SettingsPage() {
                 <div className="space-y-1 bg-gray-50 dark:bg-gray-900/30 rounded-lg overflow-hidden">
                   <SettingsItem icon={Shield} label="Security and Privacy" onClick={() => openDialog("security")} />
                   <SettingsItem icon={Bell} label="Notifications" onClick={() => openDialog("notifications")} />
+                  <SettingsItem icon={Users} label onClick={() => openDialog("notifications")} />
                   <SettingsItem icon={Users} label="Members" onClick={() => openDialog("members")} />
-                  <SettingsItem icon={Accessibility} label="Accessibility" onClick={() => openDialog("accessibility")} />
+                  <SettingsItem
+                    icon={Accessibility}
+                    label="Accessibility"
+                    onClick={() => openDialog("accessibility")}
+                  />
                   <SettingsItem icon={HelpCircle} label="Support" onClick={() => openDialog("support")} />
                   <SettingsItem icon={Home} label="Household" onClick={() => openDialog("household")} />
                   <SettingsItem icon={LayoutDashboard} label="Dashboard" onClick={() => openDialog("dashboard")} />
@@ -1611,3 +1797,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+
