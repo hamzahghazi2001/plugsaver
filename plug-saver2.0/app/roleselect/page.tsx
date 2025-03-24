@@ -219,9 +219,18 @@ export default function RoleSelectionPage() {
   const [loading, setLoading] = useState(false)
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [user, setUser] = useState<{ avatar: string | null }>({ avatar: null })
-  const [username, setUsername] = useState("Username")
+  const [username, setUsername] = useState(() => {
+    // Check if we're in the browser environment
+    if (typeof window !== "undefined") {
+      // Try to get username from localStorage, default to "Username" if not found
+      return localStorage.getItem("username") || "Username"
+    }
+    return "Username"
+  })
   const [country, setCountry] = useState("")
   const [dateOfBirth, setDateOfBirth] = useState("") // New state for date of birth
+  const [isBudgetSetup, setIsBudgetSetup] = useState(false) // New state for budget setup
+  const [budget, setBudget] = useState<number>(500) // Default budget value
 
   // Redirect if email is missing
   useEffect(() => {
@@ -301,7 +310,7 @@ export default function RoleSelectionPage() {
 
         if (data.success) {
           localStorage.setItem("household_code", householdCode)
-          setIsProfileSetup(true) // Move to profile setup
+          setIsBudgetSetup(true) // Move to budget setup instead of profile setup
         } else {
           alert(data.message || "Failed to create household.")
         }
@@ -341,9 +350,21 @@ export default function RoleSelectionPage() {
   }
 
   const handleBackToRoleSelection = () => {
-    setIsRoleConfirmed(false)
-    setIsProfileSetup(false) // Reset profile setup
-    setSelectedRole(null)
+    if (isProfileSetup) {
+      setIsProfileSetup(false)
+      if (selectedRole === "manager") {
+        setIsBudgetSetup(true)
+      } else {
+        setIsBudgetSetup(false)
+        setIsRoleConfirmed(true)
+      }
+    } else if (isBudgetSetup) {
+      setIsBudgetSetup(false)
+      setIsRoleConfirmed(true)
+    } else {
+      setIsRoleConfirmed(false)
+      setSelectedRole(null)
+    }
   }
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,6 +465,31 @@ export default function RoleSelectionPage() {
     }
   }
 
+  const handleBudgetConfirm = () => {
+    // Save budget to localStorage
+    localStorage.setItem("household_budget", budget.toString())
+    // Move to profile setup
+    setIsProfileSetup(true)
+  }
+
+  const handleBudgetChange = (value: number) => {
+    // Ensure the value is within range
+    const newValue = Math.min(Math.max(0, value), 1000)
+    setBudget(newValue)
+  }
+
+  // Add this useEffect to load user data from localStorage when component mounts
+  useEffect(() => {
+    // Load saved user data from localStorage if available
+    const savedUsername = localStorage.getItem("username")
+    const savedDateOfBirth = localStorage.getItem("date_of_birth")
+    const savedCountry = localStorage.getItem("country")
+
+    if (savedUsername) setUsername(savedUsername)
+    if (savedDateOfBirth) setDateOfBirth(savedDateOfBirth)
+    if (savedCountry) setCountry(savedCountry)
+  }, [])
+
   return (
     <div
       className="min-h-screen flex flex-col items-center p-4 md:p-8"
@@ -455,6 +501,24 @@ export default function RoleSelectionPage() {
       {/* Progress Bar Container */}
       <div className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl w-full max-w-3xl mx-auto mb-8 border border-white/20">
         <div className="flex justify-between items-center relative">
+          {/* Progress Line */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+          <div
+            className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 -translate-y-1/2 z-0 transition-all duration-500"
+            style={{
+              width: isProfileSetup
+                ? "100%"
+                : isBudgetSetup
+                  ? "80%"
+                  : isRoleConfirmed
+                    ? householdCode
+                      ? "60%"
+                      : "40%"
+                    : selectedRole
+                      ? "20%"
+                      : "0%",
+            }}
+          ></div>
 
           {/* Progress Step 1 */}
           <div className="flex flex-col items-center z-10">
@@ -496,14 +560,32 @@ export default function RoleSelectionPage() {
             <div className="text-sm font-medium text-gray-700 mt-2">Household</div>
           </div>
 
-          {/* Progress Step 4 */}
+          {/* Progress Step 4 - Budget (only visible for managers) */}
+          {selectedRole === "manager" && (
+            <div className="flex flex-col items-center z-10">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
+                  isBudgetSetup
+                    ? "bg-gradient-to-r from-blue-400 to-blue-600"
+                    : isProfileSetup
+                      ? "bg-gradient-to-r from-green-400 to-green-500"
+                      : "bg-gray-300"
+                }`}
+              >
+                {isProfileSetup ? "✓" : "4"}
+              </div>
+              <div className="text-sm font-medium text-gray-700 mt-2">Budget</div>
+            </div>
+          )}
+
+          {/* Progress Step 5 (or 4 for members) - Profile */}
           <div className="flex flex-col items-center z-10">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md transition-all duration-300 ${
                 isProfileSetup ? "bg-gradient-to-r from-blue-400 to-blue-600" : "bg-gray-300"
               }`}
             >
-              {isProfileSetup ? "✓" : "4"}
+              {selectedRole === "manager" ? "5" : "4"}
             </div>
             <div className="text-sm font-medium text-gray-700 mt-2">Profile</div>
           </div>
@@ -584,7 +666,7 @@ export default function RoleSelectionPage() {
               )}
             </button>
           </div>
-        ) : selectedRole === "manager" && !isProfileSetup ? (
+        ) : selectedRole === "manager" && !isBudgetSetup && !isProfileSetup ? (
           // Household Manager Card
           <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-3xl text-center relative border border-white/20 transition-all duration-300">
             {/* Back Button */}
@@ -658,6 +740,69 @@ export default function RoleSelectionPage() {
               ) : (
                 "Continue"
               )}
+            </button>
+          </div>
+        ) : selectedRole === "manager" && isBudgetSetup && !isProfileSetup ? (
+          // Budget Setup Card
+          <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-3xl text-center relative border border-white/20 transition-all duration-300">
+            {/* Back Button */}
+            <button
+              className="absolute top-6 left-6 text-gray-600 hover:text-gray-800 bg-white/80 p-2 rounded-full shadow-md transition-all duration-300 hover:bg-white"
+              onClick={handleBackToRoleSelection}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+
+            <h1 className="text-3xl font-bold text-gray-800 mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Household Spending Budget
+            </h1>
+
+            <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-md">
+              <div className="text-blue-600 text-4xl font-bold">AED{budget}</div>
+            </div>
+
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              Set your monthly household energy spending budget to help track and manage your energy costs.
+            </p>
+
+            {/* Budget Input and Slider */}
+            <div className="space-y-6 mb-8">
+              <div className="flex items-center gap-4">
+                <span className="text-gray-700 font-medium">AED</span>
+                <Input
+                  type="number"
+                  min="0"
+                  max="1000"
+                  value={budget}
+                  onChange={(e) => handleBudgetChange(Number.parseInt(e.target.value) || 0)}
+                  className="text-center text-xl font-bold"
+                />
+              </div>
+
+              <div className="px-4">
+                <div className="flex justify-between text-sm text-gray-500 mb-2">
+                  <span>AED 0</span>
+                  <span>AED 500</span>
+                  <span>AED 1000</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="10"
+                  value={budget}
+                  onChange={(e) => handleBudgetChange(Number.parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Continue Button */}
+            <button
+              className="w-full mt-10 py-4 rounded-xl text-white font-bold text-lg transition-all duration-300 transform bg-gradient-to-r from-blue-500 to-purple-600 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1"
+              onClick={handleBudgetConfirm}
+            >
+              Continue
             </button>
           </div>
         ) : selectedRole === "member" && !isProfileSetup ? (
