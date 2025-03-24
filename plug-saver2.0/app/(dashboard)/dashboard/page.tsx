@@ -160,7 +160,9 @@ const DashboardPage = () => {
     <div
       className={`min-h-screen p-6 md:p-10 ${isDarkMode ? "text-white" : "text-gray-900"}`}
       style={{
-        background: "radial-gradient(circle, rgba(63,94,251,1) 0%, rgba(70,252,247,1) 100%)",
+        background: isDarkMode
+          ? "radial-gradient(circle, rgba(87,119,94,1) 0%, rgba(79,74,116,1) 100%)"
+          : "radial-gradient(circle, rgba(174,238,189,1) 0%, rgba(159,148,233,1) 100%)",
       }}
     >
       <div className="flex justify-between items-center mb-8">
@@ -665,7 +667,7 @@ const DashboardPage = () => {
           </div>
           <div className="flex items-center relative z-10">
             <div className="flex-1">
-              <div className={`text-3xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>${costSavings}</div>
+              <div className={`text-3xl font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>AED {costSavings}</div>
               <div className={`text-sm ${isDarkMode ? "text-white/70" : "text-gray-600"}`}>This month</div>
               <div className={`mt-4 h-2 ${isDarkMode ? "bg-white/10" : "bg-black/10"} rounded-full overflow-hidden`}>
                 <div
@@ -674,8 +676,8 @@ const DashboardPage = () => {
                 ></div>
               </div>
               <div className={`mt-2 text-xs ${isDarkMode ? "text-white/70" : "text-gray-600"} flex justify-between`}>
-                <span>$0</span>
-                <span>$200</span>
+                <span>AED0</span>
+                <span>AED200</span>
               </div>
             </div>
           </div>
