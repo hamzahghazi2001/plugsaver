@@ -947,7 +947,7 @@ ${
                       className="bg-white/30 dark:bg-gray-800/30 p-4 rounded-lg border border-white/30 dark:border-gray-700/30 flex flex-col items-center backdrop-blur-sm"
                     >
                       <div className="w-12 h-12 rounded-full bg-white/50 dark:bg-blue-700/30 flex items-center justify-center mb-2">
-                        {React.createElement(room.icon, { className: "w-6 h-6 text-gray-500 dark:text-blue-300" })}
+                        <Home className="w-6 h-6 text-gray-500 dark:text-blue-300" />
                       </div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{room.room_name}</p>
                       <p className="text-xs text-gray-500 dark:text-blue-300">{room.total_power}W</p>
