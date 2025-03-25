@@ -110,16 +110,18 @@ import {
 
 // Add this custom hook at the top of the file, after the imports but before the component definitions
 
+// Update the useThemeStyles hook to properly handle dark mode persistence
+// Replace the existing useThemeStyles hook with this improved version:
+
 // Custom hook to manage theme styles
 const useThemeStyles = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false)
-
-  useEffect(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize from localStorage on mount
     if (typeof window !== "undefined") {
-      const storedDarkMode = localStorage.getItem("darkMode")
-      setIsDarkMode(storedDarkMode === "true")
+      return localStorage.getItem("darkMode") === "true"
     }
-  }, [])
+    return false
+  })
 
   // Apply dark mode class to the document element
   useEffect(() => {
@@ -128,10 +130,35 @@ const useThemeStyles = () => {
     } else {
       document.documentElement.classList.remove("dark")
     }
+
+    // Update localStorage when dark mode changes
     if (typeof window !== "undefined") {
       localStorage.setItem("darkMode", isDarkMode.toString())
+
+      // Dispatch a storage event to notify other pages
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "darkMode",
+          newValue: isDarkMode.toString(),
+          storageArea: localStorage,
+        }),
+      )
     }
   }, [isDarkMode])
+
+  // Listen for dark mode changes from other pages
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "darkMode") {
+        setIsDarkMode(e.newValue === "true")
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [])
 
   // Define different styles for light and dark modes
   const styles = {
@@ -286,6 +313,20 @@ const iconMap: Record<string, React.ElementType> = {
 export default function DevicesPage() {
   // Add the theme hook at the top of the component
   const { isDarkMode, setIsDarkMode, styles } = useThemeStyles()
+
+  // Also add this effect at the beginning of the DevicesPage component, right after the useThemeStyles hook:
+  // Add this right after the line: const { isDarkMode, setIsDarkMode, styles } = useThemeStyles()
+
+  // Apply dark mode class on initial render
+  useEffect(() => {
+    // Check localStorage for dark mode setting
+    const storedDarkMode = localStorage.getItem("darkMode") === "true"
+    if (storedDarkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [])
 
   const [editDeviceDialogOpen, setEditDeviceDialogOpen] = useState<boolean>(false)
   const [userId, setUserId] = useState<number | null>(null)
@@ -1056,7 +1097,7 @@ export default function DevicesPage() {
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 relative">
             <div>
-            <h2 className="text-xl font-semibold">Energy Consumption</h2>
+              <h2 className="text-xl font-semibold">Energy Consumption</h2>
               <p className="text-sm text-black-300">Current device usage</p>
             </div>
 
@@ -1072,7 +1113,6 @@ export default function DevicesPage() {
                     <span className="text-sm ml-1 text-gray-400">W</span>
                   </div>
                 </div>
-             
               </div>
             </div>
           </div>

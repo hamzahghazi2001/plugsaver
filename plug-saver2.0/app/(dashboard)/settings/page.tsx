@@ -50,6 +50,121 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnY2Z2eHdyY3Vud3Nydnd3amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTIzNzIsImV4cCI6MjA1MzU2ODM3Mn0.fgT2LL7dlx7VR185WABZCtK8ZdF4rpdOIy-crGpp6tU"
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Create a global script that will run on all pages to handle dark mode and high contrast
+const createGlobalScript = () => {
+  const script = document.createElement("script")
+  script.id = "global-accessibility-script"
+  script.innerHTML = `
+    // Function to handle dark mode and high contrast relationship
+    function handleDarkModeChange(isDarkMode) {
+      const isHighContrast = localStorage.getItem('highContrast') === 'true';
+      
+      // If dark mode is turned off, also turn off high contrast
+      if (!isDarkMode && isHighContrast) {
+        localStorage.setItem('highContrast', 'false');
+        
+        // Remove high contrast styles
+        const existingStyleTag = document.getElementById('high-contrast-style');
+        if (existingStyleTag) {
+          existingStyleTag.remove();
+        }
+      }
+      
+      // Apply dark mode class
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    // Function to apply high contrast styles
+    function applyHighContrast(enable) {
+      // Remove any existing high contrast styles first
+      const existingStyleTag = document.getElementById('high-contrast-style');
+      if (existingStyleTag) {
+        existingStyleTag.remove();
+      }
+      
+      if (enable) {
+        // If enabling high contrast, ensure dark mode is also enabled
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (!isDarkMode) {
+          localStorage.setItem('darkMode', 'true');
+          document.documentElement.classList.add('dark');
+        }
+        
+        // Add high contrast styles
+        const styleTag = document.createElement('style');
+        styleTag.id = 'high-contrast-style';
+        styleTag.textContent = \`
+          body, h1, h2, h3, h4, h5, h6, p, span, div, button, a, label, input, textarea, select {
+            color: #ffff00 !important;
+          }
+        \`;
+        document.head.appendChild(styleTag);
+      }
+    }
+    
+    // Listen for storage events (when localStorage changes in any tab/window)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'darkMode') {
+        handleDarkModeChange(e.newValue === 'true');
+      } else if (e.key === 'highContrast') {
+        applyHighContrast(e.newValue === 'true');
+      }
+    });
+    
+    // Initial setup on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+      const isHighContrast = localStorage.getItem('highContrast') === 'true';
+      
+      // Apply dark mode
+      handleDarkModeChange(isDarkMode);
+      
+      // Apply high contrast if needed
+      if (isHighContrast) {
+        applyHighContrast(true);
+      }
+    });
+    
+    // Also run immediately in case DOMContentLoaded already fired
+    (function() {
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+      const isHighContrast = localStorage.getItem('highContrast') === 'true';
+      
+      // Apply dark mode
+      handleDarkModeChange(isDarkMode);
+      
+      // Apply high contrast if needed
+      if (isHighContrast) {
+        applyHighContrast(true);
+      }
+    })();
+    
+    // Create a MutationObserver to watch for changes to the body
+    // This helps ensure our script runs even with client-side navigation
+    const observer = new MutationObserver(function(mutations) {
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+      const isHighContrast = localStorage.getItem('highContrast') === 'true';
+      
+      // Apply dark mode
+      handleDarkModeChange(isDarkMode);
+      
+      // Apply high contrast if needed
+      if (isHighContrast) {
+        applyHighContrast(true);
+      }
+    });
+    
+    // Start observing the document body for changes
+    observer.observe(document.body, { childList: true, subtree: true });
+  `
+
+  return script
+}
+
 export default function SettingsPage() {
   const router = useRouter()
 
@@ -98,15 +213,54 @@ export default function SettingsPage() {
     return false
   })
 
+  // Add the global script to handle dark mode and high contrast across all pages
+  useEffect(() => {
+    // Check if the script already exists
+    if (!document.getElementById("global-accessibility-script")) {
+      const script = createGlobalScript()
+      document.head.appendChild(script)
+    }
+
+    // Cleanup function to remove the script when the component unmounts
+    return () => {
+      // We don't remove the script on unmount because we want it to persist across pages
+    }
+  }, [])
+
   // Apply dark mode class to the document element
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark")
     } else {
       document.documentElement.classList.remove("dark")
+
+      // If turning off dark mode, also turn off high contrast and update localStorage
+      if (isHighContrast) {
+        setIsHighContrast(false)
+        localStorage.setItem("highContrast", "false")
+
+        // Remove high contrast styles
+        const existingStyleTag = document.getElementById("high-contrast-style")
+        if (existingStyleTag) {
+          existingStyleTag.remove()
+        }
+      }
     }
+
+    // Update localStorage for dark mode
     localStorage.setItem("darkMode", isDarkMode.toString())
-  }, [isDarkMode])
+
+    // Dispatch a storage event to notify other pages
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "darkMode",
+          newValue: isDarkMode.toString(),
+          storageArea: localStorage,
+        }),
+      )
+    }
+  }, [isDarkMode, isHighContrast])
 
   // Apply high contrast mode - simplified to just apply dark mode with yellow text
   useEffect(() => {
@@ -120,8 +274,23 @@ export default function SettingsPage() {
     }
 
     if (isHighContrast) {
-      // Only apply high contrast styles when explicitly enabled
-      document.documentElement.classList.add("dark")
+      // If enabling high contrast, ensure dark mode is also enabled
+      if (!isDarkMode) {
+        setIsDarkMode(true)
+        localStorage.setItem("darkMode", "true")
+        document.documentElement.classList.add("dark")
+
+        // Dispatch a storage event to notify other pages
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "darkMode",
+              newValue: "true",
+              storageArea: localStorage,
+            }),
+          )
+        }
+      }
 
       // Add a style tag for high contrast mode
       const styleTag = document.createElement("style")
@@ -134,13 +303,19 @@ export default function SettingsPage() {
         color: #ffff00 !important;
       }
     `
-    } else {
-      // Only remove dark mode if it wasn't enabled separately
-      if (localStorage.getItem("darkMode") !== "true") {
-        document.documentElement.classList.remove("dark")
-      }
     }
-  }, [isHighContrast])
+
+    // Dispatch a storage event to notify other pages
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "highContrast",
+          newValue: isHighContrast.toString(),
+          storageArea: localStorage,
+        }),
+      )
+    }
+  }, [isHighContrast, isDarkMode])
 
   // Apply large text mode - fixed size of 18px
   useEffect(() => {
@@ -181,12 +356,24 @@ export default function SettingsPage() {
 
   // Toggle dark mode
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev)
+    const newDarkMode = !isDarkMode
+    setIsDarkMode(newDarkMode)
+
+    // If switching to light mode, turn off high contrast
+    if (!newDarkMode && isHighContrast) {
+      setIsHighContrast(false)
+    }
   }
 
   // Toggle high contrast mode
   const toggleHighContrast = () => {
-    setIsHighContrast((prev) => !prev)
+    const newHighContrast = !isHighContrast
+    setIsHighContrast(newHighContrast)
+
+    // If enabling high contrast, ensure dark mode is on
+    if (newHighContrast && !isDarkMode) {
+      setIsDarkMode(true)
+    }
   }
 
   // Toggle large text mode
@@ -822,7 +1009,6 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label className="text-base">Remember Device</Label>
-            <p className="text-sm text-gray-400">Stay logged in on this device</p>
           </div>
           <Switch
             checked={settings.security.rememberDevice}
