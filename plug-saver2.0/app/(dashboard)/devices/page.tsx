@@ -999,15 +999,12 @@ export default function DevicesPage() {
         console.log("Device assigned to room successfully") // Log success
         // Re-fetch devices to ensure the UI reflects the latest state
         await fetchDevices()
+
+        // Refresh the page after successful assignment
+        window.location.reload()
       }
     } catch (error) {
       
-      // Revert the optimistic update if there's an error
-      setDevices(
-        devices.map((d) =>
-          d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
-        ),
-      )
     }
   }
 
@@ -1127,9 +1124,7 @@ export default function DevicesPage() {
               <div className="flex justify-between mb-2">
                 <p className="text-xs text-400 font-medium">Usage Level</p>
                 <div className="flex items-center gap-1">
-                  <p className="text-xs font-medium text-300">
-                    {Math.min(Math.round(totalConsumption / 10), 100)}%
-                  </p>
+                  <p className="text-xs font-medium text-300">{Math.min(Math.round(totalConsumption / 10), 100)}%</p>
                   {Math.min(Math.round(totalConsumption / 10), 100) > 70 && (
                     <span className="text-xs text-yellow-300 bg-yellow-500/20 px-1.5 py-0.5 rounded-full">High</span>
                   )}
