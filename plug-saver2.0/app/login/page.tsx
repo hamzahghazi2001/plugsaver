@@ -1,13 +1,13 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -70,24 +70,24 @@ export default function LoginPage() {
 
   const fetchHouseholdCode = async (email: string) => {
     try {
-      const response = await fetch(`/api/auth/gethouseholdcode?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
+      const response = await fetch(`/api/auth/gethouseholdcode?email=${encodeURIComponent(email)}`)
+      const data = await response.json()
 
       if (data.success) {
-        localStorage.setItem("household_code", data.household_code);
-        setHouseholdCode(data.household_code);
-        console.log("Household code stored in localStorage:", data.household_code);
+        localStorage.setItem("household_code", data.household_code)
+        setHouseholdCode(data.household_code)
+        console.log("Household code stored in localStorage:", data.household_code)
       } else {
-        console.error("Failed to fetch household code:", data.message);
+        console.error("Failed to fetch household code:", data.message)
       }
     } catch (error) {
-      console.error("Error fetching household code:", error);
+      console.error("Error fetching household code:", error)
     }
-  };
+  }
 
   const handleVerifyClick = async () => {
-    setIsVerifying(true);
-    setVerifyButtonText("Verifying...");
+    setIsVerifying(true)
+    setVerifyButtonText("Verifying...")
 
     try {
       const response = await fetch("/api/auth/verify_login", {
@@ -96,32 +96,32 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, userverifycode: twoFACode }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        localStorage.setItem("user_id", data.user_id);
-        localStorage.setItem("email", email);
-        console.log("User ID stored in localStorage:", data.user_id);
+        localStorage.setItem("user_id", data.user_id)
+        localStorage.setItem("email", email)
+        console.log("User ID stored in localStorage:", data.user_id)
 
         // Fetch and store the household code ONLY after successful 2FA verification
-        await fetchHouseholdCode(email);
+        await fetchHouseholdCode(email)
 
         const nextUrl = searchParams.get("next") || "/home"
         router.push(nextUrl)
         router.refresh()
       } else {
         setError(data.message || "Verification failed.")
-        alert("Verification failed. Please try again.");
-        setVerifyButtonText("Verify");
+        alert("Verification failed. Please try again.")
+        setVerifyButtonText("Verify")
       }
     } catch (err) {
       setError("An error occurred. Please try again.")
-      alert("An error occurred. Please try again.");
-      setVerifyButtonText("Verify");
+      alert("An error occurred. Please try again.")
+      setVerifyButtonText("Verify")
     } finally {
-      setIsVerifying(false);
+      setIsVerifying(false)
     }
   }
 
@@ -198,6 +198,9 @@ export default function LoginPage() {
               required
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder:text-gray-400"
             />
+            <Link href="/changepassword" className="block text-right text-blue-600 hover:text-blue-500 text-sm mt-1">
+              Forgot Password?
+            </Link>
           </div>
 
           <Button
@@ -250,16 +253,11 @@ export default function LoginPage() {
             </Button>
 
             <div className="text-sm text-gray-600 mt-4">
-              {timeLeft > 0
-                ? `Request new code in ${timeLeft} seconds`
-                : "Didn't receive the code?"}
+              {timeLeft > 0 ? `Request new code in ${timeLeft} seconds` : "Didn't receive the code?"}
             </div>
 
             {timeLeft === 0 && (
-              <button
-                onClick={handleResendCode}
-                className="text-blue-600 hover:text-blue-500 font-semibold mt-2"
-              >
+              <button onClick={handleResendCode} className="text-blue-600 hover:text-blue-500 font-semibold mt-2">
                 Request New Code
               </button>
             )}
@@ -269,3 +267,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

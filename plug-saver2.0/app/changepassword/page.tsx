@@ -1,8 +1,9 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -82,8 +83,8 @@ export default function ChangePasswordPage() {
 
         {success && (
           <Alert className="mb-6 bg-green-100 border-green-400 text-green-700">
-          <AlertDescription>Password changed successfully! Redirecting...</AlertDescription>
-        </Alert>
+            <AlertDescription>Password changed successfully! Redirecting...</AlertDescription>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -136,12 +137,17 @@ export default function ChangePasswordPage() {
         </form>
 
         <div className="mt-6 text-sm text-gray-600">
-          <Link href="/settings" className="text-blue-600 hover:text-blue-500 font-semibold">
+          <Button
+            variant="link"
+            className="text-blue-600 hover:text-blue-500 font-semibold p-0"
+            onClick={() => router.back()}
+          >
             <ArrowLeft className="inline-block mr-1" />
-            Back to Settings
-          </Link>
+            Back
+          </Button>
         </div>
       </div>
     </div>
   )
 }
+
