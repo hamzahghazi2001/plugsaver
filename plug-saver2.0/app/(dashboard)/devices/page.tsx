@@ -1001,8 +1001,7 @@ export default function DevicesPage() {
         await fetchDevices()
       }
     } catch (error) {
-      console.error("Error assigning device to room:", error)
-      setError("An error occurred while assigning the device to the room")
+      
       // Revert the optimistic update if there's an error
       setDevices(
         devices.map((d) =>
@@ -1113,10 +1112,10 @@ export default function DevicesPage() {
                   <Lamp className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-300 uppercase tracking-wide">Live</p>
+                  <p className="text-xs text-300 text-black uppercase tracking-wide">Live</p>
                   <div className="flex items-baseline">
                     <p className="text-2xl font-bold">{totalConsumption}</p>
-                    <span className="text-sm ml-1 text-gray-400">W</span>
+                    <span className="text-sm ml-1 text-400 text-black">W</span>
                   </div>
                 </div>
               </div>
@@ -1126,9 +1125,9 @@ export default function DevicesPage() {
           {totalConsumption > 0 ? (
             <div className="mt-6">
               <div className="flex justify-between mb-2">
-                <p className="text-xs text-gray-400 font-medium">Usage Level</p>
+                <p className="text-xs text-400 font-medium">Usage Level</p>
                 <div className="flex items-center gap-1">
-                  <p className="text-xs font-medium text-blue-300">
+                  <p className="text-xs font-medium text-300">
                     {Math.min(Math.round(totalConsumption / 10), 100)}%
                   </p>
                   {Math.min(Math.round(totalConsumption / 10), 100) > 70 && (
