@@ -1001,8 +1001,14 @@ export default function DevicesPage() {
         await fetchDevices()
       }
     } catch (error) {
-      console.error("Error assigning device to room:", error) // Log any exceptions
-      setError("An error occurred while assigning the device to a room")
+      console.error("Error assigning device to room:", error)
+      setError("An error occurred while assigning the device to the room")
+      // Revert the optimistic update if there's an error
+      setDevices(
+        devices.map((d) =>
+          d.id === deviceId ? { ...d, room: device.room, needsRoomAssignment: device.needsRoomAssignment } : d,
+        ),
+      )
     }
   }
 
@@ -1487,11 +1493,11 @@ export default function DevicesPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="flex gap-2 w-full justify-center">
+                          <div className="flex flex-col sm:flex-row gap-2 w-full justify-center">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="border-white/20 hover:bg-white/10 flex-1 flex items-center gap-1.5"
+                              className="border-white/20 hover:bg-white/10 flex items-center justify-center gap-1.5 text-xs"
                               onClick={() => setSelectedRoom(room.room_name)}
                             >
                               <Filter className="h-3.5 w-3.5" /> Filter
@@ -1501,7 +1507,7 @@ export default function DevicesPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-1 flex items-center gap-1.5"
+                                  className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-900/20 flex items-center justify-center gap-1.5 text-xs"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" /> Delete
                                 </Button>

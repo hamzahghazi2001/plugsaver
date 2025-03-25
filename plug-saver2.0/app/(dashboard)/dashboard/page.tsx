@@ -156,6 +156,55 @@ const DashboardPage = () => {
     URL.revokeObjectURL(url)
   }
 
+  const downloadChartAsImage = (chartId, fileName) => {
+    try {
+      // Find the chart container by ID
+      const chartContainer = document.getElementById(chartId)
+      if (!chartContainer) {
+        console.error(`Chart container with ID ${chartId} not found`)
+        return
+      }
+
+      // Create a canvas element
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+
+      // Set canvas dimensions to match the chart
+      const rect = chartContainer.getBoundingClientRect()
+      canvas.width = rect.width
+      canvas.height = rect.height
+
+      // Draw white background (for transparent elements)
+      ctx.fillStyle = "white"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Convert the chart to an image
+      const svgData = new XMLSerializer().serializeToString(chartContainer.querySelector("svg"))
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" })
+      const url = URL.createObjectURL(svgBlob)
+
+      img.onload = () => {
+        // Draw the image on the canvas
+        ctx.drawImage(img, 0, 0)
+        URL.revokeObjectURL(url)
+
+        // Convert canvas to image and download
+        const imgURL = canvas.toDataURL("image/png")
+        const link = document.createElement("a")
+        link.download = `${fileName}.png`
+        link.href = imgURL
+        link.click()
+      }
+
+      img.src = url
+    } catch (error) {
+      console.error("Error downloading chart as image:", error)
+    }
+  }
+
   return (
     <div
       className={`min-h-screen p-6 md:p-10 ${isDarkMode ? "text-white" : "text-gray-900"}`}
@@ -228,12 +277,12 @@ const DashboardPage = () => {
               className={`rounded-full h-8 w-8 transition-all hover:scale-105 ${
                 isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white/80 border-gray-200"
               }`}
-              onClick={() => handleDownload(energyData?.[period], "energy_consumption.json")}
+              onClick={() => downloadChartAsImage("energy-consumption-chart", "energy_consumption")}
             >
               <Download className="w-4 h-4" />
             </Button>
           </div>
-          <div className="h-64 md:h-80 relative z-10">
+          <div className="h-64 md:h-80 relative z-10" id="energy-consumption-chart">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={energyData ? energyData[period] : []}>
                 <CartesianGrid
@@ -289,12 +338,12 @@ const DashboardPage = () => {
               className={`rounded-full h-8 w-8 transition-all hover:scale-105 ${
                 isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white/80 border-gray-200"
               }`}
-              onClick={() => handleDownload(roomsData, "rooms_consumption.json")}
+              onClick={() => downloadChartAsImage("rooms-consumption-chart", "rooms_consumption")}
             >
               <Download className="w-4 h-4" />
             </Button>
           </div>
-          <div className="h-64 md:h-80 relative z-10">
+          <div className="h-64 md:h-80 relative z-10" id="rooms-consumption-chart">
             <ResponsiveContainer width="100%" height="100%">
               <PieChartRecharts>
                 <Pie
@@ -349,12 +398,12 @@ const DashboardPage = () => {
               className={`rounded-full h-8 w-8 transition-all hover:scale-105 ${
                 isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white/80 border-gray-200"
               }`}
-              onClick={() => handleDownload(applianceData, "device_category_usage.json")}
+              onClick={() => downloadChartAsImage("device-category-chart", "device_category_usage")}
             >
               <Download className="w-4 h-4" />
             </Button>
           </div>
-          <div className="h-64 md:h-80 relative z-10">
+          <div className="h-64 md:h-80 relative z-10" id="device-category-chart">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={applianceData || []}>
                 <CartesianGrid
